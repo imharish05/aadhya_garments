@@ -1,0 +1,82 @@
+'use strict';
+const { DataTypes } = require('sequelize');
+const sequelize = require('../config/db');
+
+const ProductVariant = sequelize.define('ProductVariant', {
+  id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
+  productId: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    references: { model: 'Products', key: 'id' },
+    onDelete: 'CASCADE'
+  },
+  sku: { type: DataTypes.STRING(80), unique: true, allowNull: false },
+  price: { type: DataTypes.DECIMAL(10, 2), allowNull: true }, // Sale price
+  mrp: { type: DataTypes.DECIMAL(10, 2), allowNull: true }, // Maximum Retail Price (compare price)
+  stock: { type: DataTypes.INTEGER, defaultValue: 0, allowNull: false },
+  attributes: {
+    type: DataTypes.JSON,
+    defaultValue: {},
+    get() {
+      const rawValue = this.getDataValue('attributes');
+      if (typeof rawValue === 'string') {
+        try { return JSON.parse(rawValue); } catch (e) { return {}; }
+      }
+      return rawValue || {};
+    }
+  },
+  colorHex: { type: DataTypes.STRING(7), allowNull: true, validate: { is: /^#[0-9a-f]{6}$/i } },
+  image: { type: DataTypes.STRING, allowNull: true },
+  lowStockThreshold: { type: DataTypes.INTEGER, defaultValue: 10, allowNull: true },
+  gstRate: { type: DataTypes.STRING(20), defaultValue: '0%', allowNull: true },
+  images: {
+    type: DataTypes.JSON,
+    defaultValue: [],
+    get() {
+      const rawValue = this.getDataValue('images');
+      if (typeof rawValue === 'string') {
+        try { return JSON.parse(rawValue); } catch (e) { return []; }
+      }
+      return rawValue || [];
+    }
+  }
+}, {
+  tableName: 'ProductVariants',
+  timestamps: true,
+  indexes: [
+    { unique: true, fields: ['productId', 'sku'] }
+  ]
+});
+
+ProductVariant.beforeValidate(async (variant) => {
+  const { Op } = require('sequelize');
+
+  if (!variant.sku || variant.sku.trim() === '') {
+    const pId = variant.productId || 'V';
+    let nextNum = 1;
+    if (variant.productId) {
+      const count = await ProductVariant.count({ where: { productId: variant.productId } });
+      nextNum = count + 1;
+    }
+    variant.sku = `SKU-P${pId}-V${nextNum}`;
+  }
+
+  if (variant.sku) {
+    let finalSku = variant.sku.trim().toUpperCase();
+    let count = 1;
+    const baseSku = finalSku;
+    while (true) {
+      const whereClause = { sku: finalSku };
+      if (variant.id) {
+        whereClause.id = { [Op.ne]: variant.id };
+      }
+      const existing = await ProductVariant.findOne({ where: whereClause });
+      if (!existing) break;
+      finalSku = `${baseSku}-${count}`;
+      count++;
+    }
+    variant.sku = finalSku;
+  }
+});
+
+module.exports = ProductVariant;

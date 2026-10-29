@@ -1,0 +1,259 @@
+import { useState, useEffect } from 'react';
+import { Save, ShieldCheck, RefreshCw, Check } from 'lucide-react';
+import AdminLayout from '../components/AdminLayout';
+import api from '../services/api';
+import toast from 'react-hot-toast';
+
+const TABS = [
+  'Inventory Alerts',
+  // 'Security & OTP', // Hidden: OTP verification is strictly COD-only; un-comment when needed
+];
+
+const SettingsAdminPage = () => {
+  const [tab, setTab] = useState('Inventory Alerts');
+  const [saved, setSaved] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
+
+  // OTP Verification Thresholds State
+  const [otpSettings, setOtpSettings] = useState({
+    inrThreshold: 20000,
+    requireCodOtp: true,
+    codOnly: true,
+  });
+
+  // Global Inventory Low Stock Alert Threshold State
+  const [inventorySettings, setInventorySettings] = useState({
+    globalLowStockThreshold: 10,
+  });
+
+  // Fetch settings on mount
+  useEffect(() => {
+    fetchSettings();
+  }, []);
+
+  const fetchSettings = async () => {
+    setLoading(true);
+    try {
+      const [otpRes, invRes] = await Promise.all([
+        api.get('/settings/otp_threshold').catch(() => null),
+        api.get('/settings/inventory').catch(() => null),
+      ]);
+
+      if (otpRes?.data?.success && otpRes?.data?.data) {
+        setOtpSettings({
+          inrThreshold: otpRes.data.data.inrThreshold ?? 20000,
+          requireCodOtp: otpRes.data.data.requireCodOtp ?? true,
+          codOnly: otpRes.data.data.codOnly ?? true,
+        });
+      }
+
+      if (invRes?.data?.success && invRes?.data?.data) {
+        setInventorySettings({
+          globalLowStockThreshold: invRes.data.data.globalLowStockThreshold ?? 10,
+        });
+      }
+    } catch (err) {
+      console.warn('Failed to load settings:', err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSaveInventorySettings = async (e) => {
+    e.preventDefault();
+    setSaving(true);
+    try {
+      await api.put('/settings/inventory', {
+        globalLowStockThreshold: Number(inventorySettings.globalLowStockThreshold)
+      });
+      setSaved(true);
+      toast.success('Global Inventory Stock Alert Threshold saved successfully!');
+      setTimeout(() => setSaved(false), 3000);
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to save inventory settings');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleSaveOtpSettings = async (e) => {
+    e.preventDefault();
+    setSaving(true);
+    try {
+      await api.put('/settings/otp_threshold', {
+        inrThreshold: Number(otpSettings.inrThreshold),
+        requireCodOtp: Boolean(otpSettings.requireCodOtp),
+        codOnly: Boolean(otpSettings.codOnly),
+      });
+      setSaved(true);
+      toast.success('OTP security thresholds saved successfully!');
+      setTimeout(() => setSaved(false), 3000);
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to save OTP thresholds');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const Field = ({ label, helpText, ...props }) => (
+    <div>
+      <label className="block text-xs font-semibold text-neutral-800 mb-1.5">{label}</label>
+      <input
+        {...props}
+        className="w-full border border-neutral-300 rounded-lg p-2.5 text-xs text-neutral-900 focus:border-brand-gold focus:outline-none bg-white transition-colors"
+      />
+      {helpText && <p className="text-[11px] text-neutral-400 mt-1">{helpText}</p>}
+    </div>
+  );
+
+  return (
+    <AdminLayout title="Settings">
+      <div className="flex gap-2 mb-6 border-b border-brand-light flex-wrap" role="tablist">
+        {TABS.map(t => (
+          <button
+            key={t}
+            role="tab"
+            aria-selected={tab === t}
+            onClick={() => setTab(t)}
+            id={`settings-tab-${t.toLowerCase().replace(/[^a-z]/g, '')}`}
+            className={`px-5 py-3 text-sm font-medium border-b-2 transition-colors ${tab === t ? 'border-brand-gold text-brand-gold font-bold' : 'border-transparent text-neutral-500 hover:text-neutral-900'}`}
+          >
+            {t}
+          </button>
+        ))}
+      </div>
+
+      <div className="bg-white rounded-xl shadow-sm p-6 max-w-2xl border border-neutral-100">
+          {tab === 'Inventory Alerts' ? (
+            <form onSubmit={handleSaveInventorySettings} className="space-y-6">
+              <div className="flex items-center gap-2 pb-3 border-b border-neutral-100">
+                <Save className="text-brand-gold" size={20} />
+                <div>
+                  <h2 className="text-base font-semibold text-neutral-900">Global Inventory Stock Alert Threshold</h2>
+                  <p className="text-xs text-neutral-500">Global default limit to trigger low stock warnings in the top notification bell across all warehouses.</p>
+                </div>
+              </div>
+              {loading ? (
+                <div className="py-8 text-center text-xs text-neutral-400 flex items-center justify-center gap-2">
+                  <RefreshCw size={16} className="animate-spin text-brand-gold" /> Loading inventory settings…
+                </div>
+              ) : (
+                <>
+                  <Field
+                    label="Global Low Stock Threshold (units)"
+                    id="inv-global-threshold"
+                    type="number"
+                    value={inventorySettings.globalLowStockThreshold}
+                    onChange={e => setInventorySettings(s => ({ ...s, globalLowStockThreshold: e.target.value }))}
+                    helpText="When stock in the fulfillment hub or any warehouse falls to or below this unit limit, an alert triggers in the header notification bell."
+                  />
+                  <div className="pt-4 border-t border-brand-light flex items-center gap-3">
+                    <button type="submit" disabled={saving} className="btn-primary flex items-center gap-2 text-sm px-5 py-2.5" id="settings-save-inv">
+                      {saving ? <RefreshCw size={15} className="animate-spin" /> : <Save size={15} />}
+                      {saving ? 'Saving...' : 'Save Inventory Threshold'}
+                    </button>
+                    {saved && <span className="text-green-600 text-sm font-semibold flex items-center gap-1"><Check size={14} /> Threshold updated!</span>}
+                  </div>
+                </>
+              )}
+            </form>
+          ) : (
+            <form onSubmit={handleSaveOtpSettings} className="space-y-6">
+              <div className="flex items-center gap-2 pb-3 border-b border-neutral-100">
+                <ShieldCheck className="text-brand-gold" size={20} />
+                <div>
+                  <h2 className="text-base font-semibold text-neutral-900">OTP Security Verification</h2>
+                  <p className="text-xs text-neutral-500">Configure email OTP verification rules for Cash on Delivery (COD) and checkout orders.</p>
+                </div>
+              </div>
+
+              {loading ? (
+                <div className="py-8 text-center text-xs text-neutral-400 flex items-center justify-center gap-2">
+                  <RefreshCw size={16} className="animate-spin text-brand-gold" /> Loading security settings…
+                </div>
+              ) : (
+                <>
+                  {/* Highlighted COD-Only Toggle Box */}
+                  <div className="p-4 bg-amber-50/70 border border-amber-200/80 rounded-xl space-y-2">
+                    <label className="flex items-center gap-2.5 text-sm font-semibold text-neutral-900 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={otpSettings.codOnly}
+                        onChange={e => setOtpSettings(s => ({ ...s, codOnly: e.target.checked }))}
+                        className="w-4 h-4 accent-brand-gold rounded cursor-pointer"
+                        id="otp-cod-only-toggle"
+                      />
+                      <span>Require OTP verification ONLY for Cash on Delivery (COD)</span>
+                    </label>
+                    <p className="text-xs text-neutral-600 pl-6.5 leading-relaxed">
+                      {otpSettings.codOnly ? (
+                        <span className="text-emerald-700 font-medium flex items-center gap-1 mt-1">
+                          <Check size={14} className="shrink-0" />
+                          <span><strong>Active:</strong> Email OTP verification will trigger <strong>strictly for Cash on Delivery</strong> orders. Online/Prepaid orders (Razorpay, UPI, cards, Telr) will bypass OTP and proceed directly to payment.</span>
+                        </span>
+                      ) : (
+                        <span className="text-neutral-500">
+                          When enabled, prepaid orders skip OTP and only COD requires verification. When unchecked, orders exceeding the thresholds below will also trigger OTP verification.
+                        </span>
+                      )}
+                    </p>
+                  </div>
+
+                  {/* Second COD checkbox commented out to avoid redundancy; Top COD-Only checkbox governs OTP scope
+                  <div className="pt-2">
+                    <label className="flex items-center gap-2.5 text-sm font-medium text-neutral-800 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={otpSettings.requireCodOtp}
+                        onChange={e => setOtpSettings(s => ({ ...s, requireCodOtp: e.target.checked }))}
+                        className="w-4 h-4 accent-brand-gold rounded cursor-pointer"
+                        id="otp-cod-toggle"
+                      />
+                      Require OTP verification for Cash on Delivery (COD) orders
+                    </label>
+                    <p className="text-[11px] text-neutral-400 ml-6 mt-1">
+                      When enabled, any customer selecting Cash on Delivery must verify their order via email OTP regardless of order value.
+                    </p>
+                  </div>
+                  */}
+
+                  {/* Prepaid Order Value Thresholds */}
+                  <div className={`space-y-4 pt-3 border-t border-neutral-100 transition-opacity ${otpSettings.codOnly ? 'opacity-50' : 'opacity-100'}`}>
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-semibold text-neutral-700">Prepaid Order Value Thresholds</span>
+                      {otpSettings.codOnly && (
+                        <span className="text-[11px] font-medium text-amber-800 bg-amber-100/70 px-2 py-0.5 rounded">
+                          Bypassed (COD Only Active)
+                        </span>
+                      )}
+                    </div>
+                    <Field
+                      label="Order Value Threshold (₹)"
+                      id="otp-inr-threshold"
+                      type="number"
+                      value={otpSettings.inrThreshold}
+                      disabled={otpSettings.codOnly}
+                      onChange={e => setOtpSettings(s => ({ ...s, inrThreshold: e.target.value }))}
+                      helpText={otpSettings.codOnly ? "Bypassed because 'Require OTP ONLY for Cash on Delivery' is active." : "Orders exceeding this total will trigger a mandatory 6-digit email OTP verification before placement."}
+                    />
+
+                  </div>
+
+                  <div className="pt-4 border-t border-brand-light flex items-center gap-3">
+                    <button type="submit" disabled={saving} className="btn-primary flex items-center gap-2 text-sm px-5 py-2.5" id="settings-save-otp">
+                      {saving ? <RefreshCw size={15} className="animate-spin" /> : <Save size={15} />}
+                      {saving ? 'Saving...' : 'Save OTP Thresholds'}
+                    </button>
+                    {saved && <span className="text-green-600 text-sm font-semibold flex items-center gap-1"><Check size={14} /> Settings saved & updated live!</span>}
+                  </div>
+                </>
+              )}
+            </form>
+          )}
+        </div>
+    </AdminLayout>
+  );
+};
+
+export default SettingsAdminPage;

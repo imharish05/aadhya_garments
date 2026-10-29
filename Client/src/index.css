@@ -1,0 +1,541 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+ * Twin A Apparels — Global CSS Design System
+ * ALL styling tokens live here. Do not add ad-hoc styles in components.
+ * ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── Google Fonts ──────────────────────────────────────────────────────────── */
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700;800&family=Montserrat:wght@300;400;500;600;700;800&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,600&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ── Sleek Custom Thin Scrollbar ───────────────────────────────────────────── */
+.scrollbar-thin {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0, 0, 0, 0.3) transparent;
+}
+.scrollbar-thin::-webkit-scrollbar {
+  height: 3px;
+  width: 3px;
+}
+.scrollbar-thin::-webkit-scrollbar-track {
+  background: transparent;
+}
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  background-color: rgba(0, 0, 0, 0.35);
+  border-radius: 9999px;
+}
+.scrollbar-thin::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(0, 0, 0, 0.7);
+}
+
+.scrollbar-hide,
+.scrollbar-none {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}
+.scrollbar-hide::-webkit-scrollbar,
+.scrollbar-none::-webkit-scrollbar {
+  display: none; /* Chrome, Safari and Opera */
+}
+
+/* ── CSS Custom Properties ─────────────────────────────────────────────────── */
+:root {
+  /* ui-ux-pro-max Design Tokens — Classic Luxury Minimalism */
+  --color-primary:      #000000; /* Minimalist Black */
+  --color-on-primary:   #FFFFFF;
+  --color-secondary:    #18181B; /* Zinc-900 */
+  --color-accent:       #C58837; /* Keep Luxury Accent Gold for premium highlights */
+  --color-background:   #FFFFFF; /* Clean Pure White */
+  --color-foreground:   #111111; /* Near Black */
+  --color-muted:        #FAFAFA; /* Zinc-50 */
+  --color-border:       #E4E4E7; /* Zinc-200 */
+  --color-destructive:  #DC2626;
+  --color-ring:         #000000;
+
+  /* Legacy brand colour maps for automatic styling compatibility */
+  --color-bg:           var(--color-background);
+  --color-text:         var(--color-foreground);
+  --color-gold:         var(--color-accent);
+  --color-white:        #FFFFFF;
+  --color-grey:         #71717A; /* Clean Zinc-500 gray for muted body text */
+  --color-light:        var(--color-border);
+  --color-gold-rgb:     197, 136, 55; /* RGB values for #C58837 */
+
+  /* Logo */
+  --brand-logo-text: "Twin A Apparels";
+
+  /* ── Spacing Scale (ui-ux-pro-max) ────────────────────────────────────────── */
+  --space-xs:  4px;
+  --space-sm:  8px;
+  --space-md:  16px;
+  --space-lg:  24px;
+  --space-xl:  32px;
+  --space-2xl: 48px;
+  --space-3xl: 64px;
+
+  /* ── Shadow Depths — Flat design style for minimalism ────────────────────── */
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.02);
+  --shadow-md: 0 2px 4px rgba(0,0,0,0.03);
+  --shadow-lg: 0 4px 8px rgba(0,0,0,0.04);
+  --shadow-xl: 0 8px 16px rgba(0,0,0,0.05);
+
+  /* ── Minimalist Surface Tokens ─────────────────────────────────────────── */
+  --glass-nav-bg:          #050505;
+  --glass-nav-blur:        0px;
+  --glass-nav-border:      rgba(255, 255, 255, 0.08);
+  --glass-nav-mobile-blur: 0px;
+
+  --glass-modal-bg:        rgba(255, 255, 255, 0.98);
+  --glass-modal-blur:      8px;
+  --glass-modal-border:    rgba(0, 0, 0, 0.08);
+
+  --glass-cart-bg:         rgba(255, 255, 255, 0.98);
+  --glass-cart-blur:       8px;
+  --glass-cart-border:     rgba(0, 0, 0, 0.08);
+
+  --glass-card-bg:         #FFFFFF;
+  --glass-card-blur:       0px;
+
+  --glass-hero-bg:         rgba(17, 17, 17, 0.35);
+  --glass-hero-blur:       6px;
+
+  --glass-step-bg:         #FFFFFF;
+  --glass-step-blur:       0px;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; font-variant-numeric: tabular-nums lining-nums normal; }
+
+html.lenis,
+html.lenis body {
+  height: auto;
+}
+
+.lenis.lenis-smooth {
+  scroll-behavior: auto !important;
+}
+
+.lenis.lenis-smooth [data-lenis-prevent] {
+  overscroll-behavior: contain;
+}
+
+.lenis.lenis-stopped {
+  overflow: clip;
+}
+
+.lenis.lenis-scrolling iframe {
+  pointer-events: none;
+}
+
+html, body, #root {
+  max-width: 100vw;
+  overflow-x: clip;
+}
+
+html {
+  font-size: 16px;
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+}
+
+body {
+  font-family: 'Montserrat', sans-serif;
+  background-color: var(--color-bg);
+  color: var(--color-text);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  line-height: 1.6;
+}
+
+/* ── Typography ─────────────────────────────────────────────────────────────── */
+h1, h2, h3, h4, .font-serif, .font-playfair { font-family: 'Playfair Display', 'Cinzel', Georgia, serif; }
+/* Clean normal font for all numeric values, prices, amounts, inputs, tables */
+.font-numeric, table td, input, select, textarea, button, [class*="price"], [class*="stock"], span.amount { font-family: 'Montserrat', system-ui, sans-serif !important; }
+h1 { font-size: clamp(40px, 5vw, 64px); font-weight: 700; line-height: 1.1; }
+h2 { font-size: clamp(28px, 4vw, 48px); font-weight: 600; line-height: 1.2; }
+h3 { font-size: 24px; font-weight: 600; line-height: 1.3; }
+h4 { font-size: 20px; font-weight: 600; }
+p  { font-size: 16px; line-height: 1.7; color: var(--color-grey); }
+
+/* ── Glass Surface Classes ──────────────────────────────────────────────────── */
+
+/* Surface 1: Navbar glass — sticky navigation */
+.glass-nav {
+  background: var(--glass-nav-bg);
+  /* Fallback for browsers without backdrop-filter support */
+  background: #050505;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  border-bottom: 1px solid var(--glass-nav-border);
+  will-change: transform;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+@supports (backdrop-filter: blur(1px)) {
+  .glass-nav { background: var(--glass-nav-bg); }
+}
+@media (max-width: 640px) {
+  /* Reduced blur on mobile for perf */
+  .glass-nav { backdrop-filter: blur(var(--glass-nav-mobile-blur)); -webkit-backdrop-filter: blur(var(--glass-nav-mobile-blur)); }
+}
+
+/* Surface 2: Quick-view modal glass */
+.glass-modal {
+  background: rgba(255,255,255,0.93); /* fallback */
+  backdrop-filter: blur(var(--glass-modal-blur));
+  -webkit-backdrop-filter: blur(var(--glass-modal-blur));
+  border: 1px solid var(--glass-modal-border);
+  box-shadow: 0 8px 40px rgba(0,0,0,0.15), 0 0 0 1px rgba(201,162,75,0.1);
+}
+@supports (backdrop-filter: blur(1px)) {
+  .glass-modal { background: var(--glass-modal-bg); }
+}
+
+/* Surface 3: Cart drawer glass */
+.glass-cart {
+  background: rgba(255,255,255,0.93); /* fallback */
+  backdrop-filter: blur(var(--glass-cart-blur));
+  -webkit-backdrop-filter: blur(var(--glass-cart-blur));
+  border-left: 1px solid var(--glass-cart-border);
+  box-shadow: -8px 0 40px rgba(0,0,0,0.12);
+}
+@supports (backdrop-filter: blur(1px)) {
+  .glass-cart { background: var(--glass-cart-bg); }
+}
+
+/* Surface 4: Admin stat cards — over gradient mesh background */
+.glass-stat-card {
+  background: rgba(255,255,255,0.90); /* fallback */
+  backdrop-filter: blur(var(--glass-card-blur));
+  -webkit-backdrop-filter: blur(var(--glass-card-blur));
+  border: 1px solid rgba(255,255,255,0.6);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+}
+@supports (backdrop-filter: blur(1px)) {
+  .glass-stat-card { background: var(--glass-card-bg); }
+}
+
+/* Surface 5: Home hero overlay panel */
+.glass-hero-panel {
+  background: rgba(26,26,26,0.80); /* fallback — solid dark */
+  backdrop-filter: blur(var(--glass-hero-blur));
+  -webkit-backdrop-filter: blur(var(--glass-hero-blur));
+  /* WCAG recheck: white text on rgba(26,26,26,0.4) over image = verify contrast ≥ 4.5:1 */
+}
+@supports (backdrop-filter: blur(1px)) {
+  .glass-hero-panel { background: var(--glass-hero-bg); }
+}
+
+/* Surface 6: Checkout step-indicator pill */
+.glass-step-pill {
+  background: rgba(255,255,255,0.90); /* fallback */
+  backdrop-filter: blur(var(--glass-step-blur));
+  -webkit-backdrop-filter: blur(var(--glass-step-blur));
+  border: 1px solid var(--color-border);
+}
+@supports (backdrop-filter: blur(1px)) {
+  .glass-step-pill { background: var(--glass-step-bg); }
+}
+
+/* ── Utility Classes ─────────────────────────────────────────────────────────── */
+.text-gold { color: var(--color-gold); }
+.bg-gold   { background-color: var(--color-gold); }
+.border-gold { border-color: var(--color-gold); }
+
+.btn-primary {
+  display: inline-flex; align-items: center; justify-content: center;
+  padding: 12px 32px;
+  background: var(--color-gold);
+  color: var(--color-white);
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 600;
+  font-size: 12px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 12px rgba(197, 136, 55, 0.15);
+}
+.btn-primary:hover { background: #a8712a; transform: translateY(-1.5px); box-shadow: 0 6px 20px rgba(197, 136, 55, 0.3); }
+.btn-primary:active { transform: translateY(0) scale(0.97); }
+.btn-primary:focus-visible { outline: 2px solid var(--color-gold); outline-offset: 2px; }
+
+/* WCAG AA compliant hero CTA — darker gold #996822 (from logo palette) for contrast with white text */
+.btn-primary-hero {
+  display: inline-flex; align-items: center; justify-content: center;
+  padding: 12px 32px;
+  background: #996822;
+  color: var(--color-white);
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 600;
+  font-size: 14px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.btn-primary-hero:hover { background: #81551a; transform: translateY(-1.5px); box-shadow: 0 6px 20px rgba(153, 104, 34, 0.3); }
+.btn-primary-hero:active { transform: translateY(0) scale(0.97); }
+.btn-primary-hero:focus-visible { outline: 2px solid var(--color-gold); outline-offset: 2px; }
+
+.btn-outline {
+  display: inline-flex; align-items: center; justify-content: center;
+  padding: 11px 31px;
+  background: transparent;
+  color: var(--color-text);
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 600;
+  font-size: 14px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  border: 1.5px solid var(--color-text);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.btn-outline:hover { background: var(--color-text); color: var(--color-background); transform: translateY(-1.5px); }
+.btn-outline:active { transform: translateY(0) scale(0.97); }
+.btn-outline:focus-visible { outline: 2px solid var(--color-text); outline-offset: 2px; }
+
+.btn-primary:disabled,
+.btn-primary-hero:disabled,
+.btn-outline:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+/* ── Skeleton Loader ────────────────────────────────────────────────────────── */
+.skeleton {
+  background: linear-gradient(90deg, #e4e4e7 25%, #fafafa 50%, #e4e4e7 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: 2px;
+}
+
+/* ── Scrollbar ──────────────────────────────────────────────────────────────── */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: var(--color-muted); }
+::-webkit-scrollbar-thumb { background: var(--color-primary); border-radius: 3px; }
+
+/* ── Prefers Reduced Motion ─────────────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  /* Disable blur transitions; glass surfaces stay static */
+  *, *::before, *::after { animation-duration: 0.001ms !important; transition-duration: 0.001ms !important; }
+  html { scroll-behavior: auto; }
+}
+
+/* ── Focus States (WCAG AA) ─────────────────────────────────────────────────── */
+:focus-visible { outline: 2px solid var(--color-gold); outline-offset: 2px; }
+a:focus-visible, button:focus-visible { outline: 2px solid var(--color-gold); outline-offset: 3px; }
+
+/* ── Hero Banner Section (VÉLUNE Editorial Architecture) ───────────────── */
+.hero-banner-section {
+  position: relative;
+  width: 100%;
+  height: 86vh;
+  min-height: 580px;
+  max-height: 960px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  overflow: hidden;
+}
+
+@media (min-width: 1024px) {
+  .hero-banner-section {
+    height: 88vh;
+    min-height: 640px;
+    max-height: 980px;
+  }
+}
+
+@media (max-width: 767px) {
+  .hero-banner-section {
+    height: 82vh;
+    min-height: 540px;
+    max-height: 720px;
+  }
+}
+
+
+/* ── Price Range Dual-Handle Slider ───────────────────────────────────────── */
+.price-range-input {
+  pointer-events: none;
+}
+.price-range-input::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  pointer-events: all;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #C58837;
+  border: 2px solid #fff;
+  box-shadow: 0 0 0 1.5px #C58837, 0 2px 6px rgba(197,136,55,0.35);
+  cursor: pointer;
+  transition: box-shadow 0.15s, transform 0.15s;
+}
+.price-range-input::-webkit-slider-thumb:hover {
+  box-shadow: 0 0 0 3px rgba(197,136,55,0.25), 0 2px 6px rgba(197,136,55,0.35);
+  transform: scale(1.1);
+}
+.price-range-input:focus::-webkit-slider-thumb {
+  box-shadow: 0 0 0 4px rgba(197,136,55,0.3);
+}
+.price-range-input::-moz-range-thumb {
+  pointer-events: all;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #C58837;
+  border: 2px solid #fff;
+  box-shadow: 0 0 0 1.5px #C58837;
+  cursor: pointer;
+}
+
+/* ── Promotional Card Overlays (Exclusive Deals / Home Promos) ────────────── */
+@media (max-width: 1023px) {
+  .promo-card-overlay {
+    padding: 1rem !important;
+    padding-bottom: 1.5rem !important;
+  }
+  .promo-card-overlay h3 {
+    font-size: 1.15rem !important;
+    margin-bottom: 0.3rem !important;
+    line-height: 1.25 !important;
+  }
+  .promo-card-overlay p {
+    font-size: 0.72rem !important;
+    margin-bottom: 0.45rem !important;
+    line-height: 1.3 !important;
+  }
+  .promo-card-overlay span {
+    font-size: 8px !important;
+    padding: 2px 6px !important;
+    margin-bottom: 0.35rem !important;
+  }
+  .promo-card-overlay .group\/btn {
+    padding: 5px 12px !important;
+    font-size: 9px !important;
+    letter-spacing: 0.05em !important;
+  }
+}
+
+/* ── Product Description Rich Text Renderer ──────────────────────────────── */
+.prose-description { font-size: 0.95rem; line-height: 1.75; color: var(--color-grey); }
+
+.prose-description h1 {
+  font-family: 'Montserrat', 'Inter', sans-serif;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--color-foreground);
+  margin: 1.2rem 0 0.5rem;
+  line-height: 1.3;
+  text-transform: none;
+}
+
+.prose-description h2 {
+  font-family: 'Montserrat', 'Inter', sans-serif;
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: var(--color-foreground);
+  margin: 1rem 0 0.4rem;
+  line-height: 1.3;
+  text-transform: none;
+}
+
+.prose-description h3 {
+  font-family: 'Montserrat', 'Inter', sans-serif;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--color-foreground);
+  margin: 0.8rem 0 0.35rem;
+  line-height: 1.3;
+  text-transform: none;
+}
+
+.prose-description p {
+  margin: 0.4rem 0;
+}
+
+.prose-description ul {
+  list-style: disc;
+  padding-left: 1.5rem;
+  margin: 0.5rem 0;
+}
+
+.prose-description ol {
+  list-style: decimal;
+  padding-left: 1.5rem;
+  margin: 0.5rem 0;
+}
+
+.prose-description li {
+  margin: 0.25rem 0;
+  line-height: 1.6;
+}
+
+.prose-description strong, .prose-description b {
+  font-weight: 700;
+  color: var(--color-foreground);
+}
+
+.prose-description em, .prose-description i {
+  font-style: italic;
+}
+
+.prose-description u {
+  text-decoration: underline;
+}
+
+/* ── Luxury Brand Preloader Animations ────────────────────────────────────── */
+@keyframes goldShimmer {
+  0% { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+
+@keyframes pulseGlow {
+  0%, 100% {
+    filter: drop-shadow(0 0 15px rgba(201, 162, 75, 0.35)) drop-shadow(0 0 35px rgba(201, 162, 75, 0.2));
+    transform: scale(1);
+  }
+  50% {
+    filter: drop-shadow(0 0 25px rgba(201, 162, 75, 0.65)) drop-shadow(0 0 50px rgba(201, 162, 75, 0.35));
+    transform: scale(1.03);
+  }
+}
+
+@keyframes orbitSpin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes orbitSpinReverse {
+  from { transform: rotate(360deg); }
+  to { transform: rotate(0deg); }
+}
+
+.text-gold-shimmer {
+  background: linear-gradient(90deg, #b8860b 0%, #ecd599 25%, #ffffff 50%, #ecd599 75%, #b8860b 100%);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: goldShimmer 3s linear infinite;
+}
+
+.animate-pulse-glow {
+  animation: pulseGlow 2.5s ease-in-out infinite;
+}
+
+.animate-orbit {
+  animation: orbitSpin 12s linear infinite;
+}
+
+.animate-orbit-reverse {
+  animation: orbitSpinReverse 8s linear infinite;
+}

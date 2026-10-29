@@ -1,0 +1,114 @@
+import { useEffect } from 'react';
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { useDispatch, useSelector } from 'react-redux';
+import LoginPage from './pages/LoginPage';
+import DashboardPage from './pages/DashboardPage';
+import ProductsAdminPage from './pages/ProductsAdminPage';
+import VariantsAdminPage from './pages/VariantsAdminPage';
+import CategoriesAdminPage from './pages/CategoriesAdminPage';
+import SubCategoriesAdminPage from './pages/SubCategoriesAdminPage';
+import OrdersAdminPage from './pages/OrdersAdminPage';
+import ReturnsAdminPage from './pages/ReturnsAdminPage';
+import CustomersAdminPage from './pages/CustomersAdminPage';
+import AbandonedCartsAdminPage from './pages/AbandonedCartsAdminPage';
+import BannersAdminPage from './pages/BannersAdminPage';
+import CouponsAdminPage from './pages/CouponsAdminPage';
+import PaymentsAdminPage from './pages/PaymentsAdminPage';
+import ReportsAdminPage from './pages/ReportsAdminPage';
+import SettingsAdminPage from './pages/SettingsAdminPage';
+import SiteSettingsAdminPage from './pages/SiteSettingsAdminPage';
+import SliderMessagesAdminPage from './pages/SliderMessagesAdminPage';
+import ReviewsAdminPage from './pages/ReviewsAdminPage';
+import ContactEnquiriesAdminPage from './pages/ContactEnquiriesAdminPage';
+import RolesPermissionsAdminPage from './pages/RolesPermissionsAdminPage';
+import AdminUsersAdminPage from './pages/AdminUsersAdminPage';
+import NotFoundAdminPage from './pages/NotFoundAdminPage';
+import ServiceUnavailableAdminPage from './pages/ServiceUnavailableAdminPage';
+import AccessDeniedView from './components/AccessDeniedView';
+import AdminLayout from './components/AdminLayout';
+import { canAccessNav } from './utils/rbac';
+import api from './services/api';
+import { setAdminUser } from './redux/slices/authSlice';
+import { Toaster } from 'react-hot-toast';
+
+/* Protected route — redirect to /login if no admin token, or render AccessDeniedView if unauthorized */
+const Protected = ({ children, path }) => {
+  const location = useLocation();
+  const token = localStorage.getItem('bb_admin_token');
+  const { admin } = useSelector(s => s.auth);
+
+  if (!token) {
+    return <Navigate to="/login" replace />;
+  }
+
+  const currentPath = path || location.pathname;
+  if (admin && !canAccessNav(admin, currentPath)) {
+    return (
+      <AdminLayout title="Access Denied">
+        <AccessDeniedView path={currentPath} />
+      </AdminLayout>
+    );
+  }
+
+  return children;
+};
+
+const App = () => {
+  const dispatch = useDispatch();
+  const { isAuthenticated } = useSelector(s => s.auth);
+
+  useEffect(() => {
+    const token = localStorage.getItem('bb_admin_token');
+    if (token) {
+      api.get('/auth/me').then(res => {
+        if (res.data?.success && res.data.admin) {
+          dispatch(setAdminUser(res.data.admin));
+        }
+      }).catch(() => {});
+    }
+  }, [dispatch]);
+
+  return (
+    <>
+      <Toaster
+        position="top-center"
+        containerStyle={{ zIndex: 999999 }}
+        toastOptions={{
+          duration: 2500,
+          success: { duration: 2000 },
+          error: { duration: 3500 },
+          style: { zIndex: 999999 },
+        }}
+      />
+      <Routes>
+        <Route path="/login" element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <LoginPage />} />
+        <Route path="/" element={<Navigate to="/dashboard" replace />} />
+        <Route path="/dashboard"   element={<Protected><DashboardPage /></Protected>} />
+        <Route path="/products"    element={<Protected><ProductsAdminPage /></Protected>} />
+        <Route path="/reviews"     element={<Protected><ReviewsAdminPage /></Protected>} />
+        <Route path="/variants"    element={<Protected><VariantsAdminPage /></Protected>} />
+        <Route path="/categories"  element={<Protected><CategoriesAdminPage /></Protected>} />
+        <Route path="/sub-categories" element={<Protected><SubCategoriesAdminPage /></Protected>} />
+        <Route path="/orders"      element={<Protected><OrdersAdminPage /></Protected>} />
+        <Route path="/returns"     element={<Protected><ReturnsAdminPage /></Protected>} />
+        <Route path="/customers"   element={<Protected><CustomersAdminPage /></Protected>} />
+        <Route path="/contact-enquiries" element={<Protected><ContactEnquiriesAdminPage /></Protected>} />
+        <Route path="/contact_enquiries" element={<Navigate to="/contact-enquiries" replace />} />
+        <Route path="/abandoned-carts" element={<Protected><AbandonedCartsAdminPage /></Protected>} />
+        <Route path="/slider-messages" element={<Protected><SliderMessagesAdminPage /></Protected>} />
+        <Route path="/banners"     element={<Protected><BannersAdminPage /></Protected>} />
+        <Route path="/coupons"     element={<Protected><CouponsAdminPage /></Protected>} />
+        <Route path="/payments"    element={<Protected><PaymentsAdminPage /></Protected>} />
+        <Route path="/reports"     element={<Protected><ReportsAdminPage /></Protected>} />
+        <Route path="/settings"    element={<Protected><SettingsAdminPage /></Protected>} />
+        <Route path="/roles"       element={<Protected><RolesPermissionsAdminPage /></Protected>} />
+        <Route path="/admin-users" element={<Protected><AdminUsersAdminPage /></Protected>} />
+        <Route path="/site-settings" element={<Protected><SiteSettingsAdminPage /></Protected>} />
+        <Route path="/503"          element={<ServiceUnavailableAdminPage />} />
+        <Route path="*"            element={<NotFoundAdminPage />} />
+      </Routes>
+    </>
+  );
+};
+
+export default App;

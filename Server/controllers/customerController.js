@@ -1,0 +1,211 @@
+'use strict';
+const { Customer, Wishlist, Order, SupportTicket, Product, ProductVariant } = require('../models');
+
+const getAll = async (req, res) => {
+  try {
+    const { page = 1, limit = 20, search } = req.query;
+    const { Op } = require('sequelize');
+    const where = {};
+    if (search) where[Op.or] = [{ name: { [Op.like]: `%${search}%` } }, { email: { [Op.like]: `%${search}%` } }];
+    const { count, rows } = await Customer.findAndCountAll({
+      where,
+      distinct: true,
+      limit: parseInt(limit),
+      offset: (parseInt(page) - 1) * parseInt(limit),
+      order: [['createdAt', 'DESC']],
+      attributes: { exclude: ['password'] },
+      include: [{ model: Order, as: 'orders', attributes: ['id', 'totalAmount', 'status', 'paymentStatus'] }]
+    });
+    const processedRows = rows.map(c => {
+      const plain = c.get({ plain: true });
+      const validOrders = (plain.orders || []).filter(o => o.paymentStatus === 'PAID');
+      const totalSpent = validOrders.reduce((sum, o) => sum + (parseFloat(o.totalAmount) || 0), 0);
+      return {
+        ...plain,
+        ordersCount: (plain.orders || []).length,
+        totalSpent: Math.round(totalSpent * 10) / 10
+      };
+    });
+    const p = Math.max(1, parseInt(page, 10));
+    const l = Math.max(1, parseInt(limit, 10));
+    res.json({ success: true, customers: processedRows, total: count, page: p, limit: l, totalPages: Math.ceil(count / l) });
+  } catch (err) { res.status(500).json({ success: false, message: err.message }); }
+};
+
+const getOne = async (req, res) => {
+  try {
+    const customer = await Customer.findByPk(req.params.id, { attributes: { exclude: ['password'] }, include: [{ model: Order, as: 'orders', limit: 5, order: [['createdAt', 'DESC']] }] });
+    if (!customer) return res.status(404).json({ success: false, message: 'Customer not found' });
+    res.json({ success: true, customer });
+  } catch (err) { res.status(500).json({ success: false, message: err.message }); }
+};
+
+const areVariantsEqual = (varA, varB) => {
+  // Some MySQL/MariaDB drivers return JSON columns as serialized strings.
+  const normalize = value => {
+    if (typeof value === 'string') {
+      try { value = JSON.parse(value); } catch { return {}; }
+    }
+    return value && typeof value === 'object' && !Array.isArray(value) ? value : {};
+  };
+  const a = normalize(varA);
+  const b = normalize(varB);
+  const keysA = Object.keys(a).sort();
+  const keysB = Object.keys(b).sort();
+  if (keysA.length !== keysB.length) return false;
+  return keysA.every(k => String(a[k]).toLowerCase() === String(b[k]).toLowerCase());
+};
+
+const getWishlist = async (req, res) => {
+  try {
+    const items = await Wishlist.findAll({
+      where: { customerId: req.customer.id },
+      include: [
+        { model: Product, as: 'product' },
+        { model: ProductVariant, as: 'variant' }
+      ]
+    });
+    const parsedItems = items.map(item => {
+      const json = item.toJSON ? item.toJSON() : { ...item };
+      if (typeof json.selectedVariant === 'string') {
+        try {
+          json.selectedVariant = JSON.parse(json.selectedVariant);
+        } catch {
+          json.selectedVariant = {};
+        }
+      }
+      if (typeof json.selectedVariant !== 'object' || json.selectedVariant === null) {
+        json.selectedVariant = {};
+      }
+      return json;
+    });
+    res.json({ success: true, wishlist: parsedItems });
+  } catch (err) { res.status(500).json({ success: false, message: err.message }); }
+};
+
+const toggleWishlist = async (req, res) => {
+  try {
+    const { productId, variantId, selectedVariant } = req.body;
+    let safeVariant = selectedVariant || {};
+    if (typeof safeVariant === 'string') {
+      try {
+        safeVariant = JSON.parse(safeVariant);
+      } catch {
+        safeVariant = {};
+      }
+    }
+    if (typeof safeVariant !== 'object' || safeVariant === null) {
+      safeVariant = {};
+    }
+
+    const items = await Wishlist.findAll({
+      where: {
+        customerId: req.customer.id,
+        productId,
+      }
+    });
+
+    const targetVariantId = variantId ? Number(variantId) : null;
+    const existing = items.find(w => {
+      if (targetVariantId || w.variantId) {
+        return Number(w.variantId) === targetVariantId;
+      }
+      return areVariantsEqual(w.selectedVariant, safeVariant);
+    });
+
+    if (existing) {
+      await existing.destroy();
+      return res.json({ success: true, action: 'removed' });
+    }
+    await Wishlist.create({
+      customerId: req.customer.id,
+      productId,
+      variantId: targetVariantId,
+      selectedVariant: safeVariant
+    });
+    res.json({ success: true, action: 'added' });
+  } catch (err) { res.status(500).json({ success: false, message: err.message }); }
+};
+
+const syncWishlist = async (req, res) => {
+  try {
+    const { items } = req.body;
+    if (!Array.isArray(items) || items.length === 0) {
+      return getWishlist(req, res);
+    }
+
+    const existingRows = await Wishlist.findAll({
+      where: { customerId: req.customer.id }
+    });
+
+    for (const item of items) {
+      const productId = parseInt(item.productId || item.id, 10);
+      if (!productId || isNaN(productId)) continue;
+
+      const targetVariantId = item.variantId ? parseInt(item.variantId, 10) : null;
+      let safeVariant = item.selectedVariant || {};
+      if (typeof safeVariant === 'string') {
+        try { safeVariant = JSON.parse(safeVariant); } catch { safeVariant = {}; }
+      }
+      if (typeof safeVariant !== 'object' || safeVariant === null) {
+        safeVariant = {};
+      }
+
+      const alreadyExists = existingRows.some(w => {
+        if (Number(w.productId) !== productId) return false;
+        if (targetVariantId || w.variantId) {
+          return Number(w.variantId) === targetVariantId;
+        }
+        return areVariantsEqual(w.selectedVariant, safeVariant);
+      });
+
+      if (!alreadyExists) {
+        const prod = await Product.findByPk(productId);
+        if (prod && prod.isActive) {
+          if (targetVariantId) {
+            const variant = await ProductVariant.findOne({ where: { id: targetVariantId, productId } });
+            if (!variant) continue;
+          }
+          const created = await Wishlist.create({
+            customerId: req.customer.id,
+            productId,
+            variantId: targetVariantId,
+            selectedVariant: safeVariant
+          });
+          existingRows.push(created);
+        }
+      }
+    }
+
+    return getWishlist(req, res);
+  } catch (err) { res.status(500).json({ success: false, message: err.message }); }
+};
+
+const getLoyalty = async (req, res) => {
+  try {
+    const ledger = await LoyaltyLedger.findAll({
+      where: { customerId: req.customer.id },
+      include: [{ model: Order, as: 'order', attributes: ['id', 'orderNumber', 'totalAmount'] }],
+      order: [['createdAt', 'DESC']],
+    });
+    res.json({ success: true, ledger, balance: req.customer.loyaltyPoints });
+  } catch (err) { res.status(500).json({ success: false, message: err.message }); }
+};
+
+const getTickets = async (req, res) => {
+  try {
+    const tickets = await SupportTicket.findAll({ where: { customerId: req.customer.id }, order: [['createdAt', 'DESC']] });
+    res.json({ success: true, tickets });
+  } catch (err) { res.status(500).json({ success: false, message: err.message }); }
+};
+
+const createTicket = async (req, res) => {
+  try {
+    const { subject, description, orderId, category } = req.body;
+    const ticket = await SupportTicket.create({ customerId: req.customer.id, subject, description, orderId, category });
+    res.status(201).json({ success: true, ticket });
+  } catch (err) { res.status(500).json({ success: false, message: err.message }); }
+};
+
+module.exports = { getAll, getOne, getWishlist, toggleWishlist, syncWishlist, getLoyalty, getTickets, createTicket };
+
