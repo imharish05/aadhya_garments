@@ -363,16 +363,12 @@ const CheckoutPage = () => {
         if (res.data?.success) {
           if (!res.data.isAllowed) {
             setGeoBlocked(true);
-            setGeoMessage(res.data.message || 'Payments and order placement are accepted strictly from UAE and India only.');
+            setGeoMessage('');
           } else {
             setGeoBlocked(false);
             const detectedCountry = res.data.countryCode || 'IN';
             setGeoCountry(detectedCountry);
-            if (detectedCountry === 'AE') {
-              setPaymentMethod('Telr Secure Online');
-            } else {
-              setPaymentMethod('Razorpay Secure Online');
-            }
+            setPaymentMethod('Razorpay Secure Online');
             // Only set initial display currency if user hasn't explicitly chosen one yet via toggle
             const savedCurrency = localStorage.getItem('bb_currency');
             if (!savedCurrency && res.data.currency) {
@@ -391,30 +387,6 @@ const CheckoutPage = () => {
 
   const handleToggleDeliverySame = (checked) => {
     if (checked) {
-      const bCountry = (billingAddress.country || '').trim().toLowerCase();
-      const isIndiaBilling = ['india', 'in', 'ind'].includes(bCountry);
-      const isDubaiCountry = ['uae', 'united arab emirates', 'dubai', 'abu dhabi', 'sharjah', 'ae'].includes(bCountry);
-
-      const bPhone = (billingAddress.phone || '').trim();
-      const digitsOnly = bPhone.replace(/\D/g, '');
-      const isDubaiPhone = bPhone.startsWith('+971') || (digitsOnly.startsWith('971') && digitsOnly.length >= 11) || (digitsOnly.length === 9 && digitsOnly.startsWith('5'));
-
-      if (isDubaiPhone) {
-        setDeliverySameAsBilling(false);
-        const msg = 'Delivery is available within India only and requires an Indian (+91) mobile number. Your billing mobile is a Dubai/UAE (+971) number, so please enter a separate Indian delivery address and an Indian recipient mobile number.';
-        setSameDeliveryError(msg);
-        toast.error(msg);
-        return;
-      }
-
-      if ((!isIndiaBilling && bCountry !== '') || isDubaiCountry) {
-        setDeliverySameAsBilling(false);
-        const msg = 'Delivery is strictly available within India only. Because your billing country is outside India, please uncheck and enter an Indian delivery address.';
-        setSameDeliveryError(msg);
-        toast.error(msg);
-        return;
-      }
-
       setSameDeliveryError('');
       setDeliverySameAsBilling(true);
       setAddress({ ...billingAddress, country: 'India' });
@@ -652,8 +624,6 @@ const CheckoutPage = () => {
     toast.success('Auto-selected best discount for your order!');
   };
 
-  const isGiftWrap = Boolean(location.state?.giftWrap);
-  const giftWrapPrice = isGiftWrap ? Number(location.state?.giftWrapPrice || 99) : 0;
   let shipping = 0;
   let shippingStatus = 'PENDING'; // 'PENDING' | 'DELIVERABLE' | 'NOT_DELIVERABLE'
 
@@ -700,8 +670,8 @@ const CheckoutPage = () => {
 
   const effectiveTaxRate = subtotal > 0 ? Math.round((weightedTaxSum / subtotal) * 10) / 10 : 0;
 
-  // Total = taxableSubtotal (GST-inclusive) + shipping + giftWrap
-  const total = taxableSubtotal + shipping + giftWrapPrice;
+  // Total = taxableSubtotal (GST-inclusive) + shipping
+  const total = taxableSubtotal + shipping;
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -824,17 +794,12 @@ const CheckoutPage = () => {
         await dispatch(syncCart(itemsToSync)).unwrap();
       }
 
-      const isWrap = Boolean(location.state?.giftWrap);
-      const wrapPrice = isWrap ? Number(location.state?.giftWrapPrice || 99) : 0;
 
       const isCod = paymentMethod === 'Cash on Delivery (COD)';
-      const isUaeRegion = geoCountry === 'AE';
-      const effectivePaymentMethod = isCod 
-        ? 'Cash on Delivery (COD)' 
-        : (isUaeRegion ? 'Telr Secure Online' : 'Razorpay Secure Online');
+      const effectivePaymentMethod = isCod ? 'Cash on Delivery (COD)' : 'Razorpay Secure Online';
 
       // 2. Proceed with order placement using server-side cart or isolated Buy Now item
-      const targetCountry = isUaeRegion ? 'United Arab Emirates' : 'India';
+      const targetCountry = 'India';
       const referralCode = localStorage.getItem('bb_referral') || undefined;
       const order = await dispatch(placeOrder({
         shippingAddress: { ...(deliverySameAsBilling ? billingAddress : address), country: 'India' },
@@ -843,13 +808,9 @@ const CheckoutPage = () => {
         referralCode,
         couponCode: activeDiscountType === 'COUPON' && activeCouponObj ? activeCouponObj.code : undefined,
         redeemPoints: activeDiscountType === 'LOYALTY',
-        isGiftWrap: isWrap,
-        giftWrapPrice: wrapPrice,
-        giftMessage: location.state?.giftMessage || undefined,
-        notes: location.state?.giftMessage || undefined,
         geoCountry: geoCountry || 'IN',
-        requestedCurrency: isUaeRegion ? 'AED' : 'INR',
-        currencyRate: currencyRate,         // exchange rate (1 AED = X INR), default 26.06
+        requestedCurrency: 'INR',
+        currencyRate: 1,
         isBuyNow: isBuyNowMode,
         buyNowItem: isBuyNowMode && buyNowItem ? {
           productId: buyNowItem.productId,
@@ -883,7 +844,7 @@ const CheckoutPage = () => {
         return;
       }
 
-      // 4. Initiate payment gateway transaction (Razorpay for INR, Telr for AED)
+      // 4. Initiate payment gateway transaction (Razorpay)
       const initRes = await api.post('/payments/initiate', { orderId: order.id });
       if (!initRes.data?.success) {
         throw new Error(initRes.data?.message || 'Failed to initialize payment details from gateway.');
@@ -891,12 +852,8 @@ const CheckoutPage = () => {
 
       const paymentData = initRes.data;
 
-      if (paymentData.gateway === 'telr') {
-        // Telr: redirect to hosted payment page
-        finishOrderClear();
-        window.location.href = paymentData.redirectUrl;
-
-      } else if (paymentData.gateway === 'razorpay') {
+      // Razorpay: load SDK and open checkout overlay
+      if (paymentData.gateway === 'razorpay' || paymentData.key) {
         // Razorpay: load SDK and open checkout overlay
         const loaded = await loadRazorpayScript();
         if (!loaded || typeof window === 'undefined' || !window.Razorpay) {
@@ -988,73 +945,26 @@ const CheckoutPage = () => {
     if (!billingAddress.flatHouse?.trim()) errors.flatHouse = 'Please enter Street / House No.';
     if (!billingAddress.city?.trim()) errors.city = 'Please enter City';
     if (!billingAddress.state?.trim()) errors.state = 'Please enter State';
-
-    if (deliverySameAsBilling) {
-      const countryVal = (billingAddress.country || '').trim().toLowerCase();
-      const isIndiaBilling = ['india', 'in', 'ind'].includes(countryVal);
-      if (!isIndiaBilling && countryVal !== '') {
-        const msg = 'Delivery is strictly available within India only. Please uncheck "same as billing" and enter an Indian delivery address.';
-        errors.sameDelivery = msg;
-        errors.country = msg;
-        setSameDeliveryError(msg);
-        toast.error(msg);
-      }
-
-      const bPhone = (billingAddress.phone || '').trim();
-      const digitsOnly = bPhone.replace(/\D/g, '');
-      const isDubaiPhone = bPhone.startsWith('+971') || (digitsOnly.startsWith('971') && digitsOnly.length >= 11) || (digitsOnly.length === 9 && digitsOnly.startsWith('5'));
-      if (isDubaiPhone) {
-        const msg = 'Delivery requires an Indian (+91) mobile number. Since your billing phone is a Dubai/UAE (+971) number, please uncheck "same as billing" and enter an Indian delivery contact.';
-        errors.phone = 'Billing has a UAE number. Delivery address requires an Indian (+91) mobile number.';
-        errors.sameDelivery = msg;
-        setSameDeliveryError(msg);
-        toast.error(msg);
-      }
-
-      if (!/^\d{6}$/.test((billingAddress.pincode || '').trim())) {
-        errors.pincode = 'Indian delivery pincode must be exactly 6 numeric digits';
-      }
+    if (!/^\d{6}$/.test((billingAddress.pincode || '').trim())) {
+      errors.pincode = 'Pincode must be exactly 6 numeric digits';
     }
 
     if (!deliverySameAsBilling) {
-      const hasCustomDeliveryDetails = Boolean(address.fullName?.trim() || address.flatHouse?.trim() || address.city?.trim() || address.pincode?.trim());
-      if (!hasCustomDeliveryDetails) {
-        const countryVal = (billingAddress.country || '').trim().toLowerCase();
-        const isIndiaBilling = ['india', 'in', 'ind'].includes(countryVal);
-        const bPhone = (billingAddress.phone || '').trim();
-        const digitsOnly = bPhone.replace(/\D/g, '');
-        const isDubaiPhone = bPhone.startsWith('+971') || (digitsOnly.startsWith('971') && digitsOnly.length >= 11) || (digitsOnly.length === 9 && digitsOnly.startsWith('5'));
-
-        if (!isIndiaBilling || isDubaiPhone) {
-          errors.del_fullName = 'Please enter Indian recipient Full Name';
-          errors.del_phone = 'Delivery requires a valid 10-digit Indian (+91) mobile number';
-          errors.del_flatHouse = 'Please enter delivery Street / House No.';
-          errors.del_city = 'Please enter delivery City';
-          errors.del_state = 'Please enter delivery State';
-          errors.del_pincode = 'Delivery Pincode must be exactly 6 numeric digits';
-        } else {
-          setDeliverySameAsBilling(true);
-          setAddress({ ...billingAddress, country: 'India' });
-        }
+      if (!address.fullName?.trim()) errors.del_fullName = 'Please enter delivery Full Name';
+      if (!address.phone?.trim()) {
+        errors.del_phone = 'Delivery mobile number is required';
       } else {
-        if (!address.fullName?.trim()) errors.del_fullName = 'Please enter delivery Full Name';
-        if (!address.phone?.trim()) {
-          errors.del_phone = 'Delivery mobile number is required';
-        } else {
-          const delPhoneVal = validatePhoneNumber(address.phone, { defaultCountry: 'IN' });
-          if (!delPhoneVal.isValid) {
-            errors.del_phone = delPhoneVal.message;
-          } else if (delPhoneVal.country !== 'IN') {
-            errors.del_phone = 'Delivery mobile number must be an Indian (+91) number (10 digits starting with 6–9)';
-          }
+        const delPhoneVal = validatePhoneNumber(address.phone, { defaultCountry: 'IN' });
+        if (!delPhoneVal.isValid) {
+          errors.del_phone = delPhoneVal.message;
         }
-        if (!address.email?.trim()) errors.del_email = 'Please enter delivery Email Address';
-        if (!address.flatHouse?.trim()) errors.del_flatHouse = 'Please enter delivery Street / House No.';
-        if (!address.city?.trim()) errors.del_city = 'Please enter delivery City';
-        if (!address.state?.trim()) errors.del_state = 'Please enter delivery State';
-        if (!/^\d{6}$/.test((address.pincode || '').trim())) {
-          errors.del_pincode = 'Delivery Pincode must be exactly 6 numeric digits';
-        }
+      }
+      if (!address.email?.trim()) errors.del_email = 'Please enter delivery Email Address';
+      if (!address.flatHouse?.trim()) errors.del_flatHouse = 'Please enter delivery Street / House No.';
+      if (!address.city?.trim()) errors.del_city = 'Please enter delivery City';
+      if (!address.state?.trim()) errors.del_state = 'Please enter delivery State';
+      if (!/^\d{6}$/.test((address.pincode || '').trim())) {
+        errors.del_pincode = 'Delivery Pincode must be exactly 6 numeric digits';
       }
     }
 
@@ -1108,7 +1018,7 @@ const CheckoutPage = () => {
   return (
     <main id="main-content">
       <div className="max-w-site mx-auto px-4 md:px-8 py-8 md:py-12">
-        <h1 className="font-playfair text-2xl md:text-3xl font-bold mb-2">Secure Checkout</h1>
+        <h1 className="font-playfair text-2xl md:text-3xl lg:text-4xl font-semibold mb-2">Secure Checkout</h1>
 
         {/* Restricted Location Banner */}
         {geoBlocked && (
@@ -1116,7 +1026,7 @@ const CheckoutPage = () => {
             <ShieldAlert size={28} className="text-red-600 shrink-0" />
             <div>
               <p className="font-bold text-sm">Service Region Restriction</p>
-              <p className="text-xs text-red-700 mt-0.5">{geoMessage || 'Payments and order placement are accepted strictly from UAE and India only.'}</p>
+              <p className="text-xs text-red-700 mt-0.5">{geoMessage}</p>
             </div>
           </div>
         )}
@@ -1234,7 +1144,7 @@ const CheckoutPage = () => {
                   className="space-y-5"
                 >
                   <div className="bg-white border border-neutral-200 rounded-xl p-4 sm:p-6">
-                    <h2 className="text-base sm:text-lg font-semibold mb-3 text-brand-text">Billing Address</h2>
+                    <h2 className="font-playfair text-lg sm:text-xl font-semibold mb-3 text-brand-text">Billing Address</h2>
                     {isAuthenticated && customer && (
                       <SavedAddressPicker
                         key={'billing-' + customer.id}
@@ -1405,16 +1315,6 @@ const CheckoutPage = () => {
                                   const val = e.target.value;
                                   setBillingAddress(p => ({ ...p, country: val }));
                                   if (fieldErrors.country) setFieldErrors(p => ({ ...p, country: null }));
-                                  const valLower = (val || '').trim().toLowerCase();
-                                  const isIndia = ['india', 'in', 'ind'].includes(valLower);
-                                  if (deliverySameAsBilling && !isIndia && valLower !== '') {
-                                    setDeliverySameAsBilling(false);
-                                    const msg = 'Delivery is strictly available within India only. Delivery address has been separated.';
-                                    setSameDeliveryError(msg);
-                                    toast.error(msg);
-                                  } else if (sameDeliveryError && isIndia) {
-                                    setSameDeliveryError('');
-                                  }
                                 }}
                                 placeholder="Country"
                                 className={`${inputCls} ${fieldErrors.country ? 'border-red-500 bg-red-50/20 focus:border-red-500 focus:ring-red-200' : ''}`} required />
@@ -1476,7 +1376,7 @@ const CheckoutPage = () => {
                           initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }}
                           transition={{ duration: 0.3 }} className="overflow-hidden"
                         >
-                          <h3 className="text-base sm:text-lg font-semibold mt-5 mb-3 border-t border-neutral-100 pt-5 text-brand-text">Delivery Address</h3>
+                          <h3 className="font-playfair text-lg sm:text-xl font-semibold mt-5 mb-3 border-t border-neutral-100 pt-5 text-brand-text">Delivery Address</h3>
                           {isAuthenticated && customer && (
                             <SavedAddressPicker
                               key={'delivery-' + customer.id}
@@ -1787,9 +1687,6 @@ const CheckoutPage = () => {
                       <h3 className="font-semibold text-xs text-neutral-500 uppercase tracking-wider">
                         Payment Method
                       </h3>
-                      <span className="text-[11px] text-neutral-400 italic">
-                        {geoCountry === 'AE' ? 'Region: UAE (AED)' : 'Region: India (INR)'}
-                      </span>
                     </div>
 
                     {/* Payment options (grid-cols-1 while COD is disabled, switch to sm:grid-cols-2 if re-enabling COD) */}
@@ -1807,7 +1704,7 @@ const CheckoutPage = () => {
                           name="checkout-payment-method"
                           checked={paymentMethod !== 'Cash on Delivery (COD)'}
                           onChange={() => {
-                            setPaymentMethod(geoCountry === 'AE' ? 'Telr Secure Online' : 'Razorpay Secure Online');
+                            setPaymentMethod('Razorpay Secure Online');
                             setIsVerified(false);
                             setOtpSent(false);
                           }}
@@ -1822,7 +1719,7 @@ const CheckoutPage = () => {
                             </span>
                           </div>
                           <p className="text-[11px] text-neutral-500 mt-1 leading-snug">
-                            {geoCountry === 'AE' ? 'Cards & Wallets via Telr Gateway' : 'UPI, Cards, NetBanking via Razorpay'}
+                            UPI, Cards, NetBanking via Razorpay
                           </p>
                         </div>
                       </label>
@@ -1918,22 +1815,6 @@ const CheckoutPage = () => {
           <div className="lg:col-span-1 bg-white border border-neutral-200 rounded-lg p-5 md:p-6 self-start sticky top-24">
             <div className="flex items-center justify-between mb-4">
               <h2 className="font-playfair text-lg font-semibold">Order Summary</h2>
-              <div className="flex items-center gap-1 text-xs bg-neutral-100 p-1 rounded-full border border-neutral-200">
-                <button
-                  type="button"
-                  onClick={() => dispatch(setCurrency('INR'))}
-                  className={`px-2 py-0.5 rounded-full font-bold transition-all ${currencyCode === 'INR' ? 'bg-brand-gold text-white shadow-xs' : 'text-neutral-600 hover:text-neutral-900'}`}
-                >
-                  INR ₹
-                </button>
-                <button
-                  type="button"
-                  onClick={() => dispatch(setCurrency('AED'))}
-                  className={`px-2 py-0.5 rounded-full font-bold transition-all ${currencyCode === 'AED' ? 'bg-brand-gold text-white shadow-xs' : 'text-neutral-600 hover:text-neutral-900'}`}
-                >
-                  AED
-                </button>
-              </div>
             </div>
             <div className="space-y-2.5 text-sm">
               <div className="flex justify-between"><span className="text-brand-grey">Subtotal ({items.length} items)</span><span>{fmt(subtotal)}</span></div>
@@ -1947,12 +1828,6 @@ const CheckoutPage = () => {
                 <div className="flex justify-between text-green-600">
                   <span className="flex items-center gap-1"><Award size={13} className="text-brand-gold" /> Loyalty Discount</span>
                   <span>-{fmt(loyaltyDiscountVal)}</span>
-                </div>
-              )}
-              {isGiftWrap && (
-                <div className="flex justify-between text-brand-text font-medium">
-                  <span>Gift Wrapping</span>
-                  <span>{fmt(giftWrapPrice)}</span>
                 </div>
               )}
               <div className="flex justify-between items-center">
@@ -2175,7 +2050,7 @@ const CheckoutPage = () => {
                 {paymentMethod === 'Cash on Delivery (COD)' ? (
                   <>For order confirmation and security, Cash on Delivery (COD) orders require email verification. We've sent a 6-digit code to <strong className="text-brand-text font-semibold">{billingAddress.email || customer?.email}</strong>.</>
                 ) : (
-                  <>For security reasons, high-value orders (exceeding {geoCountry === 'AE' ? `AED ${otpSettings.aedThreshold}` : `₹${otpSettings.inrThreshold.toLocaleString('en-IN')}`}) require email verification. We've sent a 6-digit code to <strong className="text-brand-text font-semibold">{billingAddress.email || customer?.email}</strong>.</>
+                  <>For security reasons, high-value orders (exceeding {`₹${otpSettings.inrThreshold.toLocaleString('en-IN')}`}) require email verification. We've sent a 6-digit code to <strong className="text-brand-text font-semibold">{billingAddress.email || customer?.email}</strong>.</>
                 )}
               </p>
 

@@ -70,7 +70,7 @@ const EditReviewModal = ({ item, onClose, onSave, submitting }) => {
             onError={(e) => { e.target.onerror = null; e.target.src = getPlaceholderSvg(item.productName || 'Product'); }}
           />
           <div>
-            <h3 className="font-semibold text-neutral-900 text-sm">{item.productName}</h3>
+            <h3 className="font-playfair font-semibold text-neutral-900 text-sm sm:text-base">{item.productName}</h3>
             <p className="text-xs text-neutral-400">Order {item.orderNumber}</p>
           </div>
         </div>
@@ -229,7 +229,7 @@ const MyReviewsPage = () => {
       ) : filtered.length === 0 ? (
         <div className="bg-white border border-neutral-200/80 rounded-lg p-8 sm:p-12 text-center shadow-sm">
           <MessageSquare size={40} className="text-neutral-300 mx-auto mb-3" strokeWidth={1.5} />
-          <h3 className="font-semibold text-neutral-800 mb-1">
+          <h3 className="font-playfair font-semibold text-lg text-neutral-800 mb-1">
             {filter === 'pending' ? 'No Pending Reviews' : filter === 'reviewed' ? 'No Reviews Yet' : 'No Delivered Orders Yet'}
           </h3>
           <p className="text-xs sm:text-sm text-neutral-500 max-w-xs mx-auto leading-relaxed">

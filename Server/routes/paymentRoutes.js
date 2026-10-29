@@ -5,7 +5,6 @@ const {
   detectGeoLocation,
   initiatePayment,
   handleRazorpayWebhook,
-  handleTelrWebhook,
   getPaymentSummary,
   verifyPayment
 } = require('../controllers/paymentController');
@@ -15,15 +14,12 @@ const { hasPermission } = require('../middleware/rbac');
 // Public geo-detection endpoint
 router.get('/geo-detect', detectGeoLocation);
 
-// Client checkout endpoints (handles both INR/Razorpay and AED/Telr)
+// Client checkout endpoints (handles INR/Razorpay)
 router.post('/initiate', optionalCustomer, initiatePayment);
 router.post('/verify', optionalCustomer, verifyPayment);
 
-
-
-// Webhook endpoints for each gateway provider
+// Webhook endpoint for Razorpay
 router.post('/webhook/razorpay', handleRazorpayWebhook);
-router.post('/webhook/telr', handleTelrWebhook);
 
 // Admin dashboard reporting endpoints
 router.get('/admin/summary', verifyAdmin, hasPermission('view_payments'), getPaymentSummary);

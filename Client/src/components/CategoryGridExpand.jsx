@@ -186,10 +186,10 @@ export default function CategoryGridExpand({ categories = [], allHref = "/produc
       <div className="mx-auto flex max-w-5xl flex-col px-4 py-10 md:px-5 md:py-12">
         {/* Header: centered, static */}
         <div className="mb-5 text-center">
-          <h2 className="font-serif text-2xl sm:text-3xl font-semibold tracking-tight text-neutral-900">
+          <h2 className="font-playfair text-2xl sm:text-3xl font-semibold tracking-tight text-neutral-900">
             Shop by category
           </h2>
-          <p className="mx-auto mt-1 hidden max-w-md text-sm text-neutral-600 sm:block">
+          <p className="mx-auto mt-1 hidden max-w-md text-sm sm:text-base text-neutral-600 sm:block font-montserrat">
             Six collections, each curated by our stylists.
           </p>
         </div>
@@ -261,14 +261,6 @@ export default function CategoryGridExpand({ categories = [], allHref = "/produc
           </div>
         </div>
 
-        <div className="mt-5 flex justify-center">
-          <Link
-            to={allHref}
-            className="whitespace-nowrap border-b border-current pb-0.5 text-sm font-medium text-neutral-900 hover:text-brand-gold hover:border-brand-gold transition-colors"
-          >
-            View all products
-          </Link>
-        </div>
       </div>
     </div>
   );

@@ -8,7 +8,6 @@ const Category = sequelize.define('Category', {
   slug: { type: DataTypes.STRING(120), allowNull: false, unique: true },
   description: { type: DataTypes.TEXT },
   image: { type: DataTypes.STRING(500) },
-  parentId: { type: DataTypes.INTEGER, allowNull: true, defaultValue: null },
   // JSON field for dynamic category attributes (e.g. fabric, occasion, fit)
   attributes: { type: DataTypes.JSON, defaultValue: [] },
   sortOrder: { type: DataTypes.INTEGER, defaultValue: 0 },

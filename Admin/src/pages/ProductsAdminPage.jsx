@@ -11,7 +11,7 @@ import currencyJs from 'currency.js';
 import toast from 'react-hot-toast';
 import api from '../services/api';
 import { checkPermission } from '../utils/rbac';
-import { validateImageFile, validateImageDimensionsAndSize, validateVideoFile, validateVideoUrl } from '../utils/fileValidation';
+import { validateImageFile, validateImageDimensionsAndSize } from '../utils/fileValidation';
 
 const fmt = (v) => currencyJs(v, { symbol: '₹', precision: 0 }).format();
 
@@ -277,163 +277,17 @@ const EMPTY_FORM = {
   name: '', slug: '', shortDescription: '', description: '', price: '', comparePrice: '',
   stock: '', sku: '', categoryId: '', subCategoryId: '',
   gstRate: '0%',
-  isFeatured: false, isNewArrival: false, isBestSeller: false, isActive: true,
+  isNewArrival: false, isBestSeller: false, isActive: true,
   defaultProductImage: null,
 };
 
 const getFullImageUrl = getImageUrl;
 
-const getVideoPreviewInfo = (file, url) => {
-  if (file) {
-    return {
-      type: 'Local File',
-      isEmbed: false,
-      src: URL.createObjectURL(file),
-    };
-  }
-  if (!url || typeof url !== 'string' || !url.trim()) return null;
-  const trimmed = url.trim();
-
-  // YouTube match (supports youtu.be, watch?v=, embed, shorts)
-  const ytMatch = trimmed.match(/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?|shorts)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/i);
-  if (ytMatch && ytMatch[1]) {
-    return {
-      type: 'YouTube',
-      isEmbed: true,
-      embedUrl: `https://www.youtube.com/embed/${ytMatch[1]}`,
-    };
-  }
-
-  // Vimeo match
-  const vimeoMatch = trimmed.match(/vimeo\.com\/(?:video\/)?(\d+)/i);
-  if (vimeoMatch && vimeoMatch[1]) {
-    return {
-      type: 'Vimeo',
-      isEmbed: true,
-      embedUrl: `https://player.vimeo.com/video/${vimeoMatch[1]}`,
-    };
-  }
-
-  // Direct MP4 / WebM / local server path
-  return {
-    type: 'Direct Video',
-    isEmbed: false,
-    src: getFullImageUrl(trimmed),
-  };
-};
-
-const VideoPreviewPlayer = ({ file, url, className = 'w-full h-48 rounded border border-neutral-300 bg-black' }) => {
-  const info = getVideoPreviewInfo(file, url);
-  if (!info) return null;
-
-  if (info.isEmbed) {
-    return (
-      <iframe
-        src={info.embedUrl}
-        title="Video Showcase Preview"
-        className={`${className} border-0`}
-        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-        allowFullScreen
-      />
-    );
-  }
-
-  return (
-    <video
-      src={info.src}
-      controls
-      className={`${className} object-contain`}
-    />
-  );
-};
-
-// ── Interactive 360 Spin Preview Box Component ──────────────────────────────
-const SpinViewerPreview = ({ images }) => {
-  const [frameIndex, setFrameIndex] = useState(0);
-  const [isAutoSpin, setIsAutoSpin] = useState(false);
-  const isDraggingRef = useRef(false);
-  const startXRef = useRef(0);
-
-  const totalFrames = images.length;
-
-  useEffect(() => {
-    if (!isAutoSpin || totalFrames === 0) return;
-    const interval = setInterval(() => {
-      setFrameIndex(prev => (prev + 1) % totalFrames);
-    }, 100);
-    return () => clearInterval(interval);
-  }, [isAutoSpin, totalFrames]);
-
-  const handleMouseDown = (e) => {
-    isDraggingRef.current = true;
-    startXRef.current = e.clientX;
-  };
-
-  const handleMouseMove = (e) => {
-    if (!isDraggingRef.current || totalFrames === 0) return;
-    const deltaX = e.clientX - startXRef.current;
-    if (Math.abs(deltaX) > 10) {
-      const step = deltaX > 0 ? 1 : -1;
-      setFrameIndex(prev => (prev + step + totalFrames) % totalFrames);
-      startXRef.current = e.clientX;
-    }
-  };
-
-  const handleMouseUp = () => {
-    isDraggingRef.current = false;
-  };
-
-  if (totalFrames === 0) return null;
-
-  return (
-    <div className="bg-neutral-900 rounded-lg p-4 text-white border border-neutral-800 space-y-3">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <RotateCw size={14} className="text-brand-gold animate-spin-slow" />
-          <span className="text-xs font-bold uppercase tracking-wider text-neutral-200">360° Preview</span>
-        </div>
-        <button
-          type="button"
-          onClick={() => setIsAutoSpin(!isAutoSpin)}
-          className={`px-2.5 py-1 text-[11px] font-semibold rounded flex items-center gap-1 transition-colors ${
-            isAutoSpin ? 'bg-brand-gold text-black' : 'bg-neutral-800 text-neutral-300 hover:bg-neutral-700'
-          }`}
-        >
-          {isAutoSpin ? <Pause size={12} /> : <Play size={12} />}
-          {isAutoSpin ? 'Pause' : 'Auto Rotate'}
-        </button>
-      </div>
-
-      <div
-        onMouseDown={handleMouseDown}
-        onMouseMove={handleMouseMove}
-        onMouseUp={handleMouseUp}
-        onMouseLeave={handleMouseUp}
-        className="relative aspect-square max-h-64 mx-auto bg-neutral-950 rounded overflow-hidden cursor-grab active:cursor-grabbing border border-neutral-800 flex items-center justify-center select-none"
-      >
-        <img
-          src={getFullImageUrl(images[frameIndex])}
-          alt={`360 Frame ${frameIndex + 1}`}
-          className="w-full h-full object-contain pointer-events-none"
-        />
-        <div className="absolute bottom-2 left-2 bg-black/70 px-2 py-0.5 rounded text-[10px] font-mono text-brand-gold">
-          Frame {frameIndex + 1} / {totalFrames}
-        </div>
-        <div className="absolute top-2 right-2 bg-black/60 px-2 py-0.5 rounded text-[9px] text-neutral-400">
-          Drag left/right to rotate
-        </div>
-      </div>
-    </div>
-  );
-};
-
 // ── Storefront Product Live Preview Modal ────────────────────────────────────
 const ProductLivePreviewModal = ({ product, onClose }) => {
   const [activeImg, setActiveImg] = useState(product.defaultProductImage || product.images?.[0] || 'https://images.unsplash.com/photo-1469334031218-e382a71b716b?w=600');
-  const [activeTab, setActiveTab] = useState('gallery'); // 'gallery' | 'spin' | 'video'
 
   const images = product.images && product.images.length > 0 ? product.images : [activeImg];
-  const spinImages = product.spin_images || [];
   const discountPct = product.comparePrice && product.comparePrice > product.price
     ? Math.round(((product.comparePrice - product.price) / product.comparePrice) * 100)
     : 0;
@@ -499,60 +353,25 @@ const ProductLivePreviewModal = ({ product, onClose }) => {
               
               {/* Media Section */}
               <div className="space-y-4">
-                {/* Media Tabs */}
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => setActiveTab('gallery')}
-                    className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-colors ${activeTab === 'gallery' ? 'bg-neutral-900 text-white' : 'bg-white border border-neutral-200 text-neutral-700'}`}
-                  >
-                    Gallery ({images.length})
-                  </button>
-                  
-                  {product.hasVideo && (product.videoUrl || product.videoFile) && (
-                    <button
-                      onClick={() => setActiveTab('video')}
-                      className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-colors ${activeTab === 'video' ? 'bg-neutral-900 text-white' : 'bg-white border border-neutral-200 text-neutral-700'}`}
-                    >
-                      Showcase Video
-                    </button>
+                <div className="space-y-3">
+                  <div className="aspect-[4/5] bg-white rounded-lg border border-neutral-200 overflow-hidden">
+                    <img src={activeImg} alt={product.name} className="w-full h-full object-cover" />
+                  </div>
+                  {images.length > 1 && (
+                    <div className="flex gap-2 overflow-x-auto pb-1">
+                      {images.map((img, i) => (
+                        <button
+                          key={i}
+                          onClick={() => setActiveImg(img)}
+                          className={`w-14 h-14 rounded overflow-hidden border-2 flex-shrink-0 ${activeImg === img ? 'border-brand-gold' : 'border-neutral-200'}`}
+                        >
+                          <img src={img} alt={`Thumb ${i}`} className="w-full h-full object-cover" />
+                        </button>
+                      ))}
+                    </div>
                   )}
                 </div>
 
-                {/* Display Media */}
-                {activeTab === 'gallery' && (
-                  <div className="space-y-3">
-                    <div className="aspect-[4/5] bg-white rounded-lg border border-neutral-200 overflow-hidden">
-                      <img src={activeImg} alt={product.name} className="w-full h-full object-cover" />
-                    </div>
-                    {images.length > 1 && (
-                      <div className="flex gap-2 overflow-x-auto pb-1">
-                        {images.map((img, i) => (
-                          <button
-                            key={i}
-                            onClick={() => setActiveImg(img)}
-                            className={`w-14 h-14 rounded overflow-hidden border-2 flex-shrink-0 ${activeImg === img ? 'border-brand-gold' : 'border-neutral-200'}`}
-                          >
-                            <img src={img} alt={`Thumb ${i}`} className="w-full h-full object-cover" />
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {activeTab === 'spin' && (
-                  <SpinViewerPreview images={spinImages} />
-                )}
-
-                {activeTab === 'video' && (
-                  <div className="aspect-video bg-black rounded-lg overflow-hidden flex items-center justify-center border border-neutral-800">
-                    {product.videoUrl ? (
-                      <VideoPreviewPlayer url={product.videoUrl} className="w-full h-full" />
-                    ) : (
-                      <p className="text-xs text-neutral-400">Video file attached</p>
-                    )}
-                  </div>
-                )}
               </div>
 
               {/* Details Section */}
@@ -628,7 +447,7 @@ const ProductModal = ({ product, onClose, onSave }) => {
     categoryId: product.categoryId || '',
     subCategoryId: product.subCategoryId || '',
     gstRate: product.gstRate || '0%',
-    isFeatured: parseBool(product.isFeatured),
+
     isNewArrival: parseBool(product.isNewArrival),
     isBestSeller: parseBool(product.isBestSeller),
         isActive: parseBool(product.isActive, true),
@@ -887,42 +706,6 @@ const ProductModal = ({ product, onClose, onSave }) => {
   const [existingVariantImages, setExistingVariantImages] = useState(product ? [...(product.images || [])] : []);
   const [newVariantImageFiles, setNewVariantImageFiles] = useState([]);
 
-  // 360 Spin Images
-  const [existingSpinImages, setExistingSpinImages] = useState(product ? [...(product.spin_images || [])] : []);
-  const [newSpinImageFiles, setNewSpinImageFiles] = useState([]);
-  const [draggedSpinIdx, setDraggedSpinIdx] = useState(null);
-
-  const handleSpinDragStart = (e, index) => {
-    setDraggedSpinIdx(index);
-    e.dataTransfer.effectAllowed = 'move';
-  };
-
-  const handleSpinDragOver = (e, index) => {
-    e.preventDefault();
-    e.stopPropagation();
-    e.dataTransfer.dropEffect = 'move';
-  };
-
-  const handleSpinDrop = (e, targetIdx) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (draggedSpinIdx === null || draggedSpinIdx === targetIdx) return;
-
-    const combined = [...existingSpinImages, ...newSpinImageFiles];
-    const [moved] = combined.splice(draggedSpinIdx, 1);
-    combined.splice(targetIdx, 0, moved);
-
-    const updatedExisting = combined.filter(item => typeof item === 'string');
-    const updatedNew = combined.filter(item => typeof item !== 'string');
-
-    setExistingSpinImages(updatedExisting);
-    setNewSpinImageFiles(updatedNew);
-    setDraggedSpinIdx(null);
-  };
-
-  // Video File
-  const [videoFile, setVideoFile] = useState(null);
-
   useEffect(() => {
     const loadMetadata = async () => {
       try {
@@ -1148,72 +931,6 @@ const ProductModal = ({ product, onClose, onSave }) => {
     });
   };
 
-  // 360 Spin Handlers
-  const handleSpinFileSelect = (e) => {
-    const rawFiles = Array.from(e.target.files || []);
-    const validFiles = [];
-    for (const file of rawFiles) {
-      const val = validateImageFile(file, { maxSizeMB: 5 });
-      if (!val.isValid) {
-        toast.error(val.error);
-      } else {
-        file.preview = URL.createObjectURL(file);
-        validFiles.push(file);
-      }
-    }
-    if (validFiles.length > 0) {
-      setNewSpinImageFiles(prev => [...prev, ...validFiles]);
-    }
-  };
-
-  const handleVideoFileSelect = (e) => {
-    const file = e.target.files?.[0];
-    if (!file) {
-      setVideoFile(null);
-      return;
-    }
-    const val = validateVideoFile(file, { maxSizeMB: 10 });
-    if (!val.isValid) {
-      toast.error(val.error);
-      e.target.value = '';
-      setVideoFile(null);
-      return;
-    }
-    setVideoFile(file);
-  };
-
-  const moveSpinFrame = (index, direction, isNew = false) => {
-    if (isNew) {
-      const newIdx = index + direction;
-      if (newIdx < 0 || newIdx >= newSpinImageFiles.length) return;
-      setNewSpinImageFiles(prev => {
-        const arr = [...prev];
-        const temp = arr[index];
-        arr[index] = arr[newIdx];
-        arr[newIdx] = temp;
-        return arr;
-      });
-    } else {
-      const newIdx = index + direction;
-      if (newIdx < 0 || newIdx >= existingSpinImages.length) return;
-      setExistingSpinImages(prev => {
-        const arr = [...prev];
-        const temp = arr[index];
-        arr[index] = arr[newIdx];
-        arr[newIdx] = temp;
-        return arr;
-      });
-    }
-  };
-
-  const removeSpinFrame = (index, isNew = false) => {
-    if (isNew) {
-      setNewSpinImageFiles(prev => prev.filter((_, i) => i !== index));
-    } else {
-      setExistingSpinImages(prev => prev.filter((_, i) => i !== index));
-    }
-  };
-
   // Form Submission
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -1258,20 +975,6 @@ const ProductModal = ({ product, onClose, onSave }) => {
 
     
 
-    if (form.hasVideo) {
-      if (!videoFile && (!form.videoUrl || form.videoUrl.trim() === '')) {
-        toast.error('Please upload a video file or provide a video URL');
-        return;
-      }
-      if (form.videoUrl && form.videoUrl.trim()) {
-        const valUrl = validateVideoUrl(form.videoUrl.trim());
-        if (!valUrl.isValid) {
-          toast.error(valUrl.error);
-          return;
-        }
-      }
-    }
-
     const finalSubCategoryId = form.subCategoryId;
 
     const generatedSlug = form.name.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
@@ -1287,7 +990,7 @@ const ProductModal = ({ product, onClose, onSave }) => {
     fd.append('gstRate', form.gstRate || '0%');
 
 
-    fd.append('isFeatured', String(form.isFeatured));
+    fd.append('isFeatured', 'false');
     fd.append('isNewArrival', String(form.isNewArrival));
     fd.append('isBestSeller', String(form.isBestSeller));
     fd.append('isActive', String(form.isActive));
@@ -1304,9 +1007,6 @@ const ProductModal = ({ product, onClose, onSave }) => {
       fd.append('defaultProductImage', defaultProductImageFile);
     } else if (defaultProductImagePreview && !isLocalPreviewUrl(defaultProductImagePreview)) {
       fd.append('defaultProductImage', defaultProductImagePreview);
-    }
-    if (videoFile) {
-      fd.append('video', videoFile);
     }
 
     if (productVariants.length > 0) {
@@ -1355,20 +1055,9 @@ const ProductModal = ({ product, onClose, onSave }) => {
       fd.append('variantImages', file);
     });
 
-    if (form.has360View) {
-      fd.append('existingSpinImages', JSON.stringify(existingSpinImages.filter(img => !isLocalPreviewUrl(img))));
-      newSpinImageFiles.forEach(file => {
-        fd.append('spin_images', file);
-      });
-    }
-
     onSave(fd);
   };
 
-  const combinedSpinPreviews = [
-    ...existingSpinImages,
-    ...newSpinImageFiles.map(f => f.preview)
-  ];
 
   const constructedPreviewProduct = {
     ...form,
@@ -1377,7 +1066,6 @@ const ProductModal = ({ product, onClose, onSave }) => {
       ...existingVariantImages,
       ...newVariantImageFiles.map(f => f.preview)
     ],
-    spin_images: combinedSpinPreviews,
     attributes: optionRows.reduce((acc, r) => {
       const name = String(r.optionName || '').trim();
       const val = Array.isArray(r.optionValue) ? r.optionValue.join(', ') : String(r.optionValue || '');
@@ -1493,27 +1181,6 @@ const ProductModal = ({ product, onClose, onSave }) => {
                 </select>
               </div>
 
-              {/* GST Rate (%) */}
-              <div>
-                <div className="flex items-center justify-between mb-1">
-                  <label className="block text-xs font-semibold text-neutral-700">GST Rate (%) *</label>
-                  <span className="text-[10px] text-neutral-400 font-medium">(Inclusive)</span>
-                </div>
-                <select
-                  value={form.gstRate || '0%'}
-                  onChange={e => {
-                    const val = e.target.value;
-                    set('gstRate', val);
-                    setProductVariants(prev => prev.map(v => ({ ...v, gstRate: val })));
-                  }}
-                  className="w-full border border-brand-light bg-white px-3 py-2 text-sm focus:outline-none focus:border-brand-gold rounded-sm font-medium text-neutral-800"
-                >
-                  <option value="0%">0%</option>
-                  <option value="5%">5%</option>
-                  <option value="18%">18%</option>
-                  <option value="40%">40%</option>
-                </select>
-              </div>
             </div>
           </div>
 
@@ -2028,12 +1695,7 @@ const ProductModal = ({ product, onClose, onSave }) => {
           <div className="bg-neutral-50 p-5 rounded-lg border border-brand-light space-y-4">
             <h3 className="text-xs font-bold uppercase tracking-wider text-brand-gold border-b border-neutral-200 pb-2">5. Status & Storefront Toggles</h3>
 
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-              <label className="flex items-center justify-between bg-white p-3 border border-brand-light rounded-sm cursor-pointer">
-                <span className="text-xs font-semibold text-neutral-700">Featured</span>
-                <Switch checked={form.isFeatured} onChange={val => set('isFeatured', typeof val === 'boolean' ? val : Boolean(val?.target?.checked))} />
-              </label>
-
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <label className="flex items-center justify-between bg-white p-3 border border-brand-light rounded-sm cursor-pointer">
                 <span className="text-xs font-semibold text-neutral-700">New Arrival</span>
                 <Switch checked={form.isNewArrival} onChange={val => set('isNewArrival', typeof val === 'boolean' ? val : Boolean(val?.target?.checked))} />

@@ -24,8 +24,8 @@ function autoBind(instance) {
   });
 }
 
-const DEFAULT_FONT = 'bold 30px Figtree';
-const DEFAULT_FONT_URL = 'https://fonts.googleapis.com/css2?family=Figtree:wght@400;700&display=swap';
+const DEFAULT_FONT = '600 30px "Playfair Display"';
+const DEFAULT_FONT_URL = 'https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600&display=swap';
 
 function deriveFontFamilyFromUrl(url) {
   const fileName = (url.split('/').pop() || 'custom-font').split('?')[0];
@@ -245,7 +245,7 @@ class Media {
 }
 
 class App {
-  constructor(container, { items, bend, textColor = '#ffffff', borderRadius = 0, font = 'bold 30px Figtree', scrollSpeed = 2, scrollEase = 0.05, onChangeActiveIndex } = {}) {
+  constructor(container, { items, bend, textColor = '#ffffff', borderRadius = 0, font = '600 30px "Playfair Display", serif', scrollSpeed = 2, scrollEase = 0.05, onChangeActiveIndex } = {}) {
     document.documentElement.classList.remove('no-js');
     this.container = container;
     this.scrollSpeed = scrollSpeed;
@@ -484,7 +484,7 @@ const CircularGallery = forwardRef(function CircularGallery({
   bend = 3,
   textColor = '#C58837',
   borderRadius = 0.05,
-  font = 'bold 28px Figtree',
+  font = '600 28px "Playfair Display", serif',
   fontUrl,
   scrollSpeed = 2,
   scrollEase = 0.06,

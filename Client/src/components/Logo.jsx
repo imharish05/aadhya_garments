@@ -27,7 +27,7 @@ const Logo = ({ size = 'md', className = '', showText = false, fullHeight = fals
       {showText && (
         <span
           className={`font-playfair font-bold tracking-tight ${textSizes[size]}`}
-          style={{ fontFamily: '"Cinzel", Georgia, serif' }}
+          style={{ fontFamily: '"Playfair Display", Georgia, serif' }}
         >
           <span style={{ color: 'var(--color-gold)' }}>Twin A</span>{' '}
           <span className="text-white">Apparels</span>

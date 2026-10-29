@@ -133,9 +133,9 @@ const initiatePayment = async (req, res) => {
       });
     }
 
-    // Resolve gateway based on order currency (INR → Razorpay, AED → Telr)
-    const gateway = resolver.getGateway(order.currency);
-    console.log(`[initiatePayment] Order ${order.orderNumber} | Currency: ${order.currency} | Gateway: ${order.currency === 'INR' ? 'Razorpay' : 'Telr'}`);
+    // Resolve gateway (Razorpay)
+    const gateway = resolver.getGateway('INR');
+    console.log(`[initiatePayment] Order ${order.orderNumber} | Currency: INR | Gateway: Razorpay`);
 
     let billingAddr = order.billingAddress;
     if (typeof billingAddr === 'string') {
@@ -148,7 +148,7 @@ const initiatePayment = async (req, res) => {
 
     const gatewayOrder = await gateway.createOrder({
       amount: parseFloat(order.totalAmount),
-      currency: order.currency,
+      currency: 'INR',
       receipt: order.orderNumber,
       orderId: order.id,
       customer: order.customer,
@@ -159,27 +159,20 @@ const initiatePayment = async (req, res) => {
     console.log(`[initiatePayment] Gateway order created: ${gatewayOrder.gatewayRef}`);
 
     // Update order with gateway references (keep status as PENDING_PAYMENT until verified)
-    if (order.currency === 'INR') {
-      await order.update({
-        razorpay_order_id: gatewayOrder.gatewayRef,
-        paymentGatewayRef: gatewayOrder.gatewayRef,
-      });
-    } else {
-      await order.update({
-        paymentGatewayRef: gatewayOrder.gatewayRef,
-      });
-    }
+    await order.update({
+      razorpay_order_id: gatewayOrder.gatewayRef,
+      paymentGatewayRef: gatewayOrder.gatewayRef,
+    });
 
     res.json({
       success: true,
-      gateway: order.currency === 'INR' ? 'razorpay' : 'telr',
-      key: order.currency === 'INR' ? process.env.RAZORPAY_KEY_ID : undefined,
-      amount: order.currency === 'INR' ? Math.round(parseFloat(order.totalAmount) * 100) : parseFloat(order.totalAmount),
-      currency: order.currency,
+      gateway: 'razorpay',
+      key: process.env.RAZORPAY_KEY_ID,
+      amount: Math.round(parseFloat(order.totalAmount) * 100),
+      currency: 'INR',
       name: 'Twin A Apparels',
       description: `Payment for Order ${order.orderNumber}`,
       order_id: gatewayOrder.gatewayRef,
-      redirectUrl: gatewayOrder.redirectUrl || undefined,
     });
   } catch (err) {
     console.error('[initiatePayment] Error:', err.message, err.stack);
@@ -218,18 +211,6 @@ const processConfirmedPayment = async ({ orderQuery, gatewayPaymentId, signature
       const duplicatePayment = await Order.findOne({
         where: {
           razorpay_payment_id: gatewayPaymentId,
-          id: { [Op.ne]: order.id }
-        },
-        transaction
-      });
-      if (duplicatePayment) {
-        await transaction.rollback();
-        return res.json({ success: true, message: 'Duplicate transaction ignored' });
-      }
-    } else if (gatewayPaymentId && !String(gatewayPaymentId).startsWith('telr_sim_')) {
-      const duplicatePayment = await Order.findOne({
-        where: {
-          paymentGatewayRef: gatewayPaymentId,
           id: { [Op.ne]: order.id }
         },
         transaction
@@ -320,18 +301,10 @@ const processConfirmedPayment = async ({ orderQuery, gatewayPaymentId, signature
       };
 
       // Update Order PAID status
-      // Telr: store the TRANSACTION ref (tran_ref) in razorpay_payment_id so all
-      // refund call sites (which read razorpay_payment_id first) use the correct ref.
-      const telrTransactionRef = gatewayType === 'telr'
-        ? (gatewayTransactionRef || (String(gatewayPaymentId).startsWith('telr_sim_') ? null : gatewayPaymentId))
-        : null;
-
       await order.update({
         status: 'PAID',
         paymentStatus: 'PAID',
-        razorpay_payment_id: gatewayType === 'razorpay'
-          ? gatewayPaymentId
-          : (telrTransactionRef || null),
+        razorpay_payment_id: gatewayPaymentId,
         razorpay_signature: signature || null,
         paymentGatewayRef: order.paymentGatewayRef || gatewayPaymentId,
         inventoryProcessed: true,
@@ -373,16 +346,10 @@ const processConfirmedPayment = async ({ orderQuery, gatewayPaymentId, signature
       return res.json({ success: true, status: 'PAID' });
     } else {
       // Inventory sold out before confirmation! Rollback & Refund
-      const telrStockFailedRef = gatewayType === 'telr'
-        ? (gatewayTransactionRef || (String(gatewayPaymentId).startsWith('telr_sim_') ? null : gatewayPaymentId))
-        : null;
-
       await order.update({
         status: 'PAYMENT_RECEIVED_STOCK_FAILED',
         paymentStatus: 'PAID',
-        razorpay_payment_id: gatewayType === 'razorpay'
-          ? gatewayPaymentId
-          : (telrStockFailedRef || null),
+        razorpay_payment_id: gatewayPaymentId,
         paymentGatewayRef: order.paymentGatewayRef || gatewayPaymentId,
         inventoryProcessed: false
       }, { transaction });
@@ -439,53 +406,6 @@ const handleRazorpayWebhook = async (req, res) => {
   }
 };
 
-// Webhook/IPN for Telr
-const handleTelrWebhook = async (req, res) => {
-  try {
-    const gateway = resolver.getGateway('AED');
-
-    // 1. Webhook authenticity check (validates tran_check signature + backchannel check API)
-    const isValid = await gateway.verifySignature(req.body);
-    if (!isValid) {
-      return res.status(400).json({ success: false, message: 'Telr IPN signature/authenticity verification failed' });
-    }
-
-    // 2. Only authorise transactions that were actually paid/authorised.
-    //    Telr tran_status 'A' = authorised, 'H' = authorised but on hold. Any other value = not authorised.
-    const tranStatus = String(req.body.tran_status || '').toUpperCase();
-    const isAuthorised = tranStatus === 'A' || tranStatus === 'H';
-    if (tranStatus && !isAuthorised) {
-      console.warn(`[handleTelrWebhook] Ignoring non-authorised Telr IPN. tran_status=${tranStatus}`);
-      return res.json({ success: false, message: 'Transaction not authorised', status: tranStatus });
-    }
-
-    const orderRef = req.body.tran_order_ref || req.body.order_ref || req.body.ivp_order;
-    const cartId = req.body.tran_cartid || req.body.cart_id || req.body.ivp_cart;
-    const paymentId = req.body.tran_ref || orderRef;
-    const transactionRef = req.body.tran_ref || null; // Telr transaction ref, used for refunds
-    const paymentAmount = parseFloat(req.body.tran_amount || req.body.ivp_amount || 0);
-
-    const orConditions = [];
-    if (orderRef) orConditions.push({ paymentGatewayRef: orderRef });
-    if (cartId) orConditions.push({ orderNumber: cartId });
-
-    if (orConditions.length === 0) {
-      return res.status(400).json({ success: false, message: 'Missing order reference or cart ID in Telr IPN payload' });
-    }
-
-    return await processConfirmedPayment({
-      orderQuery: orConditions.length === 1 ? orConditions[0] : { [Op.or]: orConditions },
-      gatewayPaymentId: paymentId,
-      signature: req.body.tran_ref || '',
-      paymentAmount: paymentAmount,
-      gatewayType: 'telr',
-      gatewayTransactionRef: transactionRef,
-      res
-    });
-  } catch (err) {
-    res.status(500).json({ success: false, message: err.message });
-  }
-};
 
 // GET Admin revenue grouped by currency and gateway
 const getPaymentSummary = async (req, res) => {
@@ -549,7 +469,7 @@ const getPaymentSummary = async (req, res) => {
         currency: item.currency,
         totalRevenue: parseFloat(item.totalRevenue || 0),
         transactionCount: parseInt(item.transactionCount || 0),
-        gateway: item.currency === 'INR' ? 'Razorpay' : 'Telr'
+        gateway: 'Razorpay'
       })),
       refundedSummary: refundedSummary.map(item => ({
         currency: item.currency,
@@ -576,7 +496,7 @@ const getPaymentSummary = async (req, res) => {
   }
 };
 
-// Unified payment verification endpoint for both Razorpay (INR) and Telr (AED)
+// Razorpay (INR) payment verification endpoint
 const verifyPayment = async (req, res) => {
   try {
     const { orderId, razorpayPaymentId, razorpayOrderId, razorpaySignature, orderRef } = req.body;
@@ -599,32 +519,7 @@ const verifyPayment = async (req, res) => {
       return res.json({ success: true, status: 'PAID', message: 'Order is already marked as PAID' });
     }
 
-    // ── 1. TELR / AED ORDER VERIFICATION ─────────────────────────────────
-    if (String(order.currency).toUpperCase() === 'AED') {
-      const gateway = resolver.getGateway('AED');
-      const targetRef = orderRef || order.paymentGatewayRef || `telr_sim_${order.id}`;
-      console.log(`[verifyPayment] Verifying Telr order ${order.orderNumber} with ref: ${targetRef}`);
-      const checkResult = await gateway.fetchPayment(targetRef);
-
-      if (checkResult.success) {
-        return await processConfirmedPayment({
-          orderQuery: { id: order.id },
-          gatewayPaymentId: checkResult.gatewayRef || targetRef,
-          signature: 'telr_verified',
-          paymentAmount: parseFloat(order.totalAmount),
-          gatewayType: 'telr',
-          gatewayTransactionRef: checkResult.transactionRef || null,
-          res
-        });
-      } else {
-        return res.status(400).json({ 
-          success: false, 
-          message: 'Telr payment verification failed. Status: ' + (checkResult.status || 'FAILED') 
-        });
-      }
-    }
-
-    // ── 2. RAZORPAY / INR ORDER VERIFICATION ─────────────────────────────
+    // ── RAZORPAY / INR ORDER VERIFICATION ─────────────────────────────
     if (!razorpayPaymentId || !razorpayOrderId || !razorpaySignature) {
       return res.status(400).json({ 
         success: false, 
@@ -716,34 +611,14 @@ const detectGeoLocation = async (req, res) => {
       countryCode = 'IN';
     }
 
-    if (countryCode === 'AE') {
-      return res.json({
-        success: true,
-        countryCode: 'AE',
-        countryName: 'United Arab Emirates',
-        currency: 'AED',
-        gateway: 'telr',
-        isAllowed: true
-      });
-    } else if (countryCode === 'IN') {
-      return res.json({
-        success: true,
-        countryCode: 'IN',
-        countryName: 'India',
-        currency: 'INR',
-        gateway: 'razorpay',
-        isAllowed: true
-      });
-    } else {
-      return res.json({
-        success: true,
-        countryCode,
-        currency: 'INR',
-        gateway: 'razorpay',
-        isAllowed: false,
-        message: 'Payments and order placement are accepted strictly from UAE and India only.'
-      });
-    }
+    return res.json({
+      success: true,
+      countryCode: 'IN',
+      countryName: 'India',
+      currency: 'INR',
+      gateway: 'razorpay',
+      isAllowed: true
+    });
   } catch (err) {
     console.error('[detectGeoLocation] Error:', err.message);
     res.status(500).json({ success: false, message: err.message });
@@ -754,7 +629,6 @@ module.exports = {
   detectGeoLocation,
   initiatePayment,
   handleRazorpayWebhook,
-  handleTelrWebhook,
   getPaymentSummary,
   verifyPayment,
   verifyRazorpayPayment: verifyPayment, // Backward compatibility alias

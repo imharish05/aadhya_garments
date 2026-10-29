@@ -176,7 +176,7 @@ export const NewArrivalsSection = () => {
             {/* Eyebrow */}
             <EyebrowReveal className="inline-flex items-center gap-2.5 mb-3 sm:mb-4">
               <span className="w-6 h-px bg-neutral-400" />
-              <span className="text-[11px] sm:text-xs font-semibold tracking-[0.28em] text-neutral-500 uppercase font-inter">
+              <span className="text-[11px] sm:text-xs font-semibold tracking-[0.28em] text-neutral-500 uppercase font-montserrat">
                 NEW SEASON
               </span>
             </EyebrowReveal>
@@ -185,7 +185,7 @@ export const NewArrivalsSection = () => {
             <SplitTextReveal
               as="h2"
               text="NEW ARRIVALS"
-              className="font-playfair text-4xl sm:text-5xl md:text-6xl lg:text-[62px] font-normal tracking-[-0.015em] text-neutral-950 uppercase leading-[1.06] mb-5 sm:mb-6"
+              className="font-playfair text-3xl sm:text-4xl md:text-5xl lg:text-[52px] font-semibold tracking-[-0.015em] text-neutral-950 uppercase leading-[1.08] mb-5 sm:mb-6"
             />
 
             {/* Supporting Description */}
@@ -194,7 +194,7 @@ export const NewArrivalsSection = () => {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, amount: 0.25 }}
               transition={{ duration: 0.55, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
-              className="font-inter text-neutral-600 text-base sm:text-lg leading-relaxed font-light max-w-md mb-8 sm:mb-9"
+              className="font-montserrat text-neutral-600 text-base sm:text-[17px] leading-relaxed font-normal max-w-md mb-8 sm:mb-9"
             >
               Discover the latest styles and thoughtfully selected pieces for your wardrobe.
             </motion.p>
@@ -203,7 +203,7 @@ export const NewArrivalsSection = () => {
             <ButtonReveal delay={0.3}>
               <Link
                 to="/products?newArrival=true"
-                className="group inline-flex items-center gap-3 px-8 sm:px-10 py-4 bg-neutral-950 text-white font-inter text-xs font-semibold tracking-[0.2em] uppercase rounded-none hover:bg-neutral-800 transition-all duration-300 shadow-sm focus-visible:outline-neutral-950"
+                className="group inline-flex items-center gap-3 px-8 sm:px-10 py-3.5 sm:py-4 bg-neutral-950 text-white font-montserrat text-sm font-semibold tracking-[0.18em] uppercase rounded-none hover:bg-neutral-800 transition-all duration-300 shadow-sm focus-visible:outline-neutral-950"
                 id="zaro-shop-new-arrivals-btn"
               >
                 <span>SHOP NEW ARRIVALS</span>
@@ -310,7 +310,7 @@ export const NewArrivalsSection = () => {
                             <div className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-neutral-950 ring-2 ring-white shadow-xs" />
                           )}
                         </div>
-                        <p className="text-[11px] font-medium text-neutral-900 truncate font-inter" title={item.name}>
+                        <p className="text-[12px] font-semibold text-neutral-900 truncate font-playfair" title={item.name}>
                           {item.name}
                         </p>
 
@@ -402,7 +402,7 @@ export const NewArrivalsSection = () => {
                         to={`/products/${featuredProduct.slug}`}
                         className="truncate pr-3 hover:text-brand-gold transition-colors block"
                       >
-                        <span className="truncate font-inter font-medium block">
+                        <span className="truncate font-playfair font-semibold text-sm sm:text-base block">
                           {featuredProduct.name}
                         </span>
                         <span className="text-neutral-500 font-sans text-[11px] block mt-0.5">

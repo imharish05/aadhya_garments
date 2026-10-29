@@ -335,7 +335,7 @@ const AbandonedCartsAdminPage = () => {
             {/* Modal Header */}
             <div className="px-6 py-4 border-b border-brand-light bg-neutral-50 flex items-center justify-between">
               <div>
-                <h3 className="font-playfair text-lg font-bold text-brand-text">Abandoned Cart Details</h3>
+                <h3 className="font-playfair text-lg sm:text-xl font-semibold text-brand-text">Abandoned Cart Details</h3>
                 <p className="text-xs text-brand-grey mt-0.5">
                   Last active: {new Date(selectedCart.updatedAt).toLocaleString('en-IN')}
                 </p>
@@ -372,7 +372,7 @@ const AbandonedCartsAdminPage = () => {
               </div>
 
               {/* Items List */}
-              <h4 className="font-playfair font-bold text-brand-text mb-3">Items in Cart</h4>
+              <h4 className="font-playfair text-base font-semibold text-brand-text mb-3">Items in Cart</h4>
               <div className="space-y-4">
                 {selectedCart.items?.map(item => {
                   const image = item.variant?.image || item.product?.defaultProductImage || (Array.isArray(item.product?.images) ? item.product?.images?.[0] : item.product?.images) || item.product?.image;
@@ -472,7 +472,7 @@ const AbandonedCartsAdminPage = () => {
             {/* Modal Header */}
             <div className="px-6 py-4 border-b border-brand-light bg-neutral-50 flex items-center justify-between">
               <div>
-                <h3 className="font-playfair text-lg font-bold text-brand-text flex items-center gap-2">
+                <h3 className="font-playfair text-lg sm:text-xl font-semibold text-brand-text flex items-center gap-2">
                   <Mail size={20} className="text-brand-gold" /> Send Marketing Automation Report
                 </h3>
                 <p className="text-xs text-brand-grey mt-0.5">

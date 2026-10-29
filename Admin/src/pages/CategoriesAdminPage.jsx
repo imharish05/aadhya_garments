@@ -226,7 +226,6 @@ const CategoriesAdminPage = () => {
       fd.append('slug', form.slug.trim());
       fd.append('isActive', String(form.isActive));
       fd.append('showHeader', String(form.showHeader));
-      fd.append('parentId', '');
 
       const file = imageFile || fileInputRef.current?.files?.[0];
       if (file) {

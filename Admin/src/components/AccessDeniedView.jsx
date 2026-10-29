@@ -31,7 +31,7 @@ const AccessDeniedView = ({ path = '' }) => {
         </div>
 
         {/* Heading */}
-        <h2 className="text-2xl font-bold text-neutral-900 tracking-tight mb-3">
+        <h2 className="font-playfair text-2xl sm:text-[32px] font-bold text-neutral-900 tracking-tight mb-3">
           Access Denied
         </h2>
 

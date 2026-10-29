@@ -379,9 +379,9 @@ nav a,
   padding: 12px 32px;
   background: var(--color-gold);
   color: var(--color-white);
-  font-family: 'Montserrat', sans-serif;
+  font-family: var(--font-body);
   font-weight: 600;
-  font-size: 12px;
+  font-size: 14px;
   letter-spacing: 0.05em;
   text-transform: uppercase;
   border: none;

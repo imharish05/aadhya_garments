@@ -9,13 +9,13 @@ import { getImageUrl } from '../utils/imageUrl';
 const SCROLL_AMOUNT = 320;
 
 const ExclusiveCollection = () => {
-  const { items: products, featured, loading } = useSelector(s => s.products);
+  const { items: products, loading } = useSelector(s => s.products);
   const { code: currencyCode, rate: currencyRate } = useSelector(s => s.currency);
   const scrollRef = useRef(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(true);
 
-  const collectionProducts = (featured.length ? featured : products).filter(p => p.isFeatured || p.isBestSeller).slice(0, 10);
+  const collectionProducts = (products || []).filter(p => p.isBestSeller).slice(0, 10);
 
   const updateScrollState = useCallback(() => {
     const el = scrollRef.current;
@@ -130,7 +130,7 @@ const ExclusiveCollection = () => {
                     </span>
                   )}
                 </div>
-                <h3 className="font-inter text-sm font-medium text-brand-text truncate group-hover:text-brand-gold transition-colors">
+                <h3 className="font-playfair text-base sm:text-[18px] font-semibold text-brand-text truncate group-hover:text-brand-gold transition-colors">
                   {product.name}
                 </h3>
                 <p className="text-brand-gold font-semibold text-sm mt-1">
@@ -142,7 +142,7 @@ const ExclusiveCollection = () => {
         </div>
 
         <div className="text-center mt-8">
-          <Link to="/products?featured=true" className="btn-outline inline-flex items-center gap-2" id="exclusive-view-all">
+          <Link to="/products?bestSeller=true" className="btn-outline inline-flex items-center gap-2" id="exclusive-view-all">
             View All <ArrowRight size={16} />
           </Link>
         </div>

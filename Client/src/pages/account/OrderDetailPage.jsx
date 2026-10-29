@@ -728,7 +728,7 @@ const OrderDetailPage = () => {
           <div>
             <div className="flex items-center gap-2 pb-3 mb-4 border-b border-neutral-100">
               <MapPin size={16} className="text-brand-gold shrink-0" />
-              <h2 className="font-sans text-sm font-semibold text-neutral-900">Shipping Address</h2>
+              <h2 className="font-playfair text-base sm:text-lg font-semibold text-neutral-900">Shipping Address</h2>
             </div>
             {renderAddress(order.shippingAddress)}
           </div>
@@ -740,7 +740,7 @@ const OrderDetailPage = () => {
             <div className="flex items-center justify-between pb-3 mb-4 border-b border-neutral-100">
               <div className="flex items-center gap-2">
                 <FileText size={16} className="text-brand-gold shrink-0" />
-                <h2 className="font-sans text-sm font-semibold text-neutral-900">Billing Address</h2>
+                <h2 className="font-playfair text-base sm:text-lg font-semibold text-neutral-900">Billing Address</h2>
               </div>
               {isBillingSameAsShipping && (
                 <span className="text-[11px] font-medium text-emerald-700 bg-emerald-50 border border-emerald-200/60 px-2.5 py-0.5 rounded-full inline-flex items-center gap-1">
@@ -757,7 +757,7 @@ const OrderDetailPage = () => {
       <div className="bg-white shadow-sm p-4 sm:p-6 mb-5 border border-neutral-100 rounded-lg">
         <div className="flex items-center gap-2 pb-3 mb-4 border-b border-neutral-100">
           <CreditCard size={16} className="text-brand-gold shrink-0" />
-          <h2 className="font-sans text-sm font-semibold text-neutral-900">Payment Details</h2>
+          <h2 className="font-playfair text-base sm:text-lg font-semibold text-neutral-900">Payment Details</h2>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6 items-start">
@@ -833,7 +833,7 @@ const OrderDetailPage = () => {
 
       {/* Item details */}
       <div className="bg-white shadow-sm p-4 sm:p-6 mb-5 border border-neutral-100 rounded-lg">
-        <h2 className="font-sans font-semibold text-xs sm:text-sm mb-4 text-neutral-900">Ordered Items ({order.items?.length || 0})</h2>
+        <h2 className="font-playfair font-semibold text-base sm:text-lg mb-4 text-neutral-900">Ordered Items ({order.items?.length || 0})</h2>
         <div className="space-y-4">
           {(order.items || []).map((item, idx) => {
             const variantObj = parseVariant(item.selectedVariant);

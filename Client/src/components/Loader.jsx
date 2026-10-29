@@ -11,7 +11,7 @@ import React from 'react';
  */
 const Loader = ({
   size = 'md',
-  color = '#C9A24B',
+  color = '#C9dddB',
   text = '',
   className = ''
 }) => {

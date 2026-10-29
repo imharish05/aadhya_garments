@@ -39,12 +39,9 @@ const PaymentsAdminPage = () => {
     fetchPaymentData();
   }, []);
 
-  // Compute metric cards separately for INR (Razorpay) and AED (Telr)
+  // Compute metric cards for INR (Razorpay)
   const inrSummary = data.summary.find(s => s.currency === 'INR') || { totalRevenue: 0, transactionCount: 0 };
-  const aedSummary = data.summary.find(s => s.currency === 'AED') || { totalRevenue: 0, transactionCount: 0 };
-
   const inrRefunded = data.refundedSummary.find(s => s.currency === 'INR')?.totalRefunded || 0;
-  const aedRefunded = data.refundedSummary.find(s => s.currency === 'AED')?.totalRefunded || 0;
 
   const statCards = [
     {

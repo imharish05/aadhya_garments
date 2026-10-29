@@ -200,7 +200,7 @@ const SiteSettingsAdminPage = () => {
               >
                 {/* Hero Section */}
                 <div className="bg-white rounded-xl border border-brand-light shadow-sm p-6">
-                  <h3 className="text-base font-playfair font-bold text-brand-text mb-4 border-b border-brand-light pb-2">Hero Section Settings</h3>
+                  <h3 className="text-lg font-playfair font-semibold text-brand-text mb-4 border-b border-brand-light pb-2">Hero Section Settings</h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-xs font-semibold text-brand-grey mb-1.5">Hero Subtitle (e.g. Est. 2019)</label>
@@ -261,7 +261,7 @@ const SiteSettingsAdminPage = () => {
 
                 {/* Brand Story Section */}
                 <div className="bg-white rounded-xl border border-brand-light shadow-sm p-6">
-                  <h3 className="text-base font-playfair font-bold text-brand-text mb-4 border-b border-brand-light pb-2">Our Legacy / Story Settings</h3>
+                  <h3 className="text-lg font-playfair font-semibold text-brand-text mb-4 border-b border-brand-light pb-2">Our Legacy / Story Settings</h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-xs font-semibold text-brand-grey mb-1.5">Story Subtitle (e.g. Our Legacy)</label>
@@ -490,7 +490,7 @@ const SiteSettingsAdminPage = () => {
               >
                 {/* Stats Counter Cards */}
                 <div className="bg-white rounded-xl border border-brand-light shadow-sm p-6">
-                  <h3 className="text-base font-playfair font-bold text-brand-text mb-4 border-b border-brand-light pb-2">By The Numbers - Page Stats Counter</h3>
+                  <h3 className="text-lg font-playfair font-semibold text-brand-text mb-4 border-b border-brand-light pb-2">By The Numbers - Page Stats Counter</h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                     {settings.stats.map((stat, idx) => (
                       <div key={idx} className="border border-brand-light rounded-xl p-4 bg-neutral-50/50 space-y-3">
@@ -541,7 +541,7 @@ const SiteSettingsAdminPage = () => {
 
                 {/* Pillars of Excellence (Values) */}
                 <div className="bg-white rounded-xl border border-brand-light shadow-sm p-6">
-                  <h3 className="text-base font-playfair font-bold text-brand-text mb-4 border-b border-brand-light pb-2">Pillars of Excellence (Values Cards)</h3>
+                  <h3 className="text-lg font-playfair font-semibold text-brand-text mb-4 border-b border-brand-light pb-2">Pillars of Excellence (Values Cards)</h3>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     {settings.values.map((val, idx) => (
                       <div key={idx} className="border border-brand-light rounded-xl p-4 bg-neutral-50/50 space-y-3">
@@ -592,7 +592,7 @@ const SiteSettingsAdminPage = () => {
 
                 {/* Marquee Word Scroller */}
                 <div className="bg-white rounded-xl border border-brand-light shadow-sm p-6">
-                  <h3 className="text-base font-playfair font-bold text-brand-text mb-4 border-b border-brand-light pb-2">Marquee Infinite Word Scroller</h3>
+                  <h3 className="text-lg font-playfair font-semibold text-brand-text mb-4 border-b border-brand-light pb-2">Marquee Infinite Word Scroller</h3>
                   <div>
                     <label className="block text-xs font-semibold text-brand-grey mb-1.5">Marquee Words (Comma separated)</label>
                     <input
@@ -620,7 +620,7 @@ const SiteSettingsAdminPage = () => {
               >
                 {/* Philosophy Settings */}
                 <div className="bg-white rounded-xl border border-brand-light shadow-sm p-6">
-                  <h3 className="text-base font-playfair font-bold text-brand-text mb-4 border-b border-brand-light pb-2">Our Philosophy Header Details</h3>
+                  <h3 className="text-lg font-playfair font-semibold text-brand-text mb-4 border-b border-brand-light pb-2">Our Philosophy Header Details</h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-xs font-semibold text-brand-grey mb-1.5">Philosophy Subtitle (e.g. Our Philosophy)</label>
@@ -663,7 +663,7 @@ const SiteSettingsAdminPage = () => {
 
                 {/* Private Concierge Support CTA Settings */}
                 <div className="bg-white rounded-xl border border-brand-light shadow-sm p-6">
-                  <h3 className="text-base font-playfair font-bold text-brand-text mb-4 border-b border-brand-light pb-2">Support & Concierge Section Settings</h3>
+                  <h3 className="text-lg font-playfair font-semibold text-brand-text mb-4 border-b border-brand-light pb-2">Support & Concierge Section Settings</h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-xs font-semibold text-brand-grey mb-1.5">Concierge Subtitle (e.g. Need Assistance?)</label>

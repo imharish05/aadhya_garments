@@ -152,7 +152,7 @@ const ReviewsAdminPage = () => {
             </div>
             <div>
               <p className="text-xs text-neutral-500 font-medium uppercase tracking-wider">Total Reviews</p>
-              <h3 className="text-2xl font-bold text-neutral-900">{totalReviews}</h3>
+              <h3 className="text-2xl font-bold text-neutral-900 font-sans stat-number">{totalReviews}</h3>
             </div>
           </div>
 
@@ -162,7 +162,7 @@ const ReviewsAdminPage = () => {
             </div>
             <div>
               <p className="text-xs text-neutral-500 font-medium uppercase tracking-wider">Approved Reviews</p>
-              <h3 className="text-2xl font-bold text-emerald-600">{approvedCount}</h3>
+              <h3 className="text-2xl font-bold text-emerald-600 font-sans stat-number">{approvedCount}</h3>
             </div>
           </div>
 
@@ -172,7 +172,7 @@ const ReviewsAdminPage = () => {
             </div>
             <div>
               <p className="text-xs text-neutral-500 font-medium uppercase tracking-wider">Pending / Rejected</p>
-              <h3 className="text-2xl font-bold text-amber-600">{pendingCount}</h3>
+              <h3 className="text-2xl font-bold text-amber-600 font-sans stat-number">{pendingCount}</h3>
             </div>
           </div>
         </div>
@@ -236,7 +236,7 @@ const ReviewsAdminPage = () => {
           ) : reviews.length === 0 ? (
             <div className="p-12 text-center">
               <MessageSquare size={36} className="text-neutral-300 mx-auto mb-2" strokeWidth={1.5} />
-              <h3 className="font-semibold text-neutral-800 text-base mb-1">No Reviews Found</h3>
+              <h3 className="font-playfair font-semibold text-neutral-800 text-lg mb-1">No Reviews Found</h3>
               <p className="text-xs text-neutral-500">No customer reviews match the selected filter criteria.</p>
             </div>
           ) : (
@@ -380,7 +380,7 @@ const ReviewsAdminPage = () => {
                 <div className="flex items-center justify-between pb-4 border-b border-neutral-100 mb-5">
                   <div className="flex items-center gap-2">
                     <MessageSquare className="text-brand-gold" size={20} />
-                    <h3 className="font-bold text-neutral-900 text-base sm:text-lg">Review Details</h3>
+                    <h3 className="font-playfair font-semibold text-neutral-900 text-lg sm:text-xl">Review Details</h3>
                   </div>
                   <button
                     onClick={() => setViewingReview(null)}
@@ -448,7 +448,7 @@ const ReviewsAdminPage = () => {
                   <div className="bg-neutral-50 p-4 rounded-xl border border-neutral-100 space-y-2">
                     <span className="text-[10px] font-mono text-neutral-400 uppercase tracking-wider">Review Content</span>
                     {viewingReview.title && (
-                      <h4 className="font-bold text-neutral-900 text-sm border-b border-neutral-200/60 pb-2">{viewingReview.title}</h4>
+                      <h4 className="font-playfair font-semibold text-neutral-900 text-base border-b border-neutral-200/60 pb-2">{viewingReview.title}</h4>
                     )}
                     <p className="text-xs sm:text-sm text-neutral-700 leading-relaxed whitespace-pre-wrap pt-1">{viewingReview.body}</p>
                   </div>

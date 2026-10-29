@@ -1324,7 +1324,7 @@ const ReturnsAdminPage = () => {
                   <Zap size={22} className="fill-blue-600/20" />
                 </div> */}
                 <div className="flex-1 pr-6">
-                  <h3 className="text-base font-bold text-neutral-900 leading-tight">
+                  <h3 className="font-playfair text-lg sm:text-xl font-semibold text-neutral-900 leading-tight">
                     Initiate Automated Razorpay Refund?
                   </h3>
                   <p className="text-xs text-neutral-500 mt-1">

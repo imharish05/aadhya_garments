@@ -27,8 +27,8 @@ export const getPlaceholderSvg = (title = 'Luxury Item') => {
       <line x1="0" y1="-40" x2="0" y2="40" stroke="%23C9A24B" stroke-width="0.5" stroke-dasharray="2,2"/>
     </g>
 
-    <text x="300" y="470" font-family="Cinzel, Playfair Display, Georgia, serif" font-size="22" font-weight="bold" fill="%231A1A1A" text-anchor="middle" letter-spacing="4">TWIN A APPARELS</text>
-    <text x="300" y="505" font-family="Inter, system-ui, sans-serif" font-size="12" fill="%23C9A24B" text-anchor="middle" letter-spacing="3">EXQUISITE CREATION</text>
+    <text x="300" y="470" font-family="Playfair Display, Georgia, serif" font-size="22" font-weight="bold" fill="%231A1A1A" text-anchor="middle" letter-spacing="4">TWIN A APPARELS</text>
+    <text x="300" y="505" font-family="Montserrat, sans-serif" font-size="12" fill="%23C9A24B" text-anchor="middle" letter-spacing="3">EXQUISITE CREATION</text>
     
     <path d="M220,530 L380,530" stroke="%23C9A24B" stroke-width="1"/>
     

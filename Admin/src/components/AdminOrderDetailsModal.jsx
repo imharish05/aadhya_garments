@@ -271,7 +271,7 @@ const AdminOrderDetailsModal = ({ order, onClose, onStatusUpdate }) => {
 
           {/* Ordered Products & Variants */}
           <div>
-            <h3 className="font-semibold text-sm mb-3 text-neutral-900 flex items-center gap-2">
+            <h3 className="font-playfair font-semibold text-base sm:text-lg mb-3 text-neutral-900 flex items-center gap-2">
               <Package size={16} className="text-brand-gold" />
               Purchased Items ({order.items?.length || 0})
             </h3>

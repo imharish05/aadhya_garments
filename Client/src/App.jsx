@@ -42,7 +42,7 @@ import api from './services/api';
 import { fetchProfile } from './redux/slices/authSlice';
 import { fetchWishlist } from './redux/slices/wishlistSlice';
 import { fetchCart } from './redux/slices/cartSlice';
-import { setRate } from './redux/slices/currencySlice';
+
 import { getAccessToken } from './utils/tokenStorage';
 
 const App = () => {
@@ -97,61 +97,10 @@ const App = () => {
     }
   }, [dispatch]);
 
-  // ── Bootstrap: fetch live AED exchange rate once on app load ────────────────
-  // The server caches the rate for 6 hours — this call is near-zero cost.
-  useEffect(() => {
-    api.get('/currency/rate')
-      .then(res => {
-        if (res.data?.success && res.data.rate > 0) {
-          dispatch(setRate(res.data.rate));
-          console.log(`[Currency] Live rate loaded: 1 AED = ${res.data.rate} INR`);
-        }
-      })
-      .catch(() => {
-        // Silently keep using the default rate from currencySlice
-        console.warn('[Currency] Could not fetch live rate, using default.');
-      });
-  }, [dispatch]);
 
 
-  const trackedRef = useRef(null);
 
-  useEffect(() => {
-    const params = new URLSearchParams(location.search);
-    const refCode = params.get('referral') || params.get('ref');
-    if (refCode) {
-      const sanitized = refCode.trim();
-      const sessionKey = `bb_tracked_ref_${sanitized}`;
 
-      // Deduplicate to prevent double tracking on React StrictMode or double renders
-      if (sessionStorage.getItem(sessionKey) || trackedRef.current === sanitized) {
-        return;
-      }
-
-      trackedRef.current = sanitized;
-      sessionStorage.setItem(sessionKey, 'true');
-
-      // Track click on the backend before storing
-      api.get(`/affiliates/track?ref=${encodeURIComponent(sanitized)}`)
-        .then(res => {
-          if (res.data?.success) {
-            localStorage.setItem('bb_referral', sanitized);
-            console.log('[Referral] Tracked click successfully:', res.data);
-          }
-        })
-        .catch(err => {
-          localStorage.removeItem('bb_referral');
-          sessionStorage.removeItem(sessionKey);
-          trackedRef.current = null;
-          const isDisabled = err.response?.data?.disabled;
-          const msg = err.response?.data?.message || 'This affiliate referral link is no longer active.';
-          if (isDisabled) {
-            toast.error(msg, { id: 'affiliate-inactive-toast' });
-          }
-          console.warn('[Referral] Link inactive or invalid:', msg);
-        });
-    }
-  }, [location.search]);
 
   return (
     <>
@@ -169,7 +118,7 @@ const App = () => {
       <Toaster
         position="top-right"
         toastOptions={{
-          style: { fontFamily: 'Inter, sans-serif', fontSize: 14, borderRadius: 0, border: '1px solid #F0EEE8' },
+          style: { fontFamily: 'Montserrat, sans-serif', fontSize: 14, borderRadius: 0, border: '1px solid #F0EEE8' },
           success: { iconTheme: { primary: '#C9A24B', secondary: 'white' } },
         }}
       />

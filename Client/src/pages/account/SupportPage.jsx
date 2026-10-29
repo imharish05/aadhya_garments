@@ -65,7 +65,7 @@ const SupportPage = () => {
 
       {/* New ticket form */}
       <div className="bg-white shadow-sm p-6 mb-5 rounded-lg">
-        <h2 className="font-medium text-sm mb-4">Raise a Ticket</h2>
+        <h2 className="font-playfair font-semibold text-lg mb-4">Raise a Ticket</h2>
         <form className="space-y-4" onSubmit={handleSubmit}>
           <div>
             <label className="block text-xs font-medium mb-1.5" htmlFor="ticket-subject">Subject</label>
@@ -96,7 +96,7 @@ const SupportPage = () => {
 
       {/* Ticket history */}
       <div className="bg-white shadow-sm p-6 rounded-lg">
-        <h2 className="font-medium text-sm mb-4">Your Tickets</h2>
+        <h2 className="font-playfair font-semibold text-lg mb-4">Your Tickets</h2>
         {tickets.length === 0 ? (
           <p className="text-sm text-brand-grey">No support tickets yet.</p>
         ) : (

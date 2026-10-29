@@ -222,7 +222,7 @@ const ProductCard = ({ product, index = 0, compactMobile = false }) => {
     >
       {/* Image Container — full bleed portrait, info sits on top */}
       <div className="group relative shrink-0 overflow-hidden aspect-[3/4] bg-brand-light">
-        <Link to={`/products/${product.slug}`} className="block w-full h-full" target="_blank" rel="noopener noreferrer">
+        <Link to={`/products/${product.slug}`} className="block w-full h-full">
           {!imgLoaded && <div className="skeleton absolute inset-0" aria-hidden="true" />}
           <img
             src={getImageUrl(currentCardImage) || getPlaceholderSvg(product.name)}
@@ -288,7 +288,7 @@ const ProductCard = ({ product, index = 0, compactMobile = false }) => {
               {product.category?.name || ''}
             </p>
           )}
-          <h3 className="font-playfair font-normal text-sm sm:text-base leading-tight text-white line-clamp-1 sm:line-clamp-2 mb-1" title={product.name}>
+          <h3 className="font-playfair font-semibold text-base sm:text-[18px] md:text-[20px] leading-tight text-white line-clamp-1 sm:line-clamp-2 mb-1" title={product.name}>
             {product.name}
           </h3>
 
@@ -395,7 +395,7 @@ const ProductCard = ({ product, index = 0, compactMobile = false }) => {
       {/* Always-visible add to cart bar (works on touch, no hover needed) */}
       <button
         onClick={handleAddToCart}
-        className="flex items-center justify-center gap-1.5 sm:gap-2 py-2.5 sm:py-3 bg-white text-neutral-900 text-[10px] sm:text-[11px] font-semibold uppercase tracking-widest hover:bg-brand-gold hover:text-white transition-colors focus-visible:outline-white"
+        className="flex items-center justify-center gap-1.5 sm:gap-2 py-2.5 sm:py-3 bg-white text-neutral-900 text-xs sm:text-sm font-semibold uppercase tracking-widest hover:bg-brand-gold hover:text-white transition-colors focus-visible:outline-white font-montserrat"
         aria-label={inCart ? `View ${product.name} in cart` : `Add ${product.name} to cart`}
         id={`add-cart-${product.id}`}
       >

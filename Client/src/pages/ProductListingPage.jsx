@@ -58,8 +58,7 @@ const ProductListingPage = () => {
     const col = (searchParams.get('collection') || '').toLowerCase();
     const isBest = searchParams.get('bestSeller') === 'true' || col === 'bestseller' || col === 'bestsellers' || col === 'best-sellers';
     const isNew = searchParams.get('newArrival') === 'true' || col === 'newarrival' || col === 'new-arrivals' || col === 'newarrivals';
-    const isFeat = searchParams.get('featured') === 'true' || col === 'featured' || col === 'customer-favourites' || col === 'customer-favorites';
-
+    
     return {
       category: currentCategory,
       search: searchParams.get('search') || '',
@@ -70,8 +69,7 @@ const ProductListingPage = () => {
       maxDiscount: searchParams.get('maxDiscount') || '',
       bestSeller: isBest ? true : undefined,
       newArrival: isNew ? true : undefined,
-      featured: isFeat ? true : undefined,
-      sort: 'createdAt',
+            sort: 'createdAt',
       order: 'DESC',
       page: 1,
     };
@@ -117,11 +115,9 @@ const ProductListingPage = () => {
     const col = (searchParams.get('collection') || '').toLowerCase();
     const isBest = searchParams.get('bestSeller') === 'true' || col === 'bestseller' || col === 'bestsellers' || col === 'best-sellers';
     const isNew = searchParams.get('newArrival') === 'true' || col === 'newarrival' || col === 'new-arrivals' || col === 'newarrivals';
-    const isFeat = searchParams.get('featured') === 'true' || col === 'featured' || col === 'customer-favourites' || col === 'customer-favorites';
-    const bestSeller = isBest ? true : undefined;
+        const bestSeller = isBest ? true : undefined;
     const newArrival = isNew ? true : undefined;
-    const featured = isFeat ? true : undefined;
-
+    
     setFilters(prev => {
       if (
         prev.category !== category ||
@@ -132,8 +128,7 @@ const ProductListingPage = () => {
         prev.minDiscount !== minDiscount ||
         prev.maxDiscount !== maxDiscount ||
         prev.bestSeller !== bestSeller ||
-        prev.newArrival !== newArrival ||
-        prev.featured !== featured
+        prev.newArrival !== newArrival
       ) {
         return {
           ...prev,
@@ -146,7 +141,6 @@ const ProductListingPage = () => {
           maxDiscount,
           bestSeller,
           newArrival,
-          featured,
           page: 1,
         };
       }
@@ -178,20 +172,18 @@ const ProductListingPage = () => {
   const handleCollectionChange = (val) => {
     const newArrival = val === 'newArrival' ? true : undefined;
     const bestSeller = val === 'bestSeller' ? true : undefined;
-    const featured = val === 'featured' ? true : undefined;
-
+    
     setFilters(prev => ({
       ...prev,
       newArrival,
       bestSeller,
-      featured,
       page: 1,
     }));
 
     const newParams = new URLSearchParams(searchParams);
     if (newArrival) newParams.set('newArrival', 'true'); else newParams.delete('newArrival');
     if (bestSeller) newParams.set('bestSeller', 'true'); else newParams.delete('bestSeller');
-    if (featured) newParams.set('featured', 'true'); else newParams.delete('featured');
+    newParams.delete('featured');
     newParams.delete('collection');
     setSearchParams(newParams, { replace: true });
   };
@@ -219,9 +211,7 @@ const ProductListingPage = () => {
     ? 'newArrival'
     : filters.bestSeller
     ? 'bestSeller'
-    : filters.featured
-    ? 'featured'
-    : '';
+        : '';
 
   const { code: currencyCode, rate: currencyRate } = useSelector(s => s.currency);
   const fmt = (v) => formatPrice(v, currencyCode, currencyRate);
@@ -244,9 +234,7 @@ const ProductListingPage = () => {
     ? 'Best Sellers'
     : selectedCollection === 'newArrival'
     ? 'New Arrivals'
-    : selectedCollection === 'featured'
-    ? 'Customer Favourites'
-    : '';
+        : '';
 
   const pageHeading = activeCategoryObject
     ? activeCategoryObject.name
@@ -272,7 +260,7 @@ const ProductListingPage = () => {
   const renderCategoryTree = (cats, currentCatSlug, currentSubSlug) => {
     return (
       <div className="space-y-4">
-        <h3 className="font-playfair text-base font-bold uppercase tracking-wider text-brand-text mb-3 pb-2 border-b border-brand-light">Categories</h3>
+        <h3 className="font-playfair text-lg font-semibold uppercase tracking-wider text-brand-text mb-3 pb-2 border-b border-brand-light">Categories</h3>
         <ul className="space-y-2 text-sm">
           <li>
             <Link
@@ -356,7 +344,7 @@ const ProductListingPage = () => {
               </span>
             ))}
           </nav>
-          <h1 className="font-playfair text-3xl font-bold text-brand-text mb-1">
+          <h1 className="font-playfair text-3xl sm:text-4xl font-semibold text-brand-text mb-1">
             {pageHeading}
           </h1>
           <p className="text-brand-grey text-sm mt-1">{total} products</p>
@@ -410,7 +398,6 @@ const ProductListingPage = () => {
                     <option value="">All Collections</option>
                     <option value="newArrival">New Arrivals</option>
                     <option value="bestSeller">Best Sellers</option>
-                    <option value="featured">Featured</option>
                   </select>
                 </div>
 
@@ -459,8 +446,7 @@ const ProductListingPage = () => {
                 {[
                   { label: 'All', value: '' },
                   { label: 'New Arrivals', value: 'newArrival' },
-                  { label: 'Best Sellers', value: 'bestSeller' },
-                  { label: 'Featured', value: 'featured' }
+                  { label: 'Best Sellers', value: 'bestSeller' }
                 ].map(col => {
                   const isActive = selectedCollection === col.value;
                   return (

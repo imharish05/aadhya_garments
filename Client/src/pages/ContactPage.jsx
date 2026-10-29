@@ -258,7 +258,7 @@ const ContactPage = () => {
                     <option value="Styling Consultation">Styling Consultation</option>
                     <option value="Custom Couture Designs">Custom Couture Designs</option>
                     <option value="Return / Exchange">Return & Exchange</option>
-                    <option value="Partnership / Affiliate">Partnership & Affiliates</option>
+                    <option value="Partnership / Collaborations">Partnership & Collaborations</option>
                   </select>
                 </div>
               </div>

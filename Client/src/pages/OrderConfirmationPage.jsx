@@ -399,12 +399,12 @@ const OrderConfirmationPage = () => {
                       {productSlug ? (
                         <Link
                           to={`/product/${productSlug}`}
-                          className="font-semibold text-sm sm:text-base text-neutral-900 hover:text-brand-gold transition-colors line-clamp-1 block"
+                          className="font-playfair font-semibold text-base sm:text-lg text-neutral-900 hover:text-brand-gold transition-colors line-clamp-1 block"
                         >
                           {productName}
                         </Link>
                       ) : (
-                        <h4 className="font-semibold text-sm sm:text-base text-neutral-900 line-clamp-1">
+                        <h4 className="font-playfair font-semibold text-base sm:text-lg text-neutral-900 line-clamp-1">
                           {productName}
                         </h4>
                       )}

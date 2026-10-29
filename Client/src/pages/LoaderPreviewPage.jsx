@@ -27,7 +27,7 @@ const LoaderPreviewPage = () => {
         </span>
         <h1
           className="text-3xl md:text-5xl font-bold tracking-tight text-neutral-900"
-          style={{ fontFamily: '"Cinzel", Georgia, serif' }}
+          style={{ fontFamily: '"Playfair Display", Georgia, serif' }}
         >
           Twin A Apparels Luxury Preloader
         </h1>
@@ -41,7 +41,7 @@ const LoaderPreviewPage = () => {
         {/* 1. Fullscreen Preloader Showcase Button */}
         <div className="bg-gradient-to-r from-neutral-900 via-neutral-950 to-neutral-900 p-8 rounded-lg border border-neutral-800 text-white shadow-xl flex flex-col md:flex-row items-center justify-between gap-6">
           <div className="space-y-1 text-center md:text-left">
-            <h3 className="text-xl font-bold text-[#F2D98D]" style={{ fontFamily: '"Cinzel", serif' }}>
+            <h3 className="text-xl font-semibold text-[#F2D98D]" style={{ fontFamily: '"Playfair Display", Georgia, serif' }}>
               Full-Screen Website Entrance Preloader
             </h3>
             <p className="text-xs md:text-sm text-neutral-400">
@@ -61,7 +61,7 @@ const LoaderPreviewPage = () => {
         <div className="bg-white p-8 rounded-lg border border-neutral-200 shadow-sm space-y-6">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-neutral-100 pb-4">
             <div>
-              <h3 className="text-lg font-bold text-neutral-900" style={{ fontFamily: '"Cinzel", serif' }}>
+              <h3 className="text-lg font-semibold text-neutral-900" style={{ fontFamily: '"Playfair Display", Georgia, serif' }}>
                 Universal Inline Loader Component
               </h3>
               <p className="text-xs text-neutral-500">

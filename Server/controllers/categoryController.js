@@ -100,7 +100,6 @@ const getAll = async (req, res) => {
     if (search) where.name = { [Op.like]: `%${search}%` };
 
     if (page !== undefined || limit !== undefined) {
-      where.parentId = null;
       const p = Math.max(1, parseInt(page || 1, 10));
       const l = Math.max(1, parseInt(limit || 10, 10));
 
@@ -153,9 +152,6 @@ const create = async (req, res) => {
     if (data.showHeader !== undefined) {
       data.showHeader = data.showHeader === 'true' || data.showHeader === true;
     }
-    if (data.parentId === '' || data.parentId === 'null' || data.parentId === 'undefined') {
-      data.parentId = null;
-    }
     const category = await Category.create(data);
     res.status(201).json({ success: true, category });
   } catch (err) {
@@ -169,9 +165,6 @@ const update = async (req, res) => {
     if (!category) return res.status(404).json({ success: false, message: 'Category not found' });
     
     const data = { ...req.body };
-    if (data.parentId === '' || data.parentId === 'null' || data.parentId === 'undefined') {
-      data.parentId = null;
-    }
     if (req.file) {
       if (req.file.size > 5 * 1024 * 1024) {
         const normalizedPath = req.file.path.replace(/\\/g, '/');

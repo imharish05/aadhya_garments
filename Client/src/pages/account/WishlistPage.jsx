@@ -204,7 +204,7 @@ const WishlistPage = () => {
                       to={detailUrl} 
                       className="hover:text-brand-gold text-brand-text transition-colors block"
                     >
-                      <h3 className="font-inter font-medium text-xs sm:text-sm leading-tight line-clamp-1 sm:line-clamp-2">
+                      <h3 className="font-playfair font-semibold text-sm sm:text-base leading-tight line-clamp-1 sm:line-clamp-2">
                         {item.name}
                       </h3>
                     </Link>

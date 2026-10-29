@@ -357,12 +357,12 @@ export const generateInvoiceHTML = (order) => {
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Tax Invoice - ${invoiceNum}</title>
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800&family=Inter:wght@400;500;600;700;800&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,600;1,700&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,600;1,700&display=swap');
     
     * { box-sizing: border-box; margin: 0; padding: 0; }
     
     body {
-      font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      font-family: 'Montserrat', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
       color: #1a1a1a;
       background-color: #f8fafc;
       padding: 28px 20px;
@@ -437,7 +437,7 @@ export const generateInvoiceHTML = (order) => {
     }
 
     .brand-title {
-      font-family: 'Cinzel', Georgia, serif;
+      font-family: 'Playfair Display', Georgia, serif;
       font-size: 26px;
       font-weight: 800;
       color: #111827;
@@ -466,7 +466,7 @@ export const generateInvoiceHTML = (order) => {
     }
 
     .invoice-heading {
-      font-family: 'Cinzel', Georgia, serif;
+      font-family: 'Playfair Display', Georgia, serif;
       font-size: 22px;
       font-weight: 800;
       color: #c58837;

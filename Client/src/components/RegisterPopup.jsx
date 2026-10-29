@@ -90,7 +90,7 @@ const RegisterPopup = () => {
             <div
               className="relative pointer-events-auto bg-white w-full max-w-[360px] rounded-lg shadow-2xl overflow-hidden"
               onClick={e => e.stopPropagation()}
-              style={{ fontFamily: 'Montserrat, Inter, sans-serif' }}
+              style={{ fontFamily: 'Montserrat, sans-serif' }}
             >
               <div
                 className="h-1 w-full"
@@ -123,13 +123,13 @@ const RegisterPopup = () => {
                 />
                 <h2
                   id="reg-popup-title"
-                  className="text-[22px] font-bold leading-snug mb-1"
+                  className="font-playfair text-[22px] font-semibold leading-snug mb-1"
                   style={{ color: '#111111' }}
                 >
                   Register now and get
                 </h2>
                 <p
-                  className="text-[22px] font-bold leading-snug mb-4"
+                  className="font-playfair text-[22px] font-semibold leading-snug mb-4"
                   style={{ color: '#111111' }}
                 >
                   <span style={{ color: '#8B1A1A' }}>{signupPoints} Loyalty Points</span>

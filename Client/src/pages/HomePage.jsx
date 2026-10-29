@@ -1,10 +1,10 @@
 import { useEffect, useState, useRef, useCallback, useMemo } from 'react';
-import InfluencerCarouselMobile from '../components/InfluencerCarouselMobile';
+
 import { useDispatch, useSelector } from 'react-redux';
 import { Link } from 'react-router-dom';
 import { motion, useInView, AnimatePresence } from 'framer-motion';
-import { ChevronLeft, ChevronRight, Play, Star, ArrowRight, Clock, Truck, Award, Lock, Headphones, Sparkles, Volume2, Compass, Eye, Plus, X } from 'lucide-react';
-import { fetchProducts, fetchFeatured, fetchNewArrivals, fetchBestSellers } from '../redux/slices/productsSlice';
+import { ChevronLeft, ChevronRight, Play, Star, ArrowRight, Clock, Sparkles, Volume2, Compass, Eye, Plus, X } from 'lucide-react';
+import { fetchProducts, fetchNewArrivals, fetchBestSellers } from '../redux/slices/productsSlice';
 import { fetchCategories } from '../redux/slices/categoriesSlice';
 import { fetchBanners } from '../redux/slices/bannersSlice';
 import api from '../services/api';
@@ -14,7 +14,9 @@ import CategoryGridExpand from '../components/CategoryGridExpand';
 import NewArrivalsSection from '../components/NewArrivalsSection';
 import { SplitTextReveal, FadeUp, EyebrowReveal } from '../components/animations';
 import Footer from '../components/Footer';
-import CircularGallery from '../components/CircularGallery';
+import OurPromise from '../components/OurPromise';
+import AboutTeaser from '../components/AboutTeaser';
+
 import { getImageUrl } from '../utils/imageUrl';
 
 // Fallback high-resolution fashion imagery
@@ -95,7 +97,7 @@ const CountUnit = ({ value, label }) => (
 const SectionHeader = ({ eyebrow, title, subtitle, centered = true, className = 'mb-12' }) => (
   <div className={`${className} ${centered ? 'text-center' : ''}`}>
     {eyebrow && (
-      <EyebrowReveal className="text-neutral-500 text-xs font-semibold tracking-[0.24em] uppercase mb-3 font-inter">
+      <EyebrowReveal className="text-neutral-500 text-xs font-semibold tracking-[0.24em] uppercase mb-3 font-montserrat">
         {eyebrow}
       </EyebrowReveal>
     )}
@@ -123,7 +125,7 @@ const SectionHeader = ({ eyebrow, title, subtitle, centered = true, className = 
  * ══════════════════════════════════════════════════════════════════════════ */
 const HomePage = () => {
   const dispatch = useDispatch();
-  const { items: products, featured, newArrivals, bestSellers, loading, bestSellersLoaded, newArrivalsLoaded } = useSelector(s => s.products);
+  const { items: products, newArrivals, bestSellers, loading, bestSellersLoaded, newArrivalsLoaded } = useSelector(s => s.products);
   const { items: categories } = useSelector(s => s.categories);
   const { items: banners } = useSelector(s => s.banners);
   const [mainTab, setMainTab] = useState('bestsellers');
@@ -193,18 +195,6 @@ const HomePage = () => {
       setCurrentExclusiveSlide(maxIdx);
     }
   }, [isMobileViewport, exclusiveBanners.length, currentExclusiveSlide]);
-  const [dbInfluencers, setDbInfluencers] = useState([]);
-  const [activeInfluencerIndex, setActiveInfluencerIndex] = useState(0);
-  const influencerGalleryItems = useMemo(
-    () => dbInfluencers.map(inf => ({ image: inf.img, text: inf.name })),
-    [dbInfluencers]
-  );
-  const handleActiveInfluencerChange = useCallback((idx) => {
-    setActiveInfluencerIndex(idx);
-  }, []);
-  const galleryRef = useRef(null);
-
-
   // Category counts and mapped categories for CategoryGridExpand (exactly 6)
   const productCountMap = useMemo(() => {
     const map = {};
@@ -244,34 +234,12 @@ const HomePage = () => {
 
   useEffect(() => {
     dispatch(fetchProducts({ limit: 16 }));
-    dispatch(fetchFeatured());
+
     dispatch(fetchNewArrivals(16));
     dispatch(fetchBestSellers(16));
     dispatch(fetchCategories());
     dispatch(fetchBanners());
     
-    // Fetch active affiliates
-    api.get('/affiliates')
-      .then(res => {
-        const active = (res.data.affiliates || []).filter(a => a.isActive);
-        if (active.length) {
-          const mapped = active.map((aff, i) => ({
-            name: aff.name,
-            handle: aff.handle || `@${aff.referralCode.toLowerCase()}_style`,
-            img: aff.avatar || (
-              i === 0 ? 'https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=400'
-                : i === 1 ? 'https://images.unsplash.com/photo-1508214751196-bcfd4ca60f91?w=400'
-                : i === 2 ? 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=400'
-                : 'https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e?w=400'
-            ),
-            products: parseInt(aff.productsCurated) || 0,
-            followers: aff.followers && aff.followers !== '0' ? aff.followers.trim() : '',
-          }));
-          setDbInfluencers(mapped);
-        }
-      })
-      .catch(() => {});
-
     // SEO meta
     document.title = 'Twin A Apparels — India\'s Luxury Fashion Destination';
     const meta = document.querySelector('meta[name="description"]');
@@ -366,74 +334,23 @@ const HomePage = () => {
       {/* ── SECTION 2: Category Grid Expand (3x2 Deck Animation on Desktop / Carousel on Mobile) ── */}
       <CategoryGridExpand categories={gridCategories} allHref="/products" />
 
-      {/* ── SECTION 3: Countdown / Deal of the Month Banner ────────────── */}
-      {countdownBanner && !isExpired && (
-        <section className="bg-gradient-to-r from-neutral-950 via-neutral-900 to-neutral-950 py-10 md:py-14 overflow-hidden border-y border-white/10" aria-label="Deal of the month countdown">
-          <div className="max-w-site mx-auto px-4 sm:px-6 md:px-8 grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-6 xl:gap-8 items-center justify-items-center">
-            {/* Text & Action */}
-            <div className="text-center lg:text-left flex flex-col items-center lg:items-start max-w-md">
-              {countdownBanner.badgeText && (
-                <span className="bg-brand-gold text-white text-[10px] sm:text-xs font-bold px-3.5 py-1 tracking-wider uppercase rounded-sm shadow-sm mb-3">
-                  {countdownBanner.badgeText}
-                </span>
-              )}
-              <SplitTextReveal as="h2" text={countdownBanner.title} className="font-playfair text-2xl sm:text-3xl lg:text-4xl font-normal text-white leading-tight mb-2" />
-              {countdownBanner.subtitle && (
-                <p className="text-white/70 text-xs sm:text-sm lg:text-base max-w-sm mb-5">
-                  {countdownBanner.subtitle}
-                </p>
-              )}
-              {isExpired ? (
-                <button
-                  className="px-8 py-3 bg-neutral-800 text-neutral-500 font-semibold uppercase tracking-wider cursor-not-allowed border border-neutral-700/80 rounded"
-                  disabled
-                  id="deal-cta"
-                >
-                  Deal Expired
-                </button>
-              ) : (
-                <Link to={countdownBanner.ctaLink || '/products'} className="btn-primary-hero inline-flex items-center gap-2" id="deal-cta">
-                  {countdownBanner.ctaText || 'Grab the Deal'}
-                </Link>
-              )}
-            </div>
 
-            {/* Product Preview (Visible on all devices including iPad Air/Mini & Mobile) */}
-            <div className="relative w-44 h-44 sm:w-52 sm:h-52 md:w-56 md:h-56 lg:w-56 lg:h-56 xl:w-64 xl:h-64 flex-shrink-0 rounded-lg overflow-hidden shadow-2xl border border-white/20 bg-neutral-900 group">
-              <img
-                src={getImageUrl(countdownBanner.image)}
-                alt={countdownBanner.title || 'Deal of the week'}
-                className="w-full h-full object-cover rounded-lg group-hover:scale-105 transition-transform duration-500"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-80" />
-            </div>
+      {/* ── SECTION 3: New Arrivals (ZARO Featured Collections Architecture) ── */}
+      <NewArrivalsSection />
 
-            {/* Countdown */}
-            <div className="flex flex-col items-center gap-3 sm:gap-4 w-full">
-              <p className="text-brand-gold text-[11px] sm:text-xs font-bold tracking-[0.2em] uppercase flex items-center gap-2">
-                <Clock size={14} className="animate-pulse text-brand-gold" /> Offer Ends In
-              </p>
-              <div className="flex items-center gap-1.5 sm:gap-2.5 md:gap-2.5 xl:gap-3 justify-center">
-                <CountUnit value={countdown.d} label="Days" />
-                <span className="text-brand-gold text-lg sm:text-xl md:text-xl lg:text-2xl font-bold mb-4">:</span>
-                <CountUnit value={countdown.h} label="Hours" />
-                <span className="text-brand-gold text-lg sm:text-xl md:text-xl lg:text-2xl font-bold mb-4">:</span>
-                <CountUnit value={countdown.m} label="Min" />
-                <span className="text-brand-gold text-lg sm:text-xl md:text-xl lg:text-2xl font-bold mb-4">:</span>
-                <CountUnit value={countdown.s} label="Sec" />
-              </div>
-            </div>
-          </div>
-        </section>
-      )}
+      {/* ── SECTION 4: About Twin A Apparels ─────────────────────────────── */}
+      <AboutTeaser />
 
-      {/* ── SECTION 4: Best Sellers Carousel ───────────────────────────── */}
+      {/* ── SECTION 5: OUR PROMISE: The Twin A Apparels Standard ─────────── */}
+      <OurPromise />
+
+      {/* ── SECTION 6: Best Sellers Carousel ───────────────────────────── */}
       {(isCarouselLoading || hasBestSellers) && (
         <section className="py-10 bg-white" aria-label="Bestsellers">
           <div className="max-w-site mx-auto px-6 md:px-8">
             <ScrollReveal>
               <div className="text-center mb-12">
-                <EyebrowReveal className="text-neutral-500 text-xs font-semibold tracking-[0.24em] uppercase mb-3 font-inter">
+                <EyebrowReveal className="text-neutral-500 text-xs font-semibold tracking-[0.24em] uppercase mb-3 font-montserrat">
                   Fresh In
                 </EyebrowReveal>
                 <SplitTextReveal
@@ -507,7 +424,7 @@ const HomePage = () => {
               <div className="flex justify-center mt-5">
                 <Link
                   to="/products?bestSeller=true"
-                  className="px-10 py-3 border border-neutral-800 text-neutral-800 hover:bg-neutral-900 hover:text-white hover:border-neutral-900 transition-all font-inter text-xs font-semibold uppercase tracking-widest"
+                  className="px-10 py-3 border border-neutral-800 text-neutral-800 hover:bg-neutral-900 hover:text-white hover:border-neutral-900 transition-all font-montserrat text-xs font-semibold uppercase tracking-widest rounded-xl"
                   id="carousel-view-all-btn"
                 >
                   View All Best Sellers
@@ -518,8 +435,66 @@ const HomePage = () => {
         </section>
       )}
 
-      {/* ── SECTION: New Arrivals (ZARO Featured Collections Architecture) ── */}
-      <NewArrivalsSection />
+      {/* ── SECTION 7: Countdown / Deal of the Month Banner ────────────── */}
+      {countdownBanner && !isExpired && (
+        <section className="bg-gradient-to-r from-neutral-950 via-neutral-900 to-neutral-950 py-10 md:py-14 overflow-hidden border-y border-white/10" aria-label="Deal of the month countdown">
+          <div className="max-w-site mx-auto px-4 sm:px-6 md:px-8 grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-6 xl:gap-8 items-center justify-items-center">
+            {/* Text & Action */}
+            <div className="text-center lg:text-left flex flex-col items-center lg:items-start max-w-md">
+              {countdownBanner.badgeText && (
+                <span className="bg-brand-gold text-white text-[10px] sm:text-xs font-bold px-3.5 py-1 tracking-wider uppercase rounded-sm shadow-sm mb-3">
+                  {countdownBanner.badgeText}
+                </span>
+              )}
+              <SplitTextReveal as="h2" text={countdownBanner.title} className="font-playfair text-2xl sm:text-3xl lg:text-4xl font-normal text-white leading-tight mb-2" />
+              {countdownBanner.subtitle && (
+                <p className="text-white/70 text-xs sm:text-sm lg:text-base max-w-sm mb-5">
+                  {countdownBanner.subtitle}
+                </p>
+              )}
+              {isExpired ? (
+                <button
+                  className="px-8 py-3 bg-neutral-800 text-neutral-500 font-semibold uppercase tracking-wider cursor-not-allowed border border-neutral-700/80 rounded"
+                  disabled
+                  id="deal-cta"
+                >
+                  Deal Expired
+                </button>
+              ) : (
+                <Link to={countdownBanner.ctaLink || '/products'} className="btn-primary-hero inline-flex items-center gap-2" id="deal-cta">
+                  {countdownBanner.ctaText || 'Grab the Deal'}
+                </Link>
+              )}
+            </div>
+
+            {/* Product Preview (Visible on all devices including iPad Air/Mini & Mobile) */}
+            <div className="relative w-44 h-44 sm:w-52 sm:h-52 md:w-56 md:h-56 lg:w-56 lg:h-56 xl:w-64 xl:h-64 flex-shrink-0 rounded-lg overflow-hidden shadow-2xl border border-white/20 bg-neutral-900 group">
+              <img
+                src={getImageUrl(countdownBanner.image)}
+                alt={countdownBanner.title || 'Deal of the week'}
+                className="w-full h-full object-cover rounded-lg group-hover:scale-105 transition-transform duration-500"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-80" />
+            </div>
+
+            {/* Countdown */}
+            <div className="flex flex-col items-center gap-3 sm:gap-4 w-full">
+              <p className="text-brand-gold text-[11px] sm:text-xs font-bold tracking-[0.2em] uppercase flex items-center gap-2">
+                <Clock size={14} className="animate-pulse text-brand-gold" /> Offer Ends In
+              </p>
+              <div className="flex items-center gap-1.5 sm:gap-2.5 md:gap-2.5 xl:gap-3 justify-center">
+                <CountUnit value={countdown.d} label="Days" />
+                <span className="text-brand-gold text-lg sm:text-xl md:text-xl lg:text-2xl font-bold mb-4">:</span>
+                <CountUnit value={countdown.h} label="Hours" />
+                <span className="text-brand-gold text-lg sm:text-xl md:text-xl lg:text-2xl font-bold mb-4">:</span>
+                <CountUnit value={countdown.m} label="Min" />
+                <span className="text-brand-gold text-lg sm:text-xl md:text-xl lg:text-2xl font-bold mb-4">:</span>
+                <CountUnit value={countdown.s} label="Sec" />
+              </div>
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* ── SECTION 6: Curated Collection Editorial Banner (PROMO Carousel) ── */}
       {promoBanners.length > 0 && (
@@ -791,109 +766,6 @@ const HomePage = () => {
           </div>
         </section>
       )}
-
-      {/* ── SECTION 11: Best Sellers + Testimonials ─────────────────────── */}
-      <section className="py-10 bg-brand-light" aria-label="Best sellers and testimonials">
-        <div className="max-w-site mx-auto px-6 md:px-8">
-          <ScrollReveal>
-            <SectionHeader eyebrow="Customer Favourites" title="Most Loved Pieces" />
-          </ScrollReveal>
-
-          {/* Featured items — 4 on mobile/tablet (even 2x2 or 1x4), 5 on desktop (clean 1x5) */}
-          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4 lg:gap-6 mb-5">
-            {(featured.length
-              ? featured.slice(0, 5)
-              : products.filter(p => p.isFeatured).slice(0, 5).length
-                ? products.filter(p => p.isFeatured).slice(0, 5)
-                : products.slice(0, 5)
-            ).map((product, i) => (
-              <div key={product.id || i} className={`w-full min-w-0 ${i === 4 ? 'hidden lg:block' : ''}`}>
-                <ProductCard product={product} index={i} compactMobile />
-              </div>
-            ))}
-          </div>
-
-          {/* Centered VIEW ALL button for Most Loved Pieces */}
-          <div className="flex justify-center mt-6">
-            <Link
-              to="/products?featured=true"
-              className="px-10 py-3 border border-neutral-800 text-neutral-800 hover:bg-neutral-900 hover:text-white hover:border-neutral-900 transition-all font-inter text-xs font-semibold uppercase tracking-widest"
-              id="most-loved-view-all-btn"
-            >
-              View All
-            </Link>
-          </div>
-        </div>
-      </section>
-
-      {/* ── SECTION 12: Trust Badges Row ────────────────────────────────── */}
-      <section className="py-12 md:py-16 bg-[#FDFDFB] border-t border-neutral-100" aria-label="Trust and security badges">
-        <div className="max-w-site mx-auto px-6 md:px-8">
-          <div className="text-center mb-10">
-            <EyebrowReveal className="text-neutral-500 text-xs font-semibold tracking-[0.24em] uppercase mb-2.5 font-inter">
-              OUR PROMISE
-            </EyebrowReveal>
-            <SplitTextReveal
-              as="h2"
-              text="The Twin A Apparels Standard"
-              className="font-playfair text-2xl sm:text-3xl md:text-4xl font-normal text-neutral-950 mx-auto"
-            />
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
-            {/* Card 1: Shipping */}
-            <ScrollReveal className="h-full">
-              <div className="bg-white border border-neutral-200/60 rounded-lg p-6 flex items-center gap-4 shadow-sm hover:shadow-md transition-all duration-300 hover:-translate-y-0.5 h-full">
-                <div className="w-14 h-14 rounded-full bg-neutral-950 flex items-center justify-center text-brand-gold flex-shrink-0">
-                  <Truck size={22} strokeWidth={1.5} />
-                </div>
-                <div>
-                  <h3 className="font-bold text-neutral-900 text-sm tracking-wide">Complimentary Shipping</h3>
-                  <p className="text-[11px] text-neutral-500 mt-0.5 leading-relaxed">Insured delivery</p>
-                </div>
-              </div>
-            </ScrollReveal>
-
-            {/* Card 2: Satisfaction */}
-            <ScrollReveal delay={0.08} className="h-full">
-              <div className="bg-white border border-neutral-200/60 rounded-lg p-6 flex items-center gap-4 shadow-sm hover:shadow-md transition-all duration-300 hover:-translate-y-0.5 h-full">
-                <div className="w-14 h-14 rounded-full bg-neutral-950 flex items-center justify-center text-brand-gold flex-shrink-0">
-                  <Award size={22} strokeWidth={1.5} />
-                </div>
-                <div>
-                  <h3 className="font-bold text-neutral-900 text-sm tracking-wide">Artisan Authenticity</h3>
-                  <p className="text-[11px] text-neutral-500 mt-0.5 leading-relaxed">Quality guarantee on every piece</p>
-                </div>
-              </div>
-            </ScrollReveal>
-
-            {/* Card 3: Payments */}
-            <ScrollReveal delay={0.16} className="h-full">
-              <div className="bg-white border border-neutral-200/60 rounded-lg p-6 flex items-center gap-4 shadow-sm hover:shadow-md transition-all duration-300 hover:-translate-y-0.5 h-full">
-                <div className="w-14 h-14 rounded-full bg-neutral-950 flex items-center justify-center text-brand-gold flex-shrink-0">
-                  <Lock size={20} strokeWidth={1.5} />
-                </div>
-                <div>
-                  <h3 className="font-bold text-neutral-900 text-sm tracking-wide">Secured Transactions</h3>
-                  <p className="text-[11px] text-neutral-500 mt-0.5 leading-relaxed">Safe and encrypted checkout</p>
-                </div>
-              </div>
-            </ScrollReveal>
-
-            {/* Card 4: Support */}
-            <ScrollReveal delay={0.24} className="h-full">
-              <div className="bg-white border border-neutral-200/60 rounded-lg p-6 flex items-center gap-4 shadow-sm hover:shadow-md transition-all duration-300 hover:-translate-y-0.5 h-full">
-                <div className="w-14 h-14 rounded-full bg-neutral-950 flex items-center justify-center text-brand-gold flex-shrink-0">
-                  <Headphones size={22} strokeWidth={1.5} />
-                </div>
-                <div>
-                  <h3 className="font-bold text-neutral-900 text-sm tracking-wide">Dedicated Concierge</h3>
-                  <p className="text-[11px] text-neutral-500 mt-0.5 leading-relaxed">Expert assistance at your service</p>
-                </div>
-              </div>
-            </ScrollReveal>
-          </div>
-        </div>
-      </section>
 
       <Footer />
     </main>

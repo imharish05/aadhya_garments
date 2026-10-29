@@ -815,7 +815,7 @@ const ProductDetailsPage = () => {
               </div>
             )}
 
-            <h1 className="font-playfair text-2xl sm:text-3xl md:text-4xl font-bold text-brand-text leading-tight break-words">
+            <h1 className="font-playfair text-2xl sm:text-3xl md:text-4xl font-semibold text-brand-text leading-tight break-words">
               {product.name}
             </h1>
 
@@ -1176,7 +1176,7 @@ const ProductDetailsPage = () => {
                   {/* Review Summary Card */}
                   <div className="bg-neutral-50 p-4 sm:p-6 rounded-lg border border-neutral-200/60 flex flex-col justify-between overflow-hidden">
                     <div>
-                      <h3 className="font-playfair text-xl font-bold text-neutral-900 mb-2">Customer Reviews</h3>
+                      <h3 className="font-playfair text-2xl font-semibold text-neutral-900 mb-2">Customer Reviews</h3>
                       {reviewsState.totalCount > 0 ? (
                         <div className="flex items-center gap-4">
                           <span className="text-4xl font-bold text-brand-gold">{parseFloat(reviewsState.averageRating).toFixed(1)}</span>
@@ -1273,7 +1273,7 @@ const ProductDetailsPage = () => {
                           ))}
                         </div>
 
-                        {review.title && <h4 className="font-semibold text-sm text-neutral-900 mb-1">{review.title}</h4>}
+                        {review.title && <h4 className="font-playfair font-semibold text-base text-neutral-900 mb-1">{review.title}</h4>}
                         <p className="text-sm text-neutral-600 leading-relaxed whitespace-pre-line">{review.body}</p>
                       </motion.div>
                     ))
@@ -1302,7 +1302,7 @@ const ProductDetailsPage = () => {
                   <X size={18} />
                 </button>
 
-                <h3 className="font-playfair text-xl font-bold mb-1 text-neutral-900">
+                <h3 className="font-playfair text-xl sm:text-2xl font-semibold mb-1 text-neutral-900">
                   {editingReviewId ? 'Edit Your Review' : 'Write a Product Review'}
                 </h3>
                 <p className="text-xs text-neutral-500 mb-5">
@@ -1445,7 +1445,7 @@ const ProductDetailsPage = () => {
             <div className="w-full max-w-7xl flex items-center justify-between z-20 text-white">
               <div>
                 <h3 className="font-playfair text-base md:text-lg font-semibold">{product.name}</h3>
-                <p className="text-xs text-neutral-400 font-mono">
+                <p className="text-xs text-neutral-400 font-montserrat">
                   Image {lightboxIndex + 1} of {allLightboxImages.length}
                 </p>
               </div>

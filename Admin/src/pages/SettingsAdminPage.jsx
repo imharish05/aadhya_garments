@@ -163,7 +163,7 @@ const SettingsAdminPage = () => {
               <div className="flex items-center gap-2 pb-3 border-b border-neutral-100">
                 <ShieldCheck className="text-brand-gold" size={20} />
                 <div>
-                  <h2 className="text-base font-semibold text-neutral-900">OTP Security Verification</h2>
+                  <h2 className="font-playfair text-lg sm:text-xl font-semibold text-neutral-900">OTP Security Verification</h2>
                   <p className="text-xs text-neutral-500">Configure email OTP verification rules for Cash on Delivery (COD) and checkout orders.</p>
                 </div>
               </div>
@@ -190,7 +190,7 @@ const SettingsAdminPage = () => {
                       {otpSettings.codOnly ? (
                         <span className="text-emerald-700 font-medium flex items-center gap-1 mt-1">
                           <Check size={14} className="shrink-0" />
-                          <span><strong>Active:</strong> Email OTP verification will trigger <strong>strictly for Cash on Delivery</strong> orders. Online/Prepaid orders (Razorpay, UPI, cards, Telr) will bypass OTP and proceed directly to payment.</span>
+                          <span><strong>Active:</strong> Email OTP verification will trigger <strong>strictly for Cash on Delivery</strong> orders. Online/Prepaid orders (Razorpay, UPI, cards) will bypass OTP and proceed directly to payment.</span>
                         </span>
                       ) : (
                         <span className="text-neutral-500">

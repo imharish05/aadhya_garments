@@ -34,7 +34,7 @@ export default function SavedAddressPicker({
   const [isEditing, setIsEditing] = useState(false);
   const initializedRef = useRef(false);
 
-  const allowed = (row) => !delivery || ['india', 'in', 'ind'].includes((row.country || '').trim().toLowerCase());
+  const allowed = () => true;
 
   // Fetch saved addresses from server
   useEffect(() => {
@@ -265,9 +265,7 @@ export default function SavedAddressPicker({
                   {[row.address, row.addressLine2, row.city, row.state, row.pincode].filter(Boolean).join(', ')}
                 </p>
                 <p className="text-xs text-neutral-500 pt-0.5">{row.country} • {row.phone}</p>
-                {!isRowAllowed && (
-                  <p className="text-[11px] text-red-600 font-medium pt-0.5">Delivery is available within India only.</p>
-                )}
+
               </div>
             </div>
           );
