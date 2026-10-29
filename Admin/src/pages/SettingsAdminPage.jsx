@@ -130,7 +130,7 @@ const SettingsAdminPage = () => {
               <div className="flex items-center gap-2 pb-3 border-b border-neutral-100">
                 <Save className="text-brand-gold" size={20} />
                 <div>
-                  <h2 className="text-base font-semibold text-neutral-900">Global Inventory Stock Alert Threshold</h2>
+                  <h2 className="font-playfair text-lg sm:text-xl font-semibold text-neutral-900">Global Inventory Stock Alert Threshold</h2>
                   <p className="text-xs text-neutral-500">Global default limit to trigger low stock warnings in the top notification bell across all warehouses.</p>
                 </div>
               </div>

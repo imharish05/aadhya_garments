@@ -40,10 +40,10 @@ const LoginPage = () => {
           <div className="flex justify-center mb-4">
             <Logo size="lg" />
           </div>
-          <h2 className="text-2xl font-bold text-gray-900 tracking-tight">
+          <h2 className="font-playfair text-2xl sm:text-[32px] font-bold text-gray-900 tracking-tight">
             Admin Sign In
           </h2>
-          <p className="text-sm text-gray-500 mt-1">
+          <p className="font-playfair text-sm text-gray-500 mt-1">
             Welcome to Twin A Apparels
           </p>
         </div>

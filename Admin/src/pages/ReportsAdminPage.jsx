@@ -392,7 +392,7 @@ const ReportsAdminPage = () => {
         {/* Page Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <h1 className="font-playfair text-2xl font-bold text-brand-text">Reports & Analytics</h1>
+            <h1 className="font-playfair text-2xl sm:text-[32px] font-bold text-brand-text tracking-tight">Reports & Analytics</h1>
             <p className="text-xs text-brand-grey mt-1">
               Pick a report, narrow it down, and view live database metrics.
             </p>
@@ -628,7 +628,7 @@ const ReportsAdminPage = () => {
           
           {/* Table Header */}
           <div className="px-5 py-4 border-b border-brand-light flex items-center justify-between">
-            <h3 className="font-playfair text-base font-bold text-neutral-900 capitalize">
+            <h3 className="font-playfair text-lg sm:text-xl font-semibold text-neutral-900 capitalize">
               {reportType} Report Data
             </h3>
             <span className="text-xs text-brand-grey">

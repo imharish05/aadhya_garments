@@ -221,10 +221,10 @@ const DashboardPage = () => {
         {/* Top Header Action Bar with Refresh Button */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white rounded-xl p-4 shadow-sm border border-brand-light/60">
           <div>
-            <h1 className="text-xl font-bold text-neutral-900 font-sans">
+            <h1 className="text-2xl sm:text-[32px] font-bold text-neutral-900 font-playfair tracking-tight leading-tight">
               Dashboard Overview
             </h1>
-            <p className="text-xs text-brand-grey mt-0.5">
+            <p className="text-xs sm:text-sm text-brand-grey mt-1 font-sans">
               Real-time stock inventory, orders, and sales performance
               {lastRefreshedAt && (
                 <span className="ml-2 text-[11px] text-emerald-600 font-medium">
@@ -258,7 +258,7 @@ const DashboardPage = () => {
           {/* Revenue Analytics Chart with Dropdown Range Selector */}
           <div className="lg:col-span-2 bg-white rounded-xl p-5 shadow-sm border border-brand-light/60">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
-              <h2 className="font-sans text-lg font-semibold text-neutral-900">Revenue Overview</h2>
+              <h2 className="font-playfair text-xl sm:text-2xl font-semibold text-neutral-900">Revenue Overview</h2>
               
               <div className="flex items-center gap-3">
                 {/* Dropdown Range Selector */}
@@ -320,7 +320,7 @@ const DashboardPage = () => {
             <div>
               <div className="flex items-center gap-2 mb-4">
                 <AlertTriangle size={17} className="text-amber-500" strokeWidth={1.5} />
-                <h2 className="font-playfair text-lg font-semibold">Low Stock Alert</h2>
+                <h2 className="font-playfair text-xl sm:text-2xl font-semibold text-neutral-900">Low Stock Alert</h2>
               </div>
               
               <div className="space-y-3">
@@ -358,7 +358,7 @@ const DashboardPage = () => {
         {/* Recent Orders Table */}
         <div className="bg-white rounded-xl shadow-sm overflow-hidden mb-6">
           <div className="flex items-center justify-between px-5 py-4 border-b border-brand-light">
-            <h2 className="font-playfair text-lg font-semibold">Recent Orders</h2>
+            <h2 className="font-playfair text-xl sm:text-2xl font-semibold text-neutral-900">Recent Orders</h2>
             <Link to="/orders" className="text-xs text-brand-gold hover:underline flex items-center gap-1 font-semibold" id="view-all-orders">
               View All <ArrowRight size={12} />
             </Link>

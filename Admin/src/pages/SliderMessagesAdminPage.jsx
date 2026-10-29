@@ -179,7 +179,7 @@ const SliderMessagesAdminPage = () => {
     <AdminLayout title="Slider Messages">
       <div className="flex justify-between items-center mb-6">
         <div>
-          <h1 className="text-xl font-bold text-brand-text flex items-center gap-2">
+          <h1 className="font-playfair text-2xl sm:text-[32px] font-bold text-brand-text tracking-tight flex items-center gap-2">
              Header Slider Announcement Messages
           </h1>
           <p className="text-xs text-brand-grey mt-1">

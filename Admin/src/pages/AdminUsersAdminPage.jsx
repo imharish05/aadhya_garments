@@ -231,7 +231,7 @@ const AdminUsersAdminPage = () => {
     <AdminLayout title="Admin Users">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <div>
-          <h1 className="text-xl font-bold text-neutral-900">Admin Users</h1>
+          <h1 className="font-playfair text-2xl sm:text-[32px] font-bold text-neutral-900 tracking-tight">Admin Users</h1>
           <p className="text-xs text-neutral-500 mt-1">Manage staff user accounts and assigned operational roles.</p>
         </div>
 
@@ -385,7 +385,7 @@ const AdminUsersAdminPage = () => {
               className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 border border-neutral-100"
             >
               <div className="flex items-center justify-between pb-4 border-b border-neutral-100">
-                <h3 className="text-base font-bold text-neutral-900">Add Admin User</h3>
+                <h3 className="font-playfair text-lg sm:text-xl font-semibold text-neutral-900">Add Admin User</h3>
                 <button onClick={() => setShowAddModal(false)} className="text-neutral-400 hover:text-neutral-600">
                   <X size={18} />
                 </button>
@@ -510,7 +510,7 @@ const AdminUsersAdminPage = () => {
               className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 border border-neutral-100"
             >
               <div className="flex items-center justify-between pb-4 border-b border-neutral-100">
-                <h3 className="text-base font-bold text-neutral-900">Edit Admin User</h3>
+                <h3 className="font-playfair text-lg sm:text-xl font-semibold text-neutral-900">Edit Admin User</h3>
                 <button onClick={() => setShowEditModal(false)} className="text-neutral-400 hover:text-neutral-600">
                   <X size={18} />
                 </button>
@@ -632,7 +632,7 @@ const AdminUsersAdminPage = () => {
               <div className="w-12 h-12 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center mx-auto mb-3">
                 <Trash2 size={24} />
               </div>
-              <h3 className="text-base font-bold text-neutral-900">Delete User Account?</h3>
+              <h3 className="font-playfair text-lg sm:text-xl font-semibold text-neutral-900">Delete User Account?</h3>
               <p className="text-xs text-neutral-500 mt-2">
                 Delete user <strong>"{selectedUser.name}"</strong> ({selectedUser.email})?
               </p>

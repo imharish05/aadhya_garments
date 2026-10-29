@@ -296,7 +296,7 @@ const RolesPermissionsAdminPage = () => {
     <AdminLayout title="Roles & Permissions">
       {/* Top Main Heading */}
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-neutral-900">Roles & Permissions</h1>
+        <h1 className="font-playfair text-2xl sm:text-[32px] font-bold text-neutral-900 tracking-tight">Roles & Permissions</h1>
       </div>
 
       {/* VIEW MODE 1: ROLES TABLE VIEW */}
@@ -304,7 +304,7 @@ const RolesPermissionsAdminPage = () => {
         <div className="bg-white rounded-2xl p-6 shadow-sm border border-neutral-100">
           {/* Card Header & Add Role Button */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-            <h2 className="text-base font-bold text-neutral-900">Roles & Permissions</h2>
+            <h2 className="font-playfair text-xl sm:text-2xl font-semibold text-neutral-900">Roles & Permissions</h2>
             {canManageRoles && (
               <button
                 onClick={handleOpenAddForm}
@@ -446,7 +446,7 @@ const RolesPermissionsAdminPage = () => {
         <form onSubmit={handleSaveRole} className="bg-white rounded-2xl p-6 shadow-sm border border-neutral-100">
           {/* Card Header & Close Button */}
           <div className="flex items-center justify-between pb-6 border-b border-neutral-100 mb-6">
-            <h2 className="text-base font-bold text-neutral-900">Roles & Permissions</h2>
+            <h2 className="font-playfair text-xl sm:text-2xl font-semibold text-neutral-900">Roles & Permissions</h2>
             <button
               type="button"
               onClick={handleCloseForm}
@@ -462,7 +462,7 @@ const RolesPermissionsAdminPage = () => {
               R
             </div>
             <div>
-              <h3 className="text-base font-bold text-neutral-900">
+              <h3 className="font-playfair text-lg sm:text-xl font-semibold text-neutral-900">
                 {editingRoleId ? 'Edit Role' : 'Add New Role'}
               </h3>
               <p className="text-xs text-neutral-500 mt-0.5">Configure role name and access permissions</p>
@@ -578,7 +578,7 @@ const RolesPermissionsAdminPage = () => {
               <div className="w-12 h-12 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center mx-auto mb-3">
                 <Trash2 size={24} />
               </div>
-              <h3 className="text-base font-bold text-neutral-900">Delete Role?</h3>
+              <h3 className="font-playfair text-lg sm:text-xl font-semibold text-neutral-900">Delete Role?</h3>
               <p className="text-xs text-neutral-500 mt-2">
                 Are you sure you want to delete this custom role? All admin users assigned to this role will also be deleted.
               </p>

@@ -4,7 +4,7 @@
  * ═══════════════════════════════════════════════════════════════════════════ */
 
 /* ── Google Fonts ──────────────────────────────────────────────────────────── */
-@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700;800&family=Montserrat:wght@300;400;500;600;700;800&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,600;1,700&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,600;1,700&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -42,6 +42,10 @@
 
 /* ── CSS Custom Properties ─────────────────────────────────────────────────── */
 :root {
+  /* ── Typography System Tokens ─────────────────────────────────────────── */
+  --font-heading: 'Playfair Display', Georgia, serif;
+  --font-body:    'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+
   /* ui-ux-pro-max Design Tokens — Classic Luxury Minimalism */
   --color-primary:      #000000; /* Minimalist Black */
   --color-on-primary:   #FFFFFF;
@@ -140,7 +144,7 @@ html {
 }
 
 body {
-  font-family: 'Montserrat', sans-serif;
+  font-family: var(--font-body);
   background-color: var(--color-bg);
   color: var(--color-text);
   -webkit-font-smoothing: antialiased;
@@ -148,15 +152,143 @@ body {
   line-height: 1.6;
 }
 
-/* ── Typography ─────────────────────────────────────────────────────────────── */
-h1, h2, h3, h4, .font-serif, .font-playfair { font-family: 'Playfair Display', 'Cinzel', Georgia, serif; }
-/* Clean normal font for all numeric values, prices, amounts, inputs, tables */
-.font-numeric, table td, input, select, textarea, button, [class*="price"], [class*="stock"], span.amount { font-family: 'Montserrat', system-ui, sans-serif !important; }
-h1 { font-size: clamp(40px, 5vw, 64px); font-weight: 700; line-height: 1.1; }
-h2 { font-size: clamp(28px, 4vw, 48px); font-weight: 600; line-height: 1.2; }
-h3 { font-size: 24px; font-weight: 600; line-height: 1.3; }
-h4 { font-size: 20px; font-weight: 600; }
-p  { font-size: 16px; line-height: 1.7; color: var(--color-grey); }
+/* ── Typography System ─────────────────────────────────────────────────────── */
+/* Headings, titles, section titles, card titles & subtitles: Playfair Display, serif */
+h1, h2, h3, h4, h5, h6,
+.font-heading,
+.font-serif,
+.font-playfair,
+.font-cormorant {
+  font-family: var(--font-heading) !important;
+}
+
+/* Body content, controls, inputs, dropdowns, dialogs, prices: Montserrat, sans-serif */
+body,
+p,
+input,
+select,
+textarea,
+button,
+label,
+table,
+th,
+td,
+nav,
+.font-body,
+.font-sans,
+.font-montserrat,
+.font-inter,
+.font-jakarta,
+.font-numeric,
+[class*="price"],
+[class*="stock"],
+span.amount {
+  font-family: var(--font-body);
+}
+
+/* Strict enforcement for controls, buttons, tables and price tags */
+button,
+input,
+select,
+textarea,
+.font-numeric,
+table td,
+table th,
+[class*="price"],
+[class*="stock"],
+span.amount {
+  font-family: var(--font-body) !important;
+}
+
+/* Typographic Hierarchy:
+ * Hero titles: 40–56px on desktop (mobile: 32–40px), Playfair Display, weight 600 or 700
+ * Page titles: 32–40px (mobile: 26–32px), Playfair Display, weight 600
+ * Section headings: 24–32px (mobile: 20–26px), Playfair Display, weight 600
+ * Card titles and subtitles: 18–22px, Playfair Display, weight 500 or 600
+ * Body text: 15–17px, Montserrat, weight 400
+ * Labels and secondary text: 12–14px, Montserrat, weight 500
+ * Buttons and navigation: 14–16px, Montserrat, weight 600
+ */
+.hero-title,
+.font-hero-title {
+  font-family: var(--font-heading) !important;
+  font-size: clamp(34px, 5vw, 56px);
+  font-weight: 700;
+  line-height: 1.12;
+  letter-spacing: -0.015em;
+}
+
+h1,
+.page-title,
+.font-page-title {
+  font-family: var(--font-heading) !important;
+  font-size: clamp(28px, 4vw, 40px);
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+h2,
+.section-heading,
+.font-section-heading {
+  font-family: var(--font-heading) !important;
+  font-size: clamp(22px, 3vw, 32px);
+  font-weight: 600;
+  line-height: 1.25;
+}
+
+h3,
+.card-title,
+.font-card-title,
+.subtitle,
+.font-subtitle {
+  font-family: var(--font-heading) !important;
+  font-size: clamp(18px, 2.5vw, 22px);
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+h4,
+.card-subtitle,
+.font-card-subtitle {
+  font-family: var(--font-heading) !important;
+  font-size: 18px;
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+/* Body text: 15–17px, Montserrat, weight 400 */
+p,
+.body-text,
+.font-body-text {
+  font-family: var(--font-body);
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 1.65;
+  color: var(--color-grey);
+}
+
+/* Labels and secondary text: 12–14px, Montserrat, weight 500 */
+label,
+.label-text,
+.font-label,
+.font-secondary {
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+/* Buttons and navigation: 14–16px, Montserrat, weight 600 */
+button,
+nav a,
+.nav-link,
+.btn-primary,
+.btn-primary-hero,
+.btn-outline {
+  font-family: var(--font-body) !important;
+  font-size: 14px;
+  font-weight: 600;
+}
 
 /* ── Glass Surface Classes ──────────────────────────────────────────────────── */
 
@@ -427,12 +559,12 @@ a:focus-visible, button:focus-visible { outline: 2px solid var(--color-gold); ou
 }
 
 /* ── Product Description Rich Text Renderer ──────────────────────────────── */
-.prose-description { font-size: 0.95rem; line-height: 1.75; color: var(--color-grey); }
+.prose-description { font-size: 0.95rem; line-height: 1.75; color: var(--color-grey); font-family: var(--font-body); }
 
 .prose-description h1 {
-  font-family: 'Montserrat', 'Inter', sans-serif;
-  font-size: 1.5rem;
-  font-weight: 700;
+  font-family: var(--font-heading);
+  font-size: clamp(22px, 3vw, 28px);
+  font-weight: 600;
   color: var(--color-foreground);
   margin: 1.2rem 0 0.5rem;
   line-height: 1.3;
@@ -440,8 +572,8 @@ a:focus-visible, button:focus-visible { outline: 2px solid var(--color-gold); ou
 }
 
 .prose-description h2 {
-  font-family: 'Montserrat', 'Inter', sans-serif;
-  font-size: 1.2rem;
+  font-family: var(--font-heading);
+  font-size: clamp(19px, 2.5vw, 24px);
   font-weight: 600;
   color: var(--color-foreground);
   margin: 1rem 0 0.4rem;
@@ -450,8 +582,8 @@ a:focus-visible, button:focus-visible { outline: 2px solid var(--color-gold); ou
 }
 
 .prose-description h3 {
-  font-family: 'Montserrat', 'Inter', sans-serif;
-  font-size: 1rem;
+  font-family: var(--font-heading);
+  font-size: clamp(17px, 2vw, 20px);
   font-weight: 600;
   color: var(--color-foreground);
   margin: 0.8rem 0 0.35rem;

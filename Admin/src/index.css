@@ -1,11 +1,15 @@
-@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Inter:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Montserrat:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,600;1,700&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,600;1,700&display=swap');
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-
 :root {
+  --font-heading: 'Playfair Display', Georgia, Cambria, serif;
+  --font-body: 'Montserrat', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-serif: var(--font-heading);
+  --font-sans: var(--font-body);
+
   --color-bg:    #FAFAF8;
   --color-text:  #1A1A1A;
   --color-gold:  #C58837;
@@ -14,11 +18,128 @@
   --color-light: #F0EEE8;
 }
 
-*, *::before, *::after { box-sizing: border-box; font-variant-numeric: tabular-nums lining-nums normal; }
-body, h1, h2, h3, h4, h5, h6, input, select, textarea, button, td, th, span, p, div, .font-playfair { 
-  font-family: 'Inter', system-ui, sans-serif !important; 
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   ADMIN TYPOGRAPHY SYSTEM
+   • Headings & Titles: Playfair Display (Serif)
+   • Content & UI Elements: Montserrat (Sans-Serif)
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* 1. Base Global Typography (Montserrat, 14–16px default) */
+body {
+  font-family: var(--font-body);
+  font-size: 15px;
+  line-height: 1.5;
+  color: var(--color-text);
+  background: var(--color-bg);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* 2. All General Text, Forms, Tables, Inputs, Buttons, Badges, Navigation -> Montserrat */
+body,
+input,
+select,
+textarea,
+button,
+table,
+th,
+td,
+label,
+p,
+span,
+a,
+li,
+nav,
+div,
+.font-montserrat,
+.font-sans {
+  font-family: var(--font-body);
+}
+
+/* Tabular & lining numbers for data and financial precision */
+table, td, th, input, select, textarea, .tabular-nums, .stat-number {
   font-variant-numeric: tabular-nums lining-nums normal;
 }
+
+/* 3. Headings, Subtitles, Card & Modal Titles System -> Playfair Display */
+h1,
+h2,
+h3,
+h4,
+.font-playfair,
+.font-serif,
+.admin-page-title,
+.admin-section-heading,
+.admin-card-title,
+.admin-modal-title,
+.admin-subtitle {
+  font-family: var(--font-heading) !important;
+}
+
+/* 4. Typographic Hierarchy */
+
+/* Page titles: 32px, Playfair Display, weight 600 or 700 */
+.admin-page-title {
+  font-family: var(--font-heading) !important;
+  font-size: 32px;
+  font-weight: 700;
+  line-height: 1.25;
+  letter-spacing: -0.01em;
+}
+
+/* Section headings: 24px, Playfair Display, weight 600 */
+.admin-section-heading {
+  font-family: var(--font-heading) !important;
+  font-size: 24px;
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+/* Card titles, subtitles, and modal titles: 18–20px, Playfair Display, weight 500 or 600 */
+.admin-card-title,
+.admin-modal-title,
+.admin-subtitle {
+  font-family: var(--font-heading) !important;
+  font-size: 19px;
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+/* Body text: 14–16px, Montserrat, weight 400 */
+.admin-body-text {
+  font-family: var(--font-body);
+  font-size: 15px;
+  font-weight: 400;
+  line-height: 1.5;
+}
+
+/* Labels and secondary text: 12–14px, Montserrat, weight 500 */
+label,
+.admin-label,
+.admin-secondary-text {
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+/* Buttons and navigation: 14–15px, Montserrat, weight 600 */
+button,
+.btn-primary,
+.btn-outline,
+nav a,
+.admin-button,
+.admin-nav-link {
+  font-family: var(--font-body);
+  font-weight: 600;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   SURFACES & EFFECTS
+   ═══════════════════════════════════════════════════════════════════ */
 
 .glass-nav {
   background: rgba(250,250,248,0.93);
@@ -30,7 +151,6 @@ body, h1, h2, h3, h4, h5, h6, input, select, textarea, button, td, th, span, p, 
 
 /* Glass surface: Admin stat cards — float over gradient mesh */
 .glass-stat-card {
-  /* Purpose: stat cards in dashboard float above gradient-mesh background */
   background: rgba(255,255,255,0.90);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
@@ -48,17 +168,59 @@ body, h1, h2, h3, h4, h5, h6, input, select, textarea, button, td, th, span, p, 
     #FAFAF8;
 }
 
-.btn-primary { display:inline-flex;align-items:center;justify-content:center;padding:10px 24px;background:#C58837;color:#fff;font-weight:600;font-size:13px;letter-spacing:0.04em;border:none;cursor:pointer;transition:all 0.2s; }
-.btn-primary:hover { background:#a8712a; }
-.btn-outline { display:inline-flex;align-items:center;justify-content:center;padding:9px 23px;background:transparent;color:#1A1A1A;font-weight:600;font-size:13px;border:1.5px solid #1A1A1A;cursor:pointer;transition:all 0.2s; }
-.btn-outline:hover { background:#1A1A1A;color:#fff; }
-.skeleton { background:linear-gradient(90deg,#e8e6e1 25%,#f5f3ee 50%,#e8e6e1 75%);background-size:200% 100%;animation:shimmer 1.5s infinite;border-radius:4px; }
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 24px;
+  background: #C58837;
+  color: #fff;
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: 14px;
+  letter-spacing: 0.02em;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s;
+  border-radius: 8px;
+}
+.btn-primary:hover {
+  background: #a8712a;
+}
+.btn-outline {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 9px 23px;
+  background: transparent;
+  color: #1A1A1A;
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: 14px;
+  border: 1.5px solid #1A1A1A;
+  cursor: pointer;
+  transition: all 0.2s;
+  border-radius: 8px;
+}
+.btn-outline:hover {
+  background: #1A1A1A;
+  color: #fff;
+}
+
+.skeleton {
+  background: linear-gradient(90deg,#e8e6e1 25%,#f5f3ee 50%,#e8e6e1 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: 4px;
+}
 @keyframes shimmer { 0%{background-position:-200% 0} 100%{background-position:200% 0} }
-:focus-visible { outline:2px solid #C58837;outline-offset:2px; }
-::-webkit-scrollbar { width:5px; height:5px; }
-::-webkit-scrollbar-track { background:#F0EEE8; border-radius:3px; }
-::-webkit-scrollbar-thumb { background:#C58837; border-radius:3px; }
-::-webkit-scrollbar-thumb:hover { background:#a8712a; }
+
+:focus-visible { outline: 2px solid #C58837; outline-offset: 2px; }
+
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: #F0EEE8; border-radius: 3px; }
+::-webkit-scrollbar-thumb { background: #C58837; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #a8712a; }
 
 /* Custom toggle switch styling - Uiverse.io by WhiteNervosa (Extra Compact & Aligned) */
 .switch {
@@ -122,10 +284,10 @@ body, h1, h2, h3, h4, h5, h6, input, select, textarea, button, td, th, span, p, 
   pointer-events: none;
 }
 .rich-editor-area:focus { outline: none; }
-.rich-editor-area h1 { font-size: 1.5rem; font-weight: 700; margin: 0.5rem 0 0.25rem; line-height: 1.3; font-family: 'Inter', sans-serif; text-transform: none; }
-.rich-editor-area h2 { font-size: 1.25rem; font-weight: 600; margin: 0.5rem 0 0.25rem; line-height: 1.3; font-family: 'Inter', sans-serif; text-transform: none; }
-.rich-editor-area h3 { font-size: 1.05rem; font-weight: 600; margin: 0.4rem 0 0.2rem; line-height: 1.3; font-family: 'Inter', sans-serif; text-transform: none; }
+.rich-editor-area h1 { font-size: 1.5rem; font-weight: 700; margin: 0.5rem 0 0.25rem; line-height: 1.3; font-family: var(--font-heading) !important; text-transform: none; }
+.rich-editor-area h2 { font-size: 1.25rem; font-weight: 600; margin: 0.5rem 0 0.25rem; line-height: 1.3; font-family: var(--font-heading) !important; text-transform: none; }
+.rich-editor-area h3 { font-size: 1.05rem; font-weight: 600; margin: 0.4rem 0 0.2rem; line-height: 1.3; font-family: var(--font-heading) !important; text-transform: none; }
 .rich-editor-area ul { list-style: disc; padding-left: 1.5rem; margin: 0.4rem 0; }
 .rich-editor-area ol { list-style: decimal; padding-left: 1.5rem; margin: 0.4rem 0; }
-.rich-editor-area li { margin: 0.2rem 0; }
-.rich-editor-area p  { margin: 0.25rem 0; }
+.rich-editor-area li { margin: 0.2rem 0; font-family: var(--font-body); }
+.rich-editor-area p  { margin: 0.25rem 0; font-family: var(--font-body); }

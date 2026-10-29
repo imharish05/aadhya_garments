@@ -164,7 +164,7 @@ const ContactEnquiriesAdminPage = () => {
         {/* Title Banner */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-5 sm:p-6 rounded-2xl border border-neutral-200/80 shadow-sm">
           <div>
-            <h1 className="text-xl sm:text-2xl font-bold text-neutral-900 tracking-tight flex items-center gap-2.5">
+            <h1 className="font-playfair text-2xl sm:text-[32px] font-bold text-neutral-900 tracking-tight flex items-center gap-2.5">
               <Mail className="w-6 h-6 sm:w-7 sm:h-7 text-amber-600 flex-shrink-0" />
               <span>Contact Enquiries</span>
             </h1>
@@ -384,7 +384,7 @@ const ContactEnquiriesAdminPage = () => {
                       <Mail className="w-5 h-5" />
                     </div>
                     <div className="min-w-0">
-                      <h3 className="text-base sm:text-lg font-bold text-neutral-900 truncate">
+                      <h3 className="font-playfair text-lg sm:text-xl font-semibold text-neutral-900 truncate">
                         Contact Enquiry #{selectedEnquiry.id}
                       </h3>
                       <p className="text-xs text-neutral-500 truncate">

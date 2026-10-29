@@ -15,12 +15,16 @@ export default {
         },
       },
       fontFamily: {
+        sans: ['"Montserrat"', 'system-ui', '-apple-system', 'sans-serif'],
+        montserrat: ['"Montserrat"', 'system-ui', '-apple-system', 'sans-serif'],
         playfair: ['"Playfair Display"', 'Georgia', 'serif'],
-        inter:    ['Inter', 'system-ui', 'sans-serif'],
+        serif: ['"Playfair Display"', 'Georgia', 'serif'],
+        heading: ['"Playfair Display"', 'Georgia', 'serif'],
+        cinzel: ['"Cinzel"', 'Georgia', 'serif'],
+        inter: ['"Montserrat"', 'system-ui', '-apple-system', 'sans-serif'],
       },
       maxWidth: { site: '1440px' },
     },
   },
   plugins: [],
 }
-
