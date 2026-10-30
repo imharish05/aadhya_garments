@@ -3,6 +3,11 @@ import api from '../../services/api';
 
 export const fetchCategories = createAsyncThunk('categories/fetchTree', async (_, { rejectWithValue }) => {
   try {
+    // '/categories/tree' returns every category WITH its subcategories
+    try {
+      const tree = await api.get('/categories/tree');
+      if (tree.data?.categories?.length) return tree.data.categories;
+    } catch {}
     const res = await api.get('/categories');
     return res.data.categories || [];
   } catch (err) {
