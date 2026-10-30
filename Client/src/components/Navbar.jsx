@@ -26,6 +26,7 @@ import {
 import { formatPrice } from '../utils/currency';
 import api from '../services/api';
 import { getImageUrl } from '../utils/imageUrl';
+import TopBar from './TopBar';
 
 const FALLBACK_CATEGORIES = [
   { name: 'Ladies Wear', slug: 'ladies-wear' },
@@ -68,6 +69,17 @@ function useTypewriter(phrases, active) {
   return text;
 }
 
+/** Own component: the typing animation re-renders only this span, not the whole Navbar. */
+const TypedPlaceholder = ({ phrases }) => {
+  const text = useTypewriter(phrases, true);
+  return (
+    <>
+      <span className="truncate">Search for {text}</span>
+      <span className="ml-0.5 inline-block h-4 w-px bg-[#BEA266] animate-pulse motion-reduce:hidden" />
+    </>
+  );
+};
+
 const Navbar = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -89,6 +101,7 @@ const Navbar = () => {
   const [searchOpen, setSearchOpen] = useState(false);
   const [hoverCat, setHoverCat] = useState(null);
   const catTimer = useRef(null);
+  const searchClosedAt = useRef(0);
   const stripRef = useRef(null);
   const [localQuery, setLocalQuery] = useState('');
   const [activeIndex, setActiveIndex] = useState(-1);
@@ -104,22 +117,6 @@ const Navbar = () => {
   const searchInputRef = useRef(null);
   const debounceTimer = useRef(null);
 
-  // Measure the real header height so the spacer below it always matches
-  const headerRef = useRef(null);
-  const [headerH, setHeaderH] = useState(117);
-
-  const [sliderMessages, setSliderMessages] = useState([]);
-  const [currentMessageIndex, setCurrentMessageIndex] = useState(0);
-
-  useEffect(() => {
-    const el = headerRef.current;
-    if (!el) return undefined;
-    const update = () => setHeaderH(el.offsetHeight);
-    update();
-    const ro = new ResizeObserver(update);
-    ro.observe(el);
-    return () => ro.disconnect();
-  }, []);
 
   // Strictly enforce Indian Currency (INR)
   useEffect(() => {
@@ -128,27 +125,6 @@ const Navbar = () => {
       dispatch(setCurrency('INR'));
     } catch {}
   }, [dispatch]);
-
-  // Marketing messages
-  useEffect(() => {
-    const fetchSliderMessages = async () => {
-      try {
-        const res = await api.get('/marketing-messages');
-        if (res.data?.success && res.data.messages?.length > 0) {
-          setSliderMessages(res.data.messages);
-        }
-      } catch {}
-    };
-    fetchSliderMessages();
-  }, []);
-
-  useEffect(() => {
-    if (sliderMessages.length <= 1) return;
-    const timer = setInterval(() => {
-      setCurrentMessageIndex(prev => (prev + 1) % sliderMessages.length);
-    }, 5000);
-    return () => clearInterval(timer);
-  }, [sliderMessages]);
 
   // Dynamic Category Tree from backend
   const [categoryTree, setCategoryTree] = useState([]);
@@ -205,7 +181,9 @@ const Navbar = () => {
 
           prevScrollY = currentScrollY;
           const nextScrolled = currentScrollY > 20;
-          const nextAnnouncementHidden = currentScrollY > 40;
+          // Collapse the topbar only once the spacer under the header has scrolled out of view.
+          // (Collapsing earlier left an empty strip between the navbar and the page.)
+          const nextAnnouncementHidden = currentScrollY > 140;
           setScrolled(prev => (prev !== nextScrolled ? nextScrolled : prev));
           setAnnouncementHidden(prev => (prev !== nextAnnouncementHidden ? nextAnnouncementHidden : prev));
           ticking = false;
@@ -245,9 +223,14 @@ const Navbar = () => {
     return () => { document.body.style.overflow = ''; };
   }, [mobileMenuOpen]);
 
-  // Focus the input whenever search opens
+  // Focus the input whenever search opens. Also reset the mega menu and remember when
+  // search closed: the cursor is then left over a nav link, and without a guard its
+  // mouseenter pops the mega menu + dim layer right after closing (looks like a flicker).
   useEffect(() => {
-    if (searchOpen) searchInputRef.current?.focus();
+    if (catTimer.current) clearTimeout(catTimer.current);
+    setHoverCat(null);
+    if (searchOpen) searchInputRef.current?.focus({ preventScroll: true });
+    else searchClosedAt.current = Date.now();
   }, [searchOpen]);
 
   // Search logic
@@ -341,6 +324,7 @@ const Navbar = () => {
   const wishlistCount = wishlistItems?.length || 0;
   const displayCategories = categoryTree.length > 0 ? categoryTree : FALLBACK_CATEGORIES;
   const openCat = (key) => {
+    if (searchOpen || Date.now() - searchClosedAt.current < 600) return;
     if (catTimer.current) clearTimeout(catTimer.current);
     setHoverCat(key);
   };
@@ -359,7 +343,6 @@ const Navbar = () => {
   const allActive = location.pathname === '/products';
 
   const searchPhrases = [...displayCategories.map(c => c.name), 'your next outfit'];
-  const typedPlaceholder = useTypewriter(searchPhrases, searchOpen && localQuery === '');
 
   const iconBtn = 'group/ic relative flex h-10 w-10 shrink-0 flex-col items-center justify-center gap-1 rounded-full text-[#F3E7C6] hover:bg-white/10 transition-colors focus:outline-none 2xl:h-auto 2xl:w-auto 2xl:rounded-2xl 2xl:px-2.5 2xl:py-1.5';
   const iconLabel = 'hidden 2xl:block text-[10.5px] font-medium uppercase tracking-[0.12em] text-[#A89A78] group-hover/ic:text-[#F3E7C6]';
@@ -373,31 +356,24 @@ const Navbar = () => {
   return (
     <>
       <header
-        ref={headerRef}
-        className={`fixed top-0 left-0 right-0 z-50 transition-transform duration-300 font-inter ${
+        className={`fixed top-0 left-0 right-0 z-50 will-change-transform transition-transform duration-300 font-inter ${
           headerVisible ? 'translate-y-0' : '-translate-y-full'
         } ${scrolled ? 'shadow-[0_8px_30px_rgba(0,0,0,0.5)]' : ''}`}
         role="banner"
       >
-        {/* Announcement bar */}
+        {/* Announcement ticker (scrolls continuously) */}
         <div
-          className={`bg-[#BEA266] text-black tracking-[0.2em] uppercase text-[10px] sm:text-[11px] overflow-hidden h-9 flex items-center justify-center transition-all duration-300 ease-in-out font-medium ${
+          className={`overflow-hidden transition-all duration-300 ease-in-out ${
             announcementHidden ? 'opacity-0 pointer-events-none' : 'opacity-100'
           }`}
-          style={{ marginTop: announcementHidden ? '-36px' : '0px' }}
+          style={{ marginTop: announcementHidden ? 'calc(var(--topbar-h) * -1)' : '0px' }}
         >
-          <div className="w-full text-center px-4 truncate">
-            {sliderMessages.length > 0 ? (
-              <span>{sliderMessages[currentMessageIndex]?.message}</span>
-            ) : (
-              <span>JOIN THE TWIN A APPARELS CIRCLE FOR EXCLUSIVE OFFERS AND UPDATES.</span>
-            )}
-          </div>
+          <TopBar />
         </div>
 
         <div className="relative bg-black border-b border-[#2B2416]">
           {/* ── Single row: logo · categories · actions ── */}
-          <div className="max-w-[1440px] mx-auto px-4 sm:px-8 lg:px-12 h-16 lg:h-20 grid grid-cols-[1fr_auto_1fr] lg:grid-cols-[auto_minmax(0,1fr)_auto] items-center lg:gap-6">
+          <div className={`max-w-[1440px] mx-auto px-4 sm:px-8 lg:px-12 h-16 lg:h-20 grid grid-cols-[1fr_auto_1fr] lg:grid-cols-[auto_minmax(0,1fr)_auto] items-center lg:gap-6 ${searchOpen ? 'lg:invisible' : ''}`}>
             {/* left: hamburger (mobile) / logo (desktop) */}
             <div className="flex items-center justify-self-start">
               <button
@@ -594,14 +570,9 @@ const Navbar = () => {
           </div>
 
           {/* ── Search: covers the row on desktop, drops below it on mobile ── */}
-          <AnimatePresence>
-            {searchOpen && (
-              <motion.div
+          {searchOpen && (
+              <div
                 ref={searchContainerRef}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.15 }}
                 className="px-4 sm:px-8 pb-3 lg:pb-0 lg:px-12 lg:absolute lg:inset-x-0 lg:top-0 lg:h-20 lg:bg-black lg:z-20 lg:flex lg:items-center"
               >
                 <div className="relative w-full max-w-[720px] mx-auto">
@@ -609,11 +580,10 @@ const Navbar = () => {
                     <Search size={18} strokeWidth={1.75} className="absolute left-4 text-[#A89A78] pointer-events-none" />
                     {localQuery === '' && (
                       <span
-                        className="absolute left-11 right-28 flex items-center truncate pointer-events-none text-[13.5px] text-[#9A8B70]"
+                        className="absolute left-11 right-28 flex items-center truncate pointer-events-none text-[16px] lg:text-[13.5px] text-[#9A8B70]"
                         aria-hidden="true"
                       >
-                        <span className="truncate">Search for {typedPlaceholder}</span>
-                        <span className="ml-0.5 inline-block h-4 w-px bg-[#BEA266] animate-pulse motion-reduce:hidden" />
+                        <TypedPlaceholder phrases={searchPhrases} />
                       </span>
                     )}
                     <input
@@ -625,7 +595,7 @@ const Navbar = () => {
                       onKeyDown={handleKeyDown}
                       aria-label="Search products"
                       autoComplete="off"
-                      className="h-full w-full rounded-full bg-[#17130B] border border-[#2B2416] pl-11 pr-[148px] text-[13.5px] text-[#F3E7C6] placeholder-[#9A8B70] transition-all focus:outline-none focus:bg-black focus:border-[#BEA266] focus:shadow-[0_0_0_4px_rgba(190,162,102,0.18)]"
+                      className="h-full w-full rounded-full bg-[#17130B] border border-[#2B2416] pl-11 pr-[148px] text-[16px] lg:text-[13.5px] text-[#F3E7C6] placeholder-[#9A8B70] transition-all focus:outline-none focus:bg-black focus:border-[#BEA266] focus:shadow-[0_0_0_4px_rgba(190,162,102,0.18)]"
                     />
                     <div className="absolute right-1.5 flex items-center gap-1">
                       {searchLoadingState && <div className="w-3.5 h-3.5 border-2 border-[#BEA266] border-t-transparent rounded-full animate-spin mr-1" />}
@@ -717,9 +687,8 @@ const Navbar = () => {
                     )}
                   </AnimatePresence>
                 </div>
-              </motion.div>
+              </div>
             )}
-          </AnimatePresence>
         </div>
       </header>
 
@@ -906,8 +875,8 @@ const Navbar = () => {
         )}
       </AnimatePresence>
 
-      {/* Spacer: always matches the real header height, so page content never slides under the fixed navbar */}
-      <div style={{ height: headerH }} aria-hidden="true" />
+      {/* Spacer: constant height (--header-h = topbar + navbar) so content never slides under the fixed header and the hero can be exactly 100svh */}
+      <div style={{ height: 'var(--header-h)' }} aria-hidden="true" />
     </>
   );
 };

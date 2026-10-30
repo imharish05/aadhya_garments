@@ -203,14 +203,13 @@ export const NewArrivalsSection = () => {
             <ButtonReveal delay={0.3}>
               <Link
                 to="/products?newArrival=true"
-                className="group inline-flex items-center gap-3 px-8 sm:px-10 py-3.5 sm:py-4 bg-neutral-950 text-white font-montserrat text-sm font-semibold tracking-[0.18em] uppercase rounded-none hover:bg-neutral-800 transition-all duration-300 shadow-sm focus-visible:outline-neutral-950"
+                className="group inline-flex items-center gap-3 rounded-full bg-neutral-950 pl-7 pr-2 py-2 font-montserrat text-sm font-semibold uppercase tracking-[0.16em] text-white transition-colors duration-300 hover:bg-neutral-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-neutral-950"
                 id="zaro-shop-new-arrivals-btn"
               >
                 <span>SHOP NEW ARRIVALS</span>
-                <ArrowRight
-                  size={14}
-                  className="transform transition-transform duration-300 group-hover:translate-x-1"
-                />
+                <span className="flex h-9 w-9 items-center justify-center rounded-full bg-white/15 text-white transition-transform duration-300 group-hover:translate-x-1">
+                  <ArrowRight size={16} />
+                </span>
               </Link>
             </ButtonReveal>
 

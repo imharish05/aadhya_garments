@@ -650,3 +650,103 @@ a:focus-visible, button:focus-visible { outline: 2px solid var(--color-gold); ou
 .animate-orbit-reverse {
   animation: orbitSpinReverse 8s linear infinite;
 }
+
+/* ── Header + hero sizing ─────────────────────────────────────────────────────
+   first screen = topbar + navbar + hero = exactly 100vh                       */
+:root {
+  --topbar-h: 40px;
+  --nav-h: 64px;
+  --header-h: calc(var(--topbar-h) + var(--nav-h) + 1px); /* +1px = navbar bottom border */
+}
+@media (min-width: 1024px) {
+  :root { --nav-h: 80px; }
+}
+
+.hero-fullscreen {
+  height: calc(100vh - var(--header-h));   /* fallback */
+  height: calc(100svh - var(--header-h));  /* mobile: ignores collapsing browser bars */
+  min-height: 420px;
+}
+
+/* ── Top bar (scrolling announcements) ───────────────────────────────────────── */
+.topbar {
+  position: relative;
+  height: var(--topbar-h);
+  background: #FBF7EE;
+  overflow: hidden;
+  display: flex;
+}
+.topbar__track {
+  display: flex;
+  width: max-content;
+  height: 100%;
+  animation: topbar-scroll var(--topbar-duration, 40s) linear infinite;
+  will-change: transform;
+}
+.topbar:hover .topbar__track { animation-play-state: paused; }
+.topbar__group { display: flex; flex-shrink: 0; height: 100%; margin: 0; padding: 0; list-style: none; }
+
+/* one announcement; its edges are the gold rule, so lines join up across cells */
+.topbar__cell {
+  position: relative;
+  display: flex;
+  align-items: center;
+  padding: 0 3rem;
+  white-space: nowrap;
+}
+.topbar__text {
+  font-family: var(--font-heading);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: #171717;
+}
+/* diamond at the end of each message (same gold as the rule diamonds) */
+.topbar__end {
+  position: absolute;
+  top: 50%;
+  right: 0;
+  width: 8px;
+  height: 8px;
+  background: #BEA266;
+  transform: translate(50%, -50%) rotate(45deg);
+  pointer-events: none;
+}
+.topbar__rule {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: rgba(190, 162, 102, 0.55);
+  pointer-events: none;
+}
+.topbar__rule--top    { top: 0; }
+.topbar__rule--bottom { bottom: 0; }
+.topbar__diamond {
+  position: absolute;
+  left: 50%;
+  width: 8px;
+  height: 8px;
+  background: #BEA266;
+  transform: translate(-50%, -50%) rotate(45deg);
+}
+.topbar__rule--top .topbar__diamond    { top: 0; }
+.topbar__rule--bottom .topbar__diamond { top: 1px; }
+
+@keyframes topbar-scroll {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
+}
+
+@media (max-width: 767px) {
+  .topbar__cell { padding: 0 2rem; }
+}
+
+/* reduced motion: no scrolling, show the first message centred */
+@media (prefers-reduced-motion: reduce) {
+  .topbar { justify-content: center; }
+  .topbar__track { animation: none; }
+  .topbar__group[aria-hidden="true"] { display: none; }
+  .topbar__cell:not(:first-child) { display: none; }
+}

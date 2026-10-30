@@ -2,7 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { motion } from 'framer-motion';
-import { Heart, ShoppingBag, Star } from 'lucide-react';
+import { Heart, Star } from 'lucide-react';
 import { addLocal, openCart } from '../redux/slices/cartSlice';
 import { toggleWishlistApi } from '../redux/slices/wishlistSlice';
 import { formatPrice } from '../utils/currency';
@@ -306,13 +306,8 @@ const ProductCard = React.memo(({ product, index = 0, compactMobile = false }) =
             disabled={soldOut}
             id={`add-cart-${product.id}`}
             aria-label={info.hasOptions ? `Select options for ${product.name}` : inCart ? `View ${product.name} in cart` : `Add ${product.name} to cart`}
-            className={`flex w-full items-center justify-center gap-1.5 rounded-full py-1.5 font-inter text-[10px] font-semibold uppercase tracking-[0.08em] transition-colors sm:gap-2 sm:py-2.5 sm:text-[11px] sm:tracking-[0.14em] disabled:cursor-not-allowed disabled:bg-black/10 disabled:text-black/40 ${
-              info.hasOptions || inCart
-                ? 'border border-black bg-white text-black hover:bg-black hover:text-[#DFC481]'
-                : 'bg-black text-[#DFC481] hover:bg-[#BEA266] hover:text-black'
-            }`}
+            className="flex w-full items-center justify-center rounded-full bg-black py-1.5 font-inter text-[10px] font-semibold uppercase tracking-[0.08em] text-[#DFC481] transition-colors hover:bg-[#BEA266] hover:text-black sm:py-2.5 sm:text-[11px] sm:tracking-[0.14em] disabled:cursor-not-allowed disabled:bg-black/10 disabled:text-black/40"
           >
-            {!info.hasOptions && !inCart && <ShoppingBag size={13} className="hidden sm:block" />}
             {soldOut ? 'Sold out' : info.hasOptions ? 'Select options' : inCart ? 'View cart' : 'Add to cart'}
           </button>
         </div>

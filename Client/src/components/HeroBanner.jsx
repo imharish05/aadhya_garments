@@ -48,7 +48,7 @@ const HeroBanner = () => {
     return () => clearTimeout(t);
   }, [current, count, paused]);
 
-  const height = 'h-[240px] sm:h-[360px] lg:h-[520px]';
+  const height = 'hero-fullscreen';
 
   if (loading) {
     return <section className={`w-full animate-pulse bg-[#F3ECDB] ${height}`} aria-label="Loading banner" />;

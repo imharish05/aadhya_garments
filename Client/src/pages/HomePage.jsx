@@ -424,10 +424,13 @@ const HomePage = () => {
               <div className="flex justify-center mt-5">
                 <Link
                   to="/products?bestSeller=true"
-                  className="px-10 py-3 border border-neutral-800 text-neutral-800 hover:bg-neutral-900 hover:text-white hover:border-neutral-900 transition-all font-montserrat text-xs font-semibold uppercase tracking-widest rounded-xl"
+                  className="group inline-flex items-center gap-3 rounded-full bg-neutral-950 pl-7 pr-2 py-2 font-montserrat text-xs sm:text-sm font-semibold uppercase tracking-[0.16em] text-white transition-colors duration-300 hover:bg-neutral-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-neutral-950 shadow-sm"
                   id="carousel-view-all-btn"
                 >
-                  View All Best Sellers
+                  <span>View All Best Sellers</span>
+                  <span className="flex h-8 w-8 sm:h-9 sm:w-9 items-center justify-center rounded-full bg-white/15 text-white transition-transform duration-300 group-hover:translate-x-1">
+                    <ArrowRight size={16} />
+                  </span>
                 </Link>
               </div>
             )}
