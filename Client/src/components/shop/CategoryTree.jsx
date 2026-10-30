@@ -45,7 +45,9 @@ const CategoryTree = ({ categories = [], activeSlug = '', activeSub = '', onNavi
   return (
     <div
       ref={boxRef}
-      className={scroll ? 'ct-scroll relative max-h-[min(20rem,38vh)] overflow-y-auto overscroll-contain pr-2' : ''}
+      // data-lenis-prevent: lets the wheel/touch scroll THIS box instead of being hijacked by the smooth-scroll lib
+      data-lenis-prevent={scroll ? '' : undefined}
+      className={scroll ? 'ct-scroll relative min-h-0 flex-1 overflow-y-auto overscroll-contain pr-2' : ''}
       style={scroll ? { scrollbarWidth: 'thin', scrollbarColor: '#BEA266 transparent' } : undefined}
     >
       {scroll && <style>{SCROLL_CSS}</style>}

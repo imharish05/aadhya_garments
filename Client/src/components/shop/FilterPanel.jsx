@@ -23,7 +23,7 @@ export const DISCOUNTS = [
 
 const Group = ({ title, children, className = '' }) => (
   <div className={className}>
-    <h3 className="mb-5 flex items-center gap-3 font-inter text-[11px] font-semibold uppercase tracking-[0.26em] text-[#7A5F28]">
+    <h3 className="mb-5 shrink-0 flex items-center gap-3 font-inter text-[11px] font-semibold uppercase tracking-[0.26em] text-[#7A5F28]">
       <span className="h-px w-6 bg-[#BEA266]" />
       {title}
     </h3>
@@ -59,8 +59,8 @@ const FilterPanel = ({
   onPrice,
   /* discountValue, onDiscount, */
 }) => (
-  <div>
-    <Group title="Categories">
+  <div className={treeScroll ? 'flex min-h-0 flex-1 flex-col' : ''}>
+    <Group title="Categories" className={treeScroll ? 'flex min-h-0 flex-1 flex-col' : ''}>
       <CategoryTree categories={categories} activeSlug={activeSlug} activeSub={activeSub} onNavigate={onNavigate} scroll={treeScroll} />
     </Group>
 
@@ -76,7 +76,7 @@ const FilterPanel = ({
     </Group>
     */}
 
-    <Group title="Price" className="mt-8 border-t border-black/10 pt-8">
+    <Group title="Price" className="mt-6 shrink-0 border-t border-black/10 pt-6">
       <PriceFilter priceMin={priceMin} priceMax={priceMax} valueMin={valueMin} valueMax={valueMax} onApply={onPrice} />
     </Group>
   </div>

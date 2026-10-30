@@ -2,14 +2,14 @@ import { useEffect, useState, useCallback, useMemo, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useSearchParams, useParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { SlidersHorizontal, ChevronLeft, ChevronRight, X, SearchX } from 'lucide-react';
+import { SlidersHorizontal, ChevronLeft, ChevronRight, X, SearchX, Layers, ArrowUpDown } from 'lucide-react';
 import { fetchProducts } from '../redux/slices/productsSlice';
 import { fetchCategories } from '../redux/slices/categoriesSlice';
 import ProductCard from '../components/ProductCard';
 import Footer from '../components/Footer';
 import { StaggeredText } from '../components/animations';
 import Breadcrumb from '../components/Breadcrumb';
-import SelectField from '../components/shop/SelectField';
+import { ToolbarMenu, ToolbarButton } from '../components/shop/ToolbarControls';
 import FilterPanel, { COLLECTIONS } from '../components/shop/FilterPanel';
 import ActiveFilters from '../components/shop/ActiveFilters';
 import { formatPrice } from '../utils/currency';
@@ -74,7 +74,7 @@ const ProductListingPage = () => {
 
   /* ── data ─────────────────────────────────────────────────────────── */
   useEffect(() => {
-    dispatch(fetchProducts({ ...filters, limit: 16 }));
+    dispatch(fetchProducts({ ...filters, limit: 20 }));
   }, [filters, dispatch]);
 
   useEffect(() => {
@@ -238,7 +238,7 @@ const ProductListingPage = () => {
     <main id="main-content" className="bg-white font-inter text-black">
       {/* ── Header ─────────────────────────────────────────── */}
       <header className="border-b border-black/10 bg-white">
-        <div className="mx-auto max-w-site px-6 py-8 md:px-8 md:py-12">
+        <div className="mx-auto max-w-[1840px] px-6 py-8 md:px-8 md:py-12">
           <Breadcrumb crumbs={crumbs} tone="light" />
           <StaggeredText
             as="h1"
@@ -257,35 +257,38 @@ const ProductListingPage = () => {
       </header>
 
       {/* ── Listing ────────────────────────────────────────── */}
-      <div ref={gridTopRef} className="mx-auto max-w-site scroll-mt-28 px-6 py-8 md:px-8 md:py-10">
-        {/* toolbar: collection · sort · (mobile) filters */}
-        <div className="mb-8 flex flex-wrap items-end gap-3">
-          <SelectField
+      <div ref={gridTopRef} className="mx-auto max-w-[1840px] scroll-mt-28 px-6 py-8 md:px-8 md:py-10">
+        {/* toolbar: Collection + Sort on the left, Filters on the right (phone/tablet) */}
+        <div className="mb-6 flex items-center justify-between gap-2.5">
+          <div className="flex items-center gap-2.5">
+          <ToolbarMenu
             id="shop-collection"
+            icon={Layers}
             label="Collection"
+            options={collectionOptions}
             value={selectedCollection}
             onChange={handleCollection}
-            options={collectionOptions}
-            className="min-w-[calc(50%-6px)] flex-1 sm:min-w-[170px] sm:max-w-[240px]"
+            active={Boolean(selectedCollection)}
           />
-          <SelectField
+          <ToolbarMenu
             id="products-sort"
-            label="Sort by"
+            icon={ArrowUpDown}
+            label="Sort"
+            options={sortOptions}
             value={sortValue}
             onChange={handleSort}
-            options={sortOptions}
-            className="min-w-[calc(50%-6px)] flex-1 sm:min-w-[170px] sm:max-w-[240px]"
+            active={sortValue !== 'createdAt-DESC'}
           />
-
-          <button
-            type="button"
-            onClick={() => setFiltersOpen(true)}
-            className="flex items-center justify-center gap-2.5 rounded-full border border-black px-5 py-3 font-inter text-[11px] font-semibold uppercase tracking-[0.16em] lg:hidden"
+          </div>
+          <ToolbarButton
             id="filters-toggle-mobile"
-          >
-            <SlidersHorizontal size={15} />
-            Filters
-          </button>
+            icon={SlidersHorizontal}
+            label="Filters"
+            value={chips.length ? `${chips.length} active` : ''}
+            onClick={() => setFiltersOpen(true)}
+            active={chips.length > 0}
+            className="lg:hidden"
+          />
         </div>
 
         {chips.length > 0 && (
@@ -294,10 +297,10 @@ const ProductListingPage = () => {
           </div>
         )}
 
-        <div className="grid grid-cols-1 gap-10 lg:grid-cols-[260px_minmax(0,1fr)] xl:gap-14">
+        <div className="grid grid-cols-1 gap-10 lg:grid-cols-[250px_minmax(0,1fr)] xl:gap-10 2xl:gap-12">
           {/* sidebar (desktop) */}
           <aside className="hidden self-start lg:sticky lg:top-28 lg:block" aria-label="Filters">
-            <div className="rounded-[1.75rem] border border-black/10 bg-white p-6">
+            <div className="flex max-h-[calc(100vh-8rem)] flex-col rounded-[1.75rem] border border-black/10 bg-white p-6">
               <FilterPanel {...panelProps} treeScroll />
             </div>
           </aside>
@@ -305,8 +308,8 @@ const ProductListingPage = () => {
           {/* products */}
           <div>
             {loading ? (
-              <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:gap-6 xl:grid-cols-4">
-                {[...Array(12)].map((_, i) => (
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 xl:grid-cols-4 2xl:grid-cols-5">
+                {[...Array(10)].map((_, i) => (
                   <div key={i} className="overflow-hidden rounded-2xl bg-white shadow-sm">
                     <div className="skeleton aspect-square" />
                     <div className="space-y-1.5 p-3">
@@ -336,7 +339,7 @@ const ProductListingPage = () => {
               </div>
             ) : (
               <>
-                <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:gap-6 xl:grid-cols-4">
+                <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 xl:grid-cols-4 2xl:grid-cols-5">
                   {products.map((product, i) => (
                     <ProductCard key={product.id} product={product} index={i} />
                   ))}
@@ -411,7 +414,8 @@ const ProductListingPage = () => {
               animate={{ y: 0 }}
               exit={{ y: '100%' }}
               transition={{ type: 'tween', duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
-              className="fixed inset-x-0 bottom-0 z-[1110] flex max-h-[88vh] flex-col rounded-t-[2rem] bg-white lg:hidden"
+              data-lenis-prevent
+              className="fixed inset-x-0 bottom-0 z-[1110] flex max-h-[88vh] max-h-[88dvh] flex-col rounded-t-[2rem] bg-white lg:hidden"
               role="dialog"
               aria-label="Filters"
             >
@@ -427,7 +431,7 @@ const ProductListingPage = () => {
                 </button>
               </div>
 
-              <div className="flex-1 overflow-y-auto px-6 pb-4">
+              <div data-lenis-prevent className="min-h-0 flex-1 touch-pan-y overflow-y-auto overscroll-contain px-6 pb-4" style={{ WebkitOverflowScrolling: 'touch' }}>
                 <FilterPanel {...panelProps} onNavigate={() => setFiltersOpen(false)} />
               </div>
 
