@@ -13,8 +13,8 @@ import {
   Trash2,
   ExternalLink,
   X,
-  AlertCircle,
   CheckCircle2,
+  Image as ImageIcon,
 } from 'lucide-react';
 import AdminLayout from '../components/AdminLayout';
 import api from '../services/api';
@@ -42,25 +42,35 @@ const DEFAULT_SETTINGS = {
     ],
   },
   who: {
+    eyebrow: 'Who We Are',
     title: 'Manufacturers and wholesale distributors',
     text: "High-quality men's wear, kid's wear, shorts, cargo pants, 3/4ths and stylish T-shirts, made and supplied from Coimbatore.",
     imageUrl: '',
   },
   fabrics: {
+    eyebrow: 'Superior Materials',
     title: 'Superior fabrics, chosen with care',
     text: 'We use superior fabrics to ensure durability, comfort, and the latest trends for our customers.',
     list: ['2-way Lycra', 'NS Fabric', 'Loopknit', 'Pure Cotton', 'Muslin'],
   },
   mission:
     'To deliver exceptional clothing that combines **modern fashion** with **unmatched comfort**, while maintaining the **highest standards** of quality and affordability.',
+  missionTitle: 'Our mission',
+  valuesTitle: 'What we stand for',
   values: ['Style', 'Comfort', 'Quality', 'Affordability', 'Durability', 'Modern fashion', 'Latest trends'],
+  missionImages: {
+    main: '',
+    accent: '',
+  },
   contact: {
+    eyebrow: 'Wholesale & Retail Inquiries',
     title: 'Get in touch',
-    text: "Men's wear, kid's wear and ladies' wear, all in one place.",
+    text: "Men's wear, kid's wear and ladies' wear, all in one place. We welcome wholesale partners, distributors, and bulk custom inquiries.",
     button: 'Contact us',
     to: '/contact',
   },
   office: {
+    label: 'Manufacturing & Office',
     address: [
       '6/154, 2nd Street, Radhithya Avenue,',
       'Checkpost, Kinathukadavu - Pollachi Main Road,',
@@ -78,15 +88,27 @@ const SiteSettingsAdminPage = () => {
   const [saving, setSaving] = useState(false);
   const [settings, setSettings] = useState(DEFAULT_SETTINGS);
 
-  // New tag/item inputs
+  // New item inputs
   const [newFabric, setNewFabric] = useState('');
   const [newValue, setNewValue] = useState('');
 
-  // Image handling
-  const [imageFile, setImageFile] = useState(null);
-  const [imagePreview, setImagePreview] = useState('');
-  const [isDragging, setIsDragging] = useState(false);
-  const fileInputRef = useRef(null);
+  // Who We Are image states
+  const [whoImageFile, setWhoImageFile] = useState(null);
+  const [whoImagePreview, setWhoImagePreview] = useState('');
+  const [whoDragging, setWhoDragging] = useState(false);
+  const whoFileRef = useRef(null);
+
+  // Mission Main image states
+  const [missionMainFile, setMissionMainFile] = useState(null);
+  const [missionMainPreview, setMissionMainPreview] = useState('');
+  const [missionMainDragging, setMissionMainDragging] = useState(false);
+  const missionMainRef = useRef(null);
+
+  // Mission Accent image states
+  const [missionAccentFile, setMissionAccentFile] = useState(null);
+  const [missionAccentPreview, setMissionAccentPreview] = useState('');
+  const [missionAccentDragging, setMissionAccentDragging] = useState(false);
+  const missionAccentRef = useRef(null);
 
   // Fetch Site Settings from backend
   const loadSettings = async () => {
@@ -96,19 +118,44 @@ const SiteSettingsAdminPage = () => {
       if (res.data && res.data.success) {
         const d = res.data.data;
         setSettings({
-          hero: { ...DEFAULT_SETTINGS.hero, ...(d.hero || {}) },
-          who: { ...DEFAULT_SETTINGS.who, ...(d.who || {}) },
+          hero: {
+            eyebrow: d.hero?.eyebrow || DEFAULT_SETTINGS.hero.eyebrow,
+            title: d.hero?.title || DEFAULT_SETTINGS.hero.title,
+            text: d.hero?.text || DEFAULT_SETTINGS.hero.text,
+            tags: d.hero?.tags?.length ? d.hero.tags : DEFAULT_SETTINGS.hero.tags,
+          },
+          who: {
+            eyebrow: d.who?.eyebrow || DEFAULT_SETTINGS.who.eyebrow,
+            title: d.who?.title || DEFAULT_SETTINGS.who.title,
+            text: d.who?.text || DEFAULT_SETTINGS.who.text,
+            imageUrl: d.who?.imageUrl || '',
+          },
           fabrics: {
+            eyebrow: d.fabrics?.eyebrow || DEFAULT_SETTINGS.fabrics.eyebrow,
             title: d.fabrics?.title || DEFAULT_SETTINGS.fabrics.title,
             text: d.fabrics?.text || DEFAULT_SETTINGS.fabrics.text,
             list: d.fabrics?.list?.length ? d.fabrics.list : DEFAULT_SETTINGS.fabrics.list,
           },
           mission: d.mission || DEFAULT_SETTINGS.mission,
+          missionTitle: d.missionTitle || DEFAULT_SETTINGS.missionTitle,
+          valuesTitle: d.valuesTitle || DEFAULT_SETTINGS.valuesTitle,
           values: d.values?.length ? d.values : DEFAULT_SETTINGS.values,
-          contact: { ...DEFAULT_SETTINGS.contact, ...(d.contact || {}) },
+          missionImages: {
+            main: d.missionImages?.main || '',
+            accent: d.missionImages?.accent || '',
+          },
+          contact: {
+            eyebrow: d.contact?.eyebrow || DEFAULT_SETTINGS.contact.eyebrow,
+            title: d.contact?.title || DEFAULT_SETTINGS.contact.title,
+            text: d.contact?.text || DEFAULT_SETTINGS.contact.text,
+            button: d.contact?.button || DEFAULT_SETTINGS.contact.button,
+            to: d.contact?.to || DEFAULT_SETTINGS.contact.to,
+          },
           office: {
-            ...DEFAULT_SETTINGS.office,
-            ...(d.office || {}),
+            label: d.office?.label || DEFAULT_SETTINGS.office.label,
+            phone: d.office?.phone || DEFAULT_SETTINGS.office.phone,
+            email: d.office?.email || DEFAULT_SETTINGS.office.email,
+            mapsUrl: d.office?.mapsUrl || DEFAULT_SETTINGS.office.mapsUrl,
             address: Array.isArray(d.office?.address)
               ? d.office.address
               : (typeof d.office?.address === 'string'
@@ -116,7 +163,9 @@ const SiteSettingsAdminPage = () => {
                   : DEFAULT_SETTINGS.office.address),
           },
         });
-        setImagePreview(d.who?.imageUrl || '');
+        setWhoImagePreview(d.who?.imageUrl || '');
+        setMissionMainPreview(d.missionImages?.main || '');
+        setMissionAccentPreview(d.missionImages?.accent || '');
       }
     } catch (err) {
       toast.error('Failed to load site settings');
@@ -130,58 +179,30 @@ const SiteSettingsAdminPage = () => {
     loadSettings();
   }, []);
 
-  const handleImageChange = (eOrFile) => {
+  // Generic image picker handler
+  const processImagePicker = (eOrFile, setFile, setPreview, ref) => {
     const file = eOrFile instanceof File ? eOrFile : eOrFile.target?.files?.[0];
     if (file) {
       const val = validateImageFile(file, { maxSizeMB: 5 });
       if (!val.isValid) {
         toast.error(val.error);
-        if (fileInputRef.current) fileInputRef.current.value = '';
+        if (ref?.current) ref.current.value = '';
         return;
       }
-      setImageFile(file);
+      setFile(file);
       const reader = new FileReader();
-      reader.onloadend = () => setImagePreview(reader.result);
+      reader.onloadend = () => setPreview(reader.result);
       reader.readAsDataURL(file);
     }
   };
 
-  const handleDrag = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (e.type === 'dragenter' || e.type === 'dragover') {
-      setIsDragging(true);
-    } else if (e.type === 'dragleave') {
-      setIsDragging(false);
-    }
-  };
-
-  const handleDrop = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsDragging(false);
-    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-      handleImageChange(e.dataTransfer.files[0]);
-    }
-  };
-
-  const removeImage = () => {
-    setImageFile(null);
-    setImagePreview('');
-    setSettings((prev) => ({
-      ...prev,
-      who: { ...prev.who, imageUrl: '' },
-    }));
-    if (fileInputRef.current) fileInputRef.current.value = '';
-  };
-
-  // Add/remove fabric
+  // Fabric list management
   const handleAddFabric = (e) => {
     e.preventDefault();
     const trimmed = newFabric.trim();
     if (!trimmed) return;
     if (settings.fabrics.list.includes(trimmed)) {
-      toast.error('Fabric already in list');
+      toast.error('Fabric already exists in list');
       return;
     }
     setSettings((prev) => ({
@@ -205,13 +226,13 @@ const SiteSettingsAdminPage = () => {
     }));
   };
 
-  // Add/remove value
+  // Values list management
   const handleAddValue = (e) => {
     e.preventDefault();
     const trimmed = newValue.trim();
     if (!trimmed) return;
     if (settings.values.includes(trimmed)) {
-      toast.error('Value already in list');
+      toast.error('Value already exists in list');
       return;
     }
     setSettings((prev) => ({
@@ -291,12 +312,12 @@ const SiteSettingsAdminPage = () => {
       return false;
     }
     if (!settings.who.text?.trim()) {
-      toast.error('Who We Are description is required');
+      toast.error('Who We Are narrative is required');
       setActiveTab('who');
       return false;
     }
     if (!settings.fabrics.list?.length) {
-      toast.error('Add at least one fabric');
+      toast.error('Add at least one fabric to the list');
       setActiveTab('fabrics');
       return false;
     }
@@ -322,9 +343,10 @@ const SiteSettingsAdminPage = () => {
     try {
       const fd = new FormData();
       fd.append('data', JSON.stringify(settings));
-      if (imageFile) {
-        fd.append('image', imageFile);
-      }
+
+      if (whoImageFile) fd.append('whoImage', whoImageFile);
+      if (missionMainFile) fd.append('missionMain', missionMainFile);
+      if (missionAccentFile) fd.append('missionAccent', missionAccentFile);
 
       const res = await api.post('/site-settings/about', fd, {
         headers: {
@@ -336,8 +358,12 @@ const SiteSettingsAdminPage = () => {
         toast.success('Site settings saved successfully!');
         const savedData = res.data.data;
         setSettings(savedData);
-        setImagePreview(savedData.who?.imageUrl || '');
-        setImageFile(null);
+        setWhoImagePreview(savedData.who?.imageUrl || '');
+        setMissionMainPreview(savedData.missionImages?.main || '');
+        setMissionAccentPreview(savedData.missionImages?.accent || '');
+        setWhoImageFile(null);
+        setMissionMainFile(null);
+        setMissionAccentFile(null);
       }
     } catch (err) {
       const errMsg = err.response?.data?.message || 'Failed to save settings';
@@ -377,7 +403,7 @@ const SiteSettingsAdminPage = () => {
               About Page & Website Content
             </h2>
             <p className="text-xs text-brand-grey mt-1">
-              Configure hero text, hang tags, company narrative, fabrics, mission, and contact information.
+              Configure every heading, text, badge, fabric, value, image, and office detail on the About page.
             </p>
           </div>
 
@@ -425,12 +451,11 @@ const SiteSettingsAdminPage = () => {
                 transition={{ duration: 0.2 }}
                 className="space-y-6"
               >
-                {/* Hero Main Copy */}
                 <div className="bg-white rounded-2xl border border-brand-light shadow-sm p-6 space-y-4">
                   <div className="border-b border-brand-light pb-3">
                     <h3 className="text-base font-semibold text-brand-text">Hero Section Copy</h3>
                     <p className="text-xs text-brand-grey mt-0.5">
-                      Main title and introduction displayed at the top of the About page.
+                      Top banner introductory text and branding eyebrow.
                     </p>
                   </div>
 
@@ -486,7 +511,7 @@ const SiteSettingsAdminPage = () => {
                             hero: { ...settings.hero, text: e.target.value },
                           })
                         }
-                        className="w-full border border-brand-light px-3.5 py-2.5 rounded-lg text-sm focus:outline-none focus:border-brand-gold"
+                        className="w-full border border-brand-light px-3.5 py-2.5 rounded-lg text-sm focus:outline-none focus:border-brand-gold leading-relaxed"
                         placeholder="We are manufacturers and wholesale distributors of high-quality..."
                       />
                     </div>
@@ -598,7 +623,25 @@ const SiteSettingsAdminPage = () => {
                     </p>
                   </div>
 
-                  <div className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs font-semibold text-brand-grey mb-1.5">
+                        Section Eyebrow Badge
+                      </label>
+                      <input
+                        type="text"
+                        value={settings.who.eyebrow}
+                        onChange={(e) =>
+                          setSettings({
+                            ...settings,
+                            who: { ...settings.who, eyebrow: e.target.value },
+                          })
+                        }
+                        className="w-full border border-brand-light px-3.5 py-2.5 rounded-lg text-sm focus:outline-none focus:border-brand-gold"
+                        placeholder="Who We Are"
+                      />
+                    </div>
+
                     <div>
                       <label className="block text-xs font-semibold text-brand-grey mb-1.5">
                         Section Heading <span className="text-rose-500">*</span>
@@ -618,7 +661,7 @@ const SiteSettingsAdminPage = () => {
                       />
                     </div>
 
-                    <div>
+                    <div className="md:col-span-2">
                       <label className="block text-xs font-semibold text-brand-grey mb-1.5">
                         Story & Manufacturing Narrative <span className="text-rose-500">*</span>
                       </label>
@@ -638,7 +681,7 @@ const SiteSettingsAdminPage = () => {
                     </div>
                   </div>
 
-                  {/* Image Upload Area */}
+                  {/* Who We Are Photo Upload */}
                   <div className="border-t border-brand-light pt-6 space-y-3">
                     <div>
                       <label className="block text-xs font-semibold text-brand-grey mb-0.5">
@@ -651,28 +694,34 @@ const SiteSettingsAdminPage = () => {
 
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
                       <div
-                        onClick={() => fileInputRef.current?.click()}
-                        onDragEnter={handleDrag}
-                        onDragOver={handleDrag}
-                        onDragLeave={handleDrag}
-                        onDrop={handleDrop}
+                        onClick={() => whoFileRef.current?.click()}
+                        onDragEnter={(e) => { e.preventDefault(); setWhoDragging(true); }}
+                        onDragOver={(e) => { e.preventDefault(); setWhoDragging(true); }}
+                        onDragLeave={(e) => { e.preventDefault(); setWhoDragging(false); }}
+                        onDrop={(e) => {
+                          e.preventDefault();
+                          setWhoDragging(false);
+                          if (e.dataTransfer.files?.[0]) {
+                            processImagePicker(e.dataTransfer.files[0], setWhoImageFile, setWhoImagePreview, whoFileRef);
+                          }
+                        }}
                         className={`border-2 border-dashed rounded-2xl p-6 transition-all flex flex-col items-center justify-center text-center h-48 cursor-pointer ${
-                          isDragging
+                          whoDragging
                             ? 'border-brand-gold bg-amber-50/20 scale-98'
                             : 'border-brand-light hover:border-brand-gold hover:bg-amber-50/10'
                         }`}
                       >
                         <Upload className="w-8 h-8 text-brand-grey mb-2" />
                         <span className="text-xs font-medium text-brand-text">
-                          Click to upload or drag & drop
+                          Upload Company Photo
                         </span>
                         <span className="text-[10px] text-brand-grey mt-1">
                           PNG, JPG or WebP (Max 5MB)
                         </span>
                         <input
                           type="file"
-                          ref={fileInputRef}
-                          onChange={handleImageChange}
+                          ref={whoFileRef}
+                          onChange={(e) => processImagePicker(e, setWhoImageFile, setWhoImagePreview, whoFileRef)}
                           accept="image/*"
                           className="hidden"
                         />
@@ -680,22 +729,27 @@ const SiteSettingsAdminPage = () => {
 
                       <div className="md:col-span-2">
                         <div className="border border-brand-light rounded-2xl h-48 overflow-hidden bg-neutral-50 flex items-center justify-center relative">
-                          {imagePreview ? (
+                          {whoImagePreview ? (
                             <>
                               <img
-                                src={imagePreview.startsWith('data:') ? imagePreview : getImageUrl(imagePreview)}
+                                src={whoImagePreview.startsWith('data:') ? whoImagePreview : getImageUrl(whoImagePreview)}
                                 alt="Company Story Banner Preview"
                                 className="w-full h-full object-cover"
                               />
                               <div className="absolute top-3 right-3 flex items-center gap-2">
-                                {imageFile && (
+                                {whoImageFile && (
                                   <span className="bg-brand-gold text-white text-[10px] font-semibold px-2 py-0.5 rounded-full shadow">
                                     New File Ready
                                   </span>
                                 )}
                                 <button
                                   type="button"
-                                  onClick={removeImage}
+                                  onClick={() => {
+                                    setWhoImageFile(null);
+                                    setWhoImagePreview('');
+                                    setSettings(prev => ({ ...prev, who: { ...prev.who, imageUrl: '' } }));
+                                    if (whoFileRef.current) whoFileRef.current.value = '';
+                                  }}
                                   className="bg-black/70 hover:bg-rose-600 text-white p-1.5 rounded-full transition-colors"
                                   title="Remove image"
                                 >
@@ -705,12 +759,12 @@ const SiteSettingsAdminPage = () => {
                             </>
                           ) : (
                             <div className="text-center p-4">
-                              <Info className="mx-auto text-neutral-300 mb-1" size={24} />
+                              <ImageIcon className="mx-auto text-neutral-300 mb-1" size={24} />
                               <span className="text-xs text-brand-grey block">
                                 No custom photo uploaded.
                               </span>
                               <span className="text-[10px] text-brand-grey/80">
-                                Story section renders clean text-only layout when empty.
+                                Section displays clean text-only layout when empty.
                               </span>
                             </div>
                           )}
@@ -743,6 +797,24 @@ const SiteSettingsAdminPage = () => {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-xs font-semibold text-brand-grey mb-1.5">
+                        Section Eyebrow Badge
+                      </label>
+                      <input
+                        type="text"
+                        value={settings.fabrics.eyebrow}
+                        onChange={(e) =>
+                          setSettings({
+                            ...settings,
+                            fabrics: { ...settings.fabrics, eyebrow: e.target.value },
+                          })
+                        }
+                        className="w-full border border-brand-light px-3.5 py-2.5 rounded-lg text-sm focus:outline-none focus:border-brand-gold"
+                        placeholder="Superior Materials"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-semibold text-brand-grey mb-1.5">
                         Section Title
                       </label>
                       <input
@@ -759,7 +831,7 @@ const SiteSettingsAdminPage = () => {
                       />
                     </div>
 
-                    <div>
+                    <div className="md:col-span-2">
                       <label className="block text-xs font-semibold text-brand-grey mb-1.5">
                         Section Subtitle / Description
                       </label>
@@ -846,29 +918,57 @@ const SiteSettingsAdminPage = () => {
                 transition={{ duration: 0.2 }}
                 className="space-y-6"
               >
-                {/* Mission Statement */}
+                {/* Mission Text & Title */}
                 <div className="bg-white rounded-2xl border border-brand-light shadow-sm p-6 space-y-4">
                   <div className="border-b border-brand-light pb-3">
                     <h3 className="text-base font-semibold text-brand-text">Mission Statement</h3>
                     <p className="text-xs text-brand-grey mt-0.5">
-                      Core brand philosophy. Wrap phrases in <code className="bg-neutral-100 px-1 py-0.5 rounded text-amber-700 font-mono">**double asterisks**</code> to emphasize them with a gold stitched underline.
+                      Core brand philosophy. Wrap phrases in <code className="bg-neutral-100 px-1 py-0.5 rounded text-amber-700 font-mono">**double asterisks**</code> to emphasize them with a gold italic style.
                     </p>
                   </div>
 
-                  <div>
-                    <label className="block text-xs font-semibold text-brand-grey mb-1.5">
-                      Mission Text <span className="text-rose-500">*</span>
-                    </label>
-                    <textarea
-                      rows={4}
-                      required
-                      value={settings.mission}
-                      onChange={(e) =>
-                        setSettings({ ...settings, mission: e.target.value })
-                      }
-                      className="w-full border border-brand-light px-3.5 py-2.5 rounded-lg text-sm focus:outline-none focus:border-brand-gold leading-relaxed"
-                      placeholder="To deliver exceptional clothing that combines **modern fashion** with **unmatched comfort**..."
-                    />
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs font-semibold text-brand-grey mb-1.5">
+                        Mission Heading Title
+                      </label>
+                      <input
+                        type="text"
+                        value={settings.missionTitle}
+                        onChange={(e) => setSettings({ ...settings, missionTitle: e.target.value })}
+                        className="w-full border border-brand-light px-3.5 py-2.5 rounded-lg text-sm focus:outline-none focus:border-brand-gold"
+                        placeholder="Our mission"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-semibold text-brand-grey mb-1.5">
+                        Values Subheading Title
+                      </label>
+                      <input
+                        type="text"
+                        value={settings.valuesTitle}
+                        onChange={(e) => setSettings({ ...settings, valuesTitle: e.target.value })}
+                        className="w-full border border-brand-light px-3.5 py-2.5 rounded-lg text-sm focus:outline-none focus:border-brand-gold"
+                        placeholder="What we stand for"
+                      />
+                    </div>
+
+                    <div className="md:col-span-2">
+                      <label className="block text-xs font-semibold text-brand-grey mb-1.5">
+                        Mission Statement Text <span className="text-rose-500">*</span>
+                      </label>
+                      <textarea
+                        rows={4}
+                        required
+                        value={settings.mission}
+                        onChange={(e) =>
+                          setSettings({ ...settings, mission: e.target.value })
+                        }
+                        className="w-full border border-brand-light px-3.5 py-2.5 rounded-lg text-sm focus:outline-none focus:border-brand-gold leading-relaxed"
+                        placeholder="To deliver exceptional clothing that combines **modern fashion** with **unmatched comfort**..."
+                      />
+                    </div>
                   </div>
 
                   {/* Live Highlight Preview */}
@@ -881,7 +981,7 @@ const SiteSettingsAdminPage = () => {
                         i % 2 === 1 ? (
                           <span
                             key={i}
-                            className="font-medium text-[#7A5F28] border-b-2 border-dashed border-[#BEA266] pb-0.5"
+                            className="font-medium text-[#7A5F28] italic px-1"
                           >
                             {part}
                           </span>
@@ -893,12 +993,152 @@ const SiteSettingsAdminPage = () => {
                   </div>
                 </div>
 
+                {/* Mission Collage Images */}
+                <div className="bg-white rounded-2xl border border-brand-light shadow-sm p-6 space-y-4">
+                  <div className="border-b border-brand-light pb-3">
+                    <h3 className="text-base font-semibold text-brand-text">Mission Section Collage Images</h3>
+                    <p className="text-xs text-brand-grey mt-0.5">
+                      The large craftsmanship photo and smaller overlapping framed detail photo on the About page.
+                    </p>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {/* Main Craftsmanship Image */}
+                    <div className="border border-brand-light rounded-xl p-4 bg-neutral-50/50 space-y-3">
+                      <span className="text-xs font-bold text-brand-text block">
+                        Main Collage Photo (Large)
+                      </span>
+                      <div
+                        onClick={() => missionMainRef.current?.click()}
+                        onDragEnter={(e) => { e.preventDefault(); setMissionMainDragging(true); }}
+                        onDragOver={(e) => { e.preventDefault(); setMissionMainDragging(true); }}
+                        onDragLeave={(e) => { e.preventDefault(); setMissionMainDragging(false); }}
+                        onDrop={(e) => {
+                          e.preventDefault();
+                          setMissionMainDragging(false);
+                          if (e.dataTransfer.files?.[0]) {
+                            processImagePicker(e.dataTransfer.files[0], setMissionMainFile, setMissionMainPreview, missionMainRef);
+                          }
+                        }}
+                        className={`border-2 border-dashed rounded-xl h-36 flex flex-col items-center justify-center cursor-pointer transition-all ${
+                          missionMainDragging
+                            ? 'border-brand-gold bg-amber-50/20'
+                            : 'border-brand-light hover:border-brand-gold'
+                        }`}
+                      >
+                        {missionMainPreview ? (
+                          <div className="relative h-full w-full overflow-hidden rounded-lg group">
+                            <img
+                              src={missionMainPreview.startsWith('data:') ? missionMainPreview : getImageUrl(missionMainPreview)}
+                              alt="Mission Main Preview"
+                              className="h-full w-full object-cover"
+                            />
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setMissionMainFile(null);
+                                setMissionMainPreview('');
+                                setSettings(prev => ({
+                                  ...prev,
+                                  missionImages: { ...prev.missionImages, main: '' },
+                                }));
+                                if (missionMainRef.current) missionMainRef.current.value = '';
+                              }}
+                              className="absolute top-2 right-2 bg-black/70 hover:bg-rose-600 text-white p-1 rounded-full"
+                            >
+                              <Trash2 size={12} />
+                            </button>
+                          </div>
+                        ) : (
+                          <div className="text-center p-2">
+                            <Upload className="mx-auto text-brand-grey mb-1" size={20} />
+                            <span className="text-[11px] font-medium text-brand-text block">Click or Drop Main Photo</span>
+                            <span className="text-[9px] text-brand-grey">Falls back to Loopknit photo</span>
+                          </div>
+                        )}
+                        <input
+                          type="file"
+                          ref={missionMainRef}
+                          onChange={(e) => processImagePicker(e, setMissionMainFile, setMissionMainPreview, missionMainRef)}
+                          accept="image/*"
+                          className="hidden"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Accent Detail Image */}
+                    <div className="border border-brand-light rounded-xl p-4 bg-neutral-50/50 space-y-3">
+                      <span className="text-xs font-bold text-brand-text block">
+                        Accent Detail Photo (Overlapping)
+                      </span>
+                      <div
+                        onClick={() => missionAccentRef.current?.click()}
+                        onDragEnter={(e) => { e.preventDefault(); setMissionAccentDragging(true); }}
+                        onDragOver={(e) => { e.preventDefault(); setMissionAccentDragging(true); }}
+                        onDragLeave={(e) => { e.preventDefault(); setMissionAccentDragging(false); }}
+                        onDrop={(e) => {
+                          e.preventDefault();
+                          setMissionAccentDragging(false);
+                          if (e.dataTransfer.files?.[0]) {
+                            processImagePicker(e.dataTransfer.files[0], setMissionAccentFile, setMissionAccentPreview, missionAccentRef);
+                          }
+                        }}
+                        className={`border-2 border-dashed rounded-xl h-36 flex flex-col items-center justify-center cursor-pointer transition-all ${
+                          missionAccentDragging
+                            ? 'border-brand-gold bg-amber-50/20'
+                            : 'border-brand-light hover:border-brand-gold'
+                        }`}
+                      >
+                        {missionAccentPreview ? (
+                          <div className="relative h-full w-full overflow-hidden rounded-lg group">
+                            <img
+                              src={missionAccentPreview.startsWith('data:') ? missionAccentPreview : getImageUrl(missionAccentPreview)}
+                              alt="Mission Accent Preview"
+                              className="h-full w-full object-cover"
+                            />
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setMissionAccentFile(null);
+                                setMissionAccentPreview('');
+                                setSettings(prev => ({
+                                  ...prev,
+                                  missionImages: { ...prev.missionImages, accent: '' },
+                                }));
+                                if (missionAccentRef.current) missionAccentRef.current.value = '';
+                              }}
+                              className="absolute top-2 right-2 bg-black/70 hover:bg-rose-600 text-white p-1 rounded-full"
+                            >
+                              <Trash2 size={12} />
+                            </button>
+                          </div>
+                        ) : (
+                          <div className="text-center p-2">
+                            <Upload className="mx-auto text-brand-grey mb-1" size={20} />
+                            <span className="text-[11px] font-medium text-brand-text block">Click or Drop Accent Photo</span>
+                            <span className="text-[9px] text-brand-grey">Falls back to Pure Cotton photo</span>
+                          </div>
+                        )}
+                        <input
+                          type="file"
+                          ref={missionAccentRef}
+                          onChange={(e) => processImagePicker(e, setMissionAccentFile, setMissionAccentPreview, missionAccentRef)}
+                          accept="image/*"
+                          className="hidden"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
                 {/* Core Values */}
                 <div className="bg-white rounded-2xl border border-brand-light shadow-sm p-6 space-y-4">
                   <div className="border-b border-brand-light pb-3">
-                    <h3 className="text-base font-semibold text-brand-text">What We Stand For (Garment Label Values)</h3>
+                    <h3 className="text-base font-semibold text-brand-text">What We Stand For (Core Values Pills)</h3>
                     <p className="text-xs text-brand-grey mt-0.5">
-                      Appears in the stitched garment specification card on the About page.
+                      Pill badges displayed in the mission section.
                     </p>
                   </div>
 
@@ -970,7 +1210,25 @@ const SiteSettingsAdminPage = () => {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-xs font-semibold text-brand-grey mb-1.5">
-                        Banner Heading
+                        Banner Eyebrow Badge
+                      </label>
+                      <input
+                        type="text"
+                        value={settings.contact.eyebrow}
+                        onChange={(e) =>
+                          setSettings({
+                            ...settings,
+                            contact: { ...settings.contact, eyebrow: e.target.value },
+                          })
+                        }
+                        className="w-full border border-brand-light px-3.5 py-2.5 rounded-lg text-sm focus:outline-none focus:border-brand-gold"
+                        placeholder="Wholesale & Retail Inquiries"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-semibold text-brand-grey mb-1.5">
+                        Banner Heading Title
                       </label>
                       <input
                         type="text"
@@ -1022,12 +1280,12 @@ const SiteSettingsAdminPage = () => {
                       />
                     </div>
 
-                    <div>
+                    <div className="md:col-span-2">
                       <label className="block text-xs font-semibold text-brand-grey mb-1.5">
                         Subtext / Description
                       </label>
-                      <input
-                        type="text"
+                      <textarea
+                        rows={2}
                         value={settings.contact.text}
                         onChange={(e) =>
                           setSettings({
@@ -1035,7 +1293,7 @@ const SiteSettingsAdminPage = () => {
                             contact: { ...settings.contact, text: e.target.value },
                           })
                         }
-                        className="w-full border border-brand-light px-3.5 py-2.5 rounded-lg text-sm focus:outline-none focus:border-brand-gold"
+                        className="w-full border border-brand-light px-3.5 py-2.5 rounded-lg text-sm focus:outline-none focus:border-brand-gold leading-relaxed"
                         placeholder="Men's wear, kid's wear and ladies' wear, all in one place."
                       />
                     </div>
@@ -1047,11 +1305,29 @@ const SiteSettingsAdminPage = () => {
                   <div className="border-b border-brand-light pb-3">
                     <h3 className="text-base font-semibold text-brand-text">Office Address & Contacts</h3>
                     <p className="text-xs text-brand-grey mt-0.5">
-                      Physical manufacturing and distribution office location.
+                      Physical manufacturing and distribution office location and contact lines.
                     </p>
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="md:col-span-2">
+                      <label className="block text-xs font-semibold text-brand-grey mb-1.5">
+                        Office Card Label / Header
+                      </label>
+                      <input
+                        type="text"
+                        value={settings.office.label}
+                        onChange={(e) =>
+                          setSettings({
+                            ...settings,
+                            office: { ...settings.office, label: e.target.value },
+                          })
+                        }
+                        className="w-full border border-brand-light px-3.5 py-2.5 rounded-lg text-sm focus:outline-none focus:border-brand-gold"
+                        placeholder="Manufacturing & Office"
+                      />
+                    </div>
+
                     <div className="md:col-span-2">
                       <label className="block text-xs font-semibold text-brand-grey mb-1.5">
                         Address Lines (One line per row)
@@ -1079,7 +1355,7 @@ const SiteSettingsAdminPage = () => {
 
                     <div>
                       <label className="block text-xs font-semibold text-brand-grey mb-1.5">
-                        Official Phone
+                        Official Direct Phone Line
                       </label>
                       <input
                         type="text"
@@ -1097,7 +1373,7 @@ const SiteSettingsAdminPage = () => {
 
                     <div>
                       <label className="block text-xs font-semibold text-brand-grey mb-1.5">
-                        Official Email
+                        Official Inquiries Email
                       </label>
                       <input
                         type="email"
@@ -1115,7 +1391,7 @@ const SiteSettingsAdminPage = () => {
 
                     <div className="md:col-span-2">
                       <label className="block text-xs font-semibold text-brand-grey mb-1.5">
-                        Google Maps Link
+                        Google Maps Location Link
                       </label>
                       <input
                         type="text"
@@ -1140,7 +1416,7 @@ const SiteSettingsAdminPage = () => {
           <div className="bg-white rounded-2xl border border-brand-light p-4 shadow-sm flex items-center justify-between sticky bottom-4 z-10">
             <div className="text-xs text-brand-grey flex items-center gap-1.5">
               <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-              <span>Changes reflect immediately on the website upon saving.</span>
+              <span>All changes reflect immediately on the website upon saving.</span>
             </div>
 
             <button

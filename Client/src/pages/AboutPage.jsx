@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, useReducedMotion } from 'framer-motion';
-import { ArrowUpRight, MapPin, Phone, Mail, Compass } from 'lucide-react';
+import { ArrowUpRight } from 'lucide-react';
 import Footer from '../components/Footer';
 import { FadeUp, EyebrowReveal, StaggeredText } from '../components/animations';
 import api from '../services/api';
@@ -29,30 +29,35 @@ const DEFAULT_ABOUT = {
     ],
   },
   who: {
+    eyebrow: 'Who We Are',
     title: 'Manufacturers and wholesale distributors',
     text: "High-quality men's wear, kid's wear, shorts, cargo pants, 3/4ths and stylish T-shirts, made and supplied from Coimbatore.",
     imageUrl: '',
   },
   values: ['Style', 'Comfort', 'Quality', 'Affordability', 'Durability', 'Modern fashion', 'Latest trends'],
   fabrics: {
+    eyebrow: 'Superior Materials',
     title: 'Superior fabrics, chosen with care',
     text: 'We use superior fabrics to ensure durability, comfort, and the latest trends for our customers.',
     list: ['2-way Lycra', 'NS Fabric', 'Loopknit', 'Pure Cotton', 'Muslin'],
   },
   mission:
     'To deliver exceptional clothing that combines **modern fashion** with **unmatched comfort**, while maintaining the **highest standards** of quality and affordability.',
-  // Empty = fall back to bundled fabric photos. Set via site settings API.
+  missionTitle: 'Our mission',
+  valuesTitle: 'What we stand for',
   missionImages: {
     main: '',
     accent: '',
   },
   contact: {
+    eyebrow: 'Wholesale & Retail Inquiries',
     title: 'Get in touch',
     text: "Men's wear, kid's wear and ladies' wear, all in one place. We welcome wholesale partners, distributors, and bulk custom inquiries.",
     button: 'Contact us',
     to: '/contact',
   },
   office: {
+    label: 'Manufacturing & Office',
     address: [
       '6/154, 2nd Street, Radhithya Avenue,',
       'Checkpost, Kinathukadavu - Pollachi Main Road,',
@@ -154,7 +159,7 @@ const Who = ({ who = {} }) => {
           <FadeUp className={photo ? '' : 'md:col-span-5'}>
             <span className="mb-3 inline-flex items-center gap-3 text-[11px] font-semibold uppercase tracking-[0.28em] text-[#7A5F28]">
               <span className="h-px w-8 bg-[#BEA266]" />
-              Who We Are
+              {who.eyebrow || DEFAULT_ABOUT.who.eyebrow}
             </span>
             <h2 className="font-playfair text-2xl font-medium leading-snug text-black sm:text-3xl lg:text-[2.2rem]">
               {who.title || DEFAULT_ABOUT.who.title}
@@ -204,7 +209,7 @@ const Fabrics = ({ fabrics = {} }) => {
         <FadeUp className="mx-auto max-w-xl text-center">
           <span className="mb-4 inline-flex items-center gap-3 text-[11px] font-semibold uppercase tracking-[0.28em] text-[#7A5F28]">
             <span className="h-px w-8 bg-[#BEA266]" />
-            Superior Materials
+            {fabrics.eyebrow || DEFAULT_ABOUT.fabrics.eyebrow}
             <span className="h-px w-8 bg-[#BEA266]" />
           </span>
           <h2 className="font-playfair text-2xl font-medium leading-snug text-black sm:text-3xl lg:text-[2rem]">
@@ -264,11 +269,9 @@ const Fabrics = ({ fabrics = {} }) => {
 };
 
 /* ────────────────────────────────────────────────────────────────────────────
-   4. MISSION & CORE VALUES — big image + overlapping framed small image + text
-   Images come from site settings (about.missionImages.main / .accent),
-   falling back to fabric photos already imported above.
+   4. MISSION & CORE VALUES
 ──────────────────────────────────────────────────────────────────────────── */
-const Mission = ({ mission = '', values = [], images = {} }) => {
+const Mission = ({ mission = '', missionTitle = '', valuesTitle = '', values = [], images = {} }) => {
   const missionText = mission || DEFAULT_ABOUT.mission;
   const valuesList = values.length ? values : DEFAULT_ABOUT.values;
   const parts = missionText.split('**');
@@ -308,7 +311,7 @@ const Mission = ({ mission = '', values = [], images = {} }) => {
           {/* Mission words */}
           <FadeUp delay={0.1}>
             <h2 className="font-playfair text-2xl font-medium text-black sm:text-3xl">
-              Our mission
+              {missionTitle || DEFAULT_ABOUT.missionTitle}
             </h2>
 
             <p className="font-playfair mt-6 text-2xl font-normal leading-[1.4] text-black/85 sm:text-3xl lg:text-[2.1rem]">
@@ -325,7 +328,9 @@ const Mission = ({ mission = '', values = [], images = {} }) => {
 
             <div className="my-9 h-px w-full bg-gradient-to-r from-[#BEA266] to-transparent" />
 
-            <p className="text-sm font-semibold text-black/60">What we stand for</p>
+            <p className="text-sm font-semibold text-black/60">
+              {valuesTitle || DEFAULT_ABOUT.valuesTitle}
+            </p>
             <ul className="mt-4 flex flex-wrap gap-2.5">
               {valuesList.map((val) => (
                 <li
@@ -344,30 +349,22 @@ const Mission = ({ mission = '', values = [], images = {} }) => {
 };
 
 /* ────────────────────────────────────────────────────────────────────────────
-   5. CONTACT & SHOWROOM — Architectural Couture Lounge
-   Fully connected to API office address, phone, email, and Google maps.
+   5. CONTACT CTA BANNER — Clean, prominent responsive call to action
+   Left: Eyebrow, Heading & Narrative
+   Right (In place of former address): Prominent Contact Us Action button
 ──────────────────────────────────────────────────────────────────────────── */
-const Contact = ({ contact = {}, office = {} }) => {
+const Contact = ({ contact = {} }) => {
   const title = contact.title || DEFAULT_ABOUT.contact.title;
   const text = contact.text || DEFAULT_ABOUT.contact.text;
   const button = contact.button || DEFAULT_ABOUT.contact.button;
   const to = contact.to || DEFAULT_ABOUT.contact.to;
-
-  const addressLines = Array.isArray(office.address)
-    ? office.address
-    : (typeof office.address === 'string'
-        ? office.address.split('\n').filter(Boolean)
-        : DEFAULT_ABOUT.office.address);
-
-  const phone = office.phone || DEFAULT_ABOUT.office.phone;
-  const email = office.email || DEFAULT_ABOUT.office.email;
-  const mapsUrl = office.mapsUrl || DEFAULT_ABOUT.office.mapsUrl;
+  const contactEyebrow = contact.eyebrow || DEFAULT_ABOUT.contact.eyebrow;
 
   return (
-    <section className="bg-[#FBF7EE] px-6 py-16 md:px-12 md:py-24" aria-label="Contact and Showroom">
+    <section className="bg-[#FBF7EE] px-6 py-16 md:px-12 md:py-24" aria-label="Contact">
       <div className="mx-auto max-w-site">
         <FadeUp>
-          <div className="relative overflow-hidden rounded-[2.5rem] bg-[#0E0C09] px-7 py-14 sm:px-14 sm:py-18 lg:p-20 text-[#FBF7EE] shadow-[0_24px_60px_rgba(0,0,0,0.18)] border border-[#BEA266]/35">
+          <div className="relative overflow-hidden rounded-[2rem] sm:rounded-[2.5rem] bg-[#0E0C09] px-7 py-12 sm:px-12 sm:py-16 lg:px-16 lg:py-20 text-[#FBF7EE] shadow-[0_24px_60px_rgba(0,0,0,0.18)] border border-[#BEA266]/35">
             {/* Ambient luxury lighting */}
             <span
               className="pointer-events-none absolute -right-24 -top-24 h-80 w-80 rounded-full bg-[#BEA266]/15 blur-3xl"
@@ -378,104 +375,34 @@ const Contact = ({ contact = {}, office = {} }) => {
               aria-hidden="true"
             />
 
-            <div className="relative z-10 grid grid-cols-1 lg:grid-cols-[1.25fr_1fr] gap-12 lg:gap-16 items-center">
-              {/* Left Column: Heading, intro & action */}
-              <div>
+            <div className="relative z-10 flex flex-col md:flex-row md:items-center md:justify-between gap-8 md:gap-12 lg:gap-16">
+              {/* Left Column: Heading & Narrative */}
+              <div className="max-w-2xl">
                 <span className="inline-flex items-center gap-3 text-[11px] font-semibold uppercase tracking-[0.28em] text-[#DFC481]">
                   <span className="h-px w-6 bg-[#BEA266]" />
-                  Wholesale & Retail Inquiries
+                  {contactEyebrow}
                 </span>
 
                 <h2 className="font-playfair mt-4 text-3xl sm:text-4xl lg:text-5xl font-medium leading-[1.15] text-[#FBF7EE]">
                   {title}
                 </h2>
 
-                <p className="mt-5 text-base sm:text-lg leading-relaxed text-[#FBF7EE]/70 max-w-lg">
+                <p className="mt-4 text-base sm:text-lg leading-relaxed text-[#FBF7EE]/70">
                   {text}
                 </p>
-
-                <div className="mt-9 flex flex-wrap items-center gap-4">
-                  <Link
-                    to={to}
-                    className="group inline-flex items-center gap-4 rounded-full bg-[#BEA266] pl-7 pr-2.5 py-2.5 text-xs font-semibold uppercase tracking-[0.16em] text-black transition-all duration-300 hover:bg-[#DFC481] hover:shadow-[0_10px_25px_rgba(190,162,102,0.3)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#DFC481]"
-                  >
-                    <span>{button}</span>
-                    <span className="flex h-10 w-10 items-center justify-center rounded-full bg-black text-[#DFC481] transition-transform duration-300 group-hover:translate-x-1">
-                      <ArrowUpRight size={18} />
-                    </span>
-                  </Link>
-
-                  {mapsUrl && (
-                    <a
-                      href={mapsUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-2 rounded-full border border-white/20 px-6 py-3.5 text-xs font-semibold uppercase tracking-[0.14em] text-[#FBF7EE] transition-colors hover:border-[#BEA266] hover:text-[#DFC481]"
-                    >
-                      <Compass size={15} />
-                      <span>Showroom Location</span>
-                    </a>
-                  )}
-                </div>
               </div>
 
-              {/* Right Column: Office & Direct contact cards */}
-              <div className="space-y-4 lg:border-l lg:border-white/10 lg:pl-12">
-                {/* Physical address card */}
-                <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-6 backdrop-blur-xs">
-                  <div className="flex items-start gap-4">
-                    <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#BEA266]/15 text-[#DFC481]">
-                      <MapPin size={20} />
-                    </span>
-                    <div>
-                      <p className="text-[10px] font-semibold uppercase tracking-[0.24em] text-[#BEA266]">
-                        Manufacturing & Office
-                      </p>
-                      <address className="not-italic mt-2 font-playfair text-base sm:text-lg leading-snug text-[#FBF7EE]">
-                        {addressLines.map((line) => (
-                          <span key={line} className="block">{line}</span>
-                        ))}
-                      </address>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Direct contact pills */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  {phone && (
-                    <a
-                      href={`tel:${phone.replace(/\s+/g, '')}`}
-                      className="group flex items-center gap-3 rounded-xl border border-white/10 bg-white/[0.03] p-4 transition-colors hover:border-[#BEA266]/50 hover:bg-white/[0.06]"
-                    >
-                      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#BEA266]/15 text-[#DFC481]">
-                        <Phone size={15} />
-                      </span>
-                      <div className="overflow-hidden">
-                        <span className="text-[9px] uppercase tracking-wider text-white/50 block">Direct Line</span>
-                        <span className="text-xs font-medium text-[#FBF7EE] truncate block group-hover:text-[#DFC481]">
-                          {phone}
-                        </span>
-                      </div>
-                    </a>
-                  )}
-
-                  {email && (
-                    <a
-                      href={`mailto:${email}`}
-                      className="group flex items-center gap-3 rounded-xl border border-white/10 bg-white/[0.03] p-4 transition-colors hover:border-[#BEA266]/50 hover:bg-white/[0.06]"
-                    >
-                      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#BEA266]/15 text-[#DFC481]">
-                        <Mail size={15} />
-                      </span>
-                      <div className="overflow-hidden">
-                        <span className="text-[9px] uppercase tracking-wider text-white/50 block">Inquiries</span>
-                        <span className="text-xs font-medium text-[#FBF7EE] truncate block group-hover:text-[#DFC481]">
-                          {email}
-                        </span>
-                      </div>
-                    </a>
-                  )}
-                </div>
+              {/* Right Column (In place of address): Prominent Contact Action Button */}
+              <div className="shrink-0 flex items-center md:justify-end">
+                <Link
+                  to={to}
+                  className="group w-full sm:w-auto inline-flex items-center justify-between sm:justify-start gap-5 rounded-full bg-[#BEA266] pl-7 pr-2.5 py-2.5 text-xs font-semibold uppercase tracking-[0.16em] text-black transition-all duration-300 hover:bg-[#DFC481] hover:shadow-[0_12px_30px_rgba(190,162,102,0.35)] hover:scale-[1.02] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#DFC481]"
+                >
+                  <span>{button}</span>
+                  <span className="flex h-11 w-11 items-center justify-center rounded-full bg-black text-[#DFC481] transition-transform duration-300 group-hover:translate-x-1">
+                    <ArrowUpRight size={18} />
+                  </span>
+                </Link>
               </div>
             </div>
           </div>
@@ -504,6 +431,10 @@ const AboutPage = () => {
             hero: { ...prev.hero, ...(d.hero || {}) },
             who: { ...prev.who, ...(d.who || {}) },
             fabrics: { ...prev.fabrics, ...(d.fabrics || {}) },
+            mission: d.mission || prev.mission,
+            missionTitle: d.missionTitle || prev.missionTitle,
+            valuesTitle: d.valuesTitle || prev.valuesTitle,
+            values: d.values?.length ? d.values : prev.values,
             missionImages: { ...prev.missionImages, ...(d.missionImages || {}) },
             contact: { ...prev.contact, ...(d.contact || {}) },
             office: { ...prev.office, ...(d.office || {}) },
@@ -550,10 +481,16 @@ const AboutPage = () => {
       <Fabrics fabrics={about.fabrics} />
 
       {/* 4. Mission & Values */}
-      <Mission mission={about.mission} values={about.values} images={about.missionImages} />
+      <Mission
+        mission={about.mission}
+        missionTitle={about.missionTitle}
+        valuesTitle={about.valuesTitle}
+        values={about.values}
+        images={about.missionImages}
+      />
 
-      {/* 5. Contact & Showroom */}
-      <Contact contact={about.contact} office={about.office} />
+      {/* 5. Contact CTA */}
+      <Contact contact={about.contact} />
 
       <Footer />
     </main>

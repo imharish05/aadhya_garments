@@ -13,25 +13,35 @@ const defaultAboutSettings = {
     ],
   },
   who: {
+    eyebrow: 'Who We Are',
     title: 'Manufacturers and wholesale distributors',
     text: "High-quality men's wear, kid's wear, shorts, cargo pants, 3/4ths and stylish T-shirts, made and supplied from Coimbatore.",
     imageUrl: '',
   },
   fabrics: {
+    eyebrow: 'Superior Materials',
     title: 'Superior fabrics, chosen with care',
     text: 'We use superior fabrics to ensure durability, comfort, and the latest trends for our customers.',
     list: ['2-way Lycra', 'NS Fabric', 'Loopknit', 'Pure Cotton', 'Muslin'],
   },
   mission:
     'To deliver exceptional clothing that combines **modern fashion** with **unmatched comfort**, while maintaining the **highest standards** of quality and affordability.',
+  missionTitle: 'Our mission',
+  valuesTitle: 'What we stand for',
   values: ['Style', 'Comfort', 'Quality', 'Affordability', 'Durability', 'Modern fashion', 'Latest trends'],
+  missionImages: {
+    main: '',
+    accent: '',
+  },
   contact: {
+    eyebrow: 'Wholesale & Retail Inquiries',
     title: 'Get in touch',
-    text: "Men's wear, kid's wear and ladies' wear, all in one place.",
+    text: "Men's wear, kid's wear and ladies' wear, all in one place. We welcome wholesale partners, distributors, and bulk custom inquiries.",
     button: 'Contact us',
     to: '/contact',
   },
   office: {
+    label: 'Manufacturing & Office',
     address: [
       '6/154, 2nd Street, Radhithya Avenue,',
       'Checkpost, Kinathukadavu - Pollachi Main Road,',
@@ -76,14 +86,14 @@ const defaultTaxSettings = {
 
 /**
  * Validates and sanitizes the about page site settings.
- * Removes all legacy/unused columns so only valid website data is stored in DB.
+ * Removes all legacy/unused fields so only valid website data is stored in DB.
  */
 const validateAboutSettings = (input) => {
   if (!input || typeof input !== 'object') {
     return { valid: false, message: 'Settings payload must be a valid JSON object' };
   }
 
-  // Hero validation
+  // 1. Hero validation
   if (!input.hero || typeof input.hero !== 'object') {
     return { valid: false, message: 'Hero section data is required' };
   }
@@ -106,7 +116,7 @@ const validateAboutSettings = (input) => {
     })).filter(t => t.title || t.kicker);
   }
 
-  // Who We Are validation
+  // 2. Who We Are validation
   if (!input.who || typeof input.who !== 'object') {
     return { valid: false, message: 'Who We Are section data is required' };
   }
@@ -119,31 +129,39 @@ const validateAboutSettings = (input) => {
     return { valid: false, message: 'Who We Are description text is required' };
   }
 
-  // Fabrics validation
+  // 3. Fabrics validation
+  const fabricsEyebrow = String(input.fabrics?.eyebrow || '').trim() || defaultAboutSettings.fabrics.eyebrow;
   const fabricsTitle = String(input.fabrics?.title || '').trim() || defaultAboutSettings.fabrics.title;
   const fabricsText = String(input.fabrics?.text || '').trim();
   const fabricList = Array.isArray(input.fabrics?.list)
     ? input.fabrics.list.map(f => String(f || '').trim()).filter(Boolean)
     : defaultAboutSettings.fabrics.list;
 
-  // Mission validation
+  // 4. Mission validation
   const mission = String(input.mission || '').trim();
   if (!mission) {
     return { valid: false, message: 'Mission statement is required' };
   }
-
-  // Values validation
+  const missionTitle = String(input.missionTitle || '').trim() || defaultAboutSettings.missionTitle;
+  const valuesTitle = String(input.valuesTitle || '').trim() || defaultAboutSettings.valuesTitle;
   const values = Array.isArray(input.values)
     ? input.values.map(v => String(v || '').trim()).filter(Boolean)
     : defaultAboutSettings.values;
 
-  // Contact validation
+  const missionImages = {
+    main: String(input.missionImages?.main || '').trim(),
+    accent: String(input.missionImages?.accent || '').trim(),
+  };
+
+  // 5. Contact validation
+  const contactEyebrow = String(input.contact?.eyebrow || '').trim() || defaultAboutSettings.contact.eyebrow;
   const contactTitle = String(input.contact?.title || '').trim() || defaultAboutSettings.contact.title;
   const contactText = String(input.contact?.text || '').trim() || defaultAboutSettings.contact.text;
   const contactButton = String(input.contact?.button || '').trim() || defaultAboutSettings.contact.button;
   const contactTo = String(input.contact?.to || '').trim() || defaultAboutSettings.contact.to;
 
-  // Office validation
+  // 6. Office validation
+  const officeLabel = String(input.office?.label || '').trim() || defaultAboutSettings.office.label;
   let address = Array.isArray(input.office?.address)
     ? input.office.address.map(a => String(a || '').trim()).filter(Boolean)
     : (typeof input.office?.address === 'string'
@@ -154,7 +172,7 @@ const validateAboutSettings = (input) => {
   const email = String(input.office?.email || '').trim();
   const mapsUrl = String(input.office?.mapsUrl || '').trim();
 
-  // Construct cleansed payload — pruned of all obsolete columns/fields
+  // Construct cleansed payload — exactly matches website contents
   const cleanData = {
     hero: {
       eyebrow: String(input.hero.eyebrow || '').trim() || defaultAboutSettings.hero.eyebrow,
@@ -163,24 +181,31 @@ const validateAboutSettings = (input) => {
       tags: tags.length ? tags : defaultAboutSettings.hero.tags,
     },
     who: {
+      eyebrow: String(input.who.eyebrow || '').trim() || defaultAboutSettings.who.eyebrow,
       title: whoTitle,
       text: whoText,
       imageUrl: input.who.imageUrl ? String(input.who.imageUrl).trim() : '',
     },
     fabrics: {
+      eyebrow: fabricsEyebrow,
       title: fabricsTitle,
       text: fabricsText,
       list: fabricList,
     },
     mission,
+    missionTitle,
+    valuesTitle,
     values,
+    missionImages,
     contact: {
+      eyebrow: contactEyebrow,
       title: contactTitle,
       text: contactText,
       button: contactButton,
       to: contactTo,
     },
     office: {
+      label: officeLabel,
       address,
       phone,
       email,
@@ -197,7 +222,6 @@ const getSetting = async (req, res) => {
     const setting = await SiteSetting.findOne({ where: { key } });
     if (!setting) {
       if (key === 'about') {
-        // Auto-insert default into database so the table is populated
         try {
           await SiteSetting.create({ key: 'about', value: JSON.stringify(defaultAboutSettings) });
         } catch (seedErr) {
@@ -233,7 +257,10 @@ const getSetting = async (req, res) => {
         who: { ...defaultAboutSettings.who, ...(parsed.who || {}) },
         fabrics: { ...defaultAboutSettings.fabrics, ...(parsed.fabrics || {}) },
         mission: parsed.mission || defaultAboutSettings.mission,
+        missionTitle: parsed.missionTitle || defaultAboutSettings.missionTitle,
+        valuesTitle: parsed.valuesTitle || defaultAboutSettings.valuesTitle,
         values: parsed.values?.length ? parsed.values : defaultAboutSettings.values,
+        missionImages: { ...defaultAboutSettings.missionImages, ...(parsed.missionImages || {}) },
         contact: { ...defaultAboutSettings.contact, ...(parsed.contact || {}) },
         office: { ...defaultAboutSettings.office, ...(parsed.office || {}) },
       };
@@ -280,7 +307,24 @@ const updateSetting = async (req, res) => {
       }
       toSave = valResult.cleanData;
 
-      if (req.file) {
+      // Handle multi-image file uploads
+      if (req.files && Array.isArray(req.files)) {
+        const whoFile = req.files.find(f => f.fieldname === 'whoImage' || f.fieldname === 'image');
+        if (whoFile) {
+          toSave.who.imageUrl = `/uploads/settings/${whoFile.filename}`;
+        }
+        const mainFile = req.files.find(f => f.fieldname === 'missionMain');
+        if (mainFile) {
+          if (!toSave.missionImages) toSave.missionImages = {};
+          toSave.missionImages.main = `/uploads/settings/${mainFile.filename}`;
+        }
+        const accentFile = req.files.find(f => f.fieldname === 'missionAccent');
+        if (accentFile) {
+          if (!toSave.missionImages) toSave.missionImages = {};
+          toSave.missionImages.accent = `/uploads/settings/${accentFile.filename}`;
+        }
+      } else if (req.file) {
+        // Fallback for single file upload
         toSave.who.imageUrl = `/uploads/settings/${req.file.filename}`;
       }
     }
@@ -301,7 +345,6 @@ const updateSetting = async (req, res) => {
 };
 
 const subscribeNewsletter = async (req, res) => {
-  // Newsletter subscription kept for backward compat
   return res.json({ success: true, message: 'Thank you!', pointsAwarded: 0 });
 };
 
