@@ -3,8 +3,6 @@ import { useDispatch, useSelector } from 'react-redux';
 import { Routes, Route, useLocation, Navigate } from 'react-router-dom';
 import { AnimatePresence } from 'framer-motion';
 import { Toaster, toast } from 'react-hot-toast';
-import Lenis from 'lenis';
-import 'lenis/dist/lenis.css';
 import Preloader from './components/Preloader';
 import ScrollToTop from './components/ScrollToTop';
 import Navbar from './components/Navbar';
@@ -50,40 +48,6 @@ const App = () => {
   const dispatch = useDispatch();
   const { isAuthenticated } = useSelector(s => s.auth);
   const [initialLoading, setInitialLoading] = useState(true);
-
-  // ── Luxury Smooth Momentum Scrolling Engine (Lenis) ──────────────────────
-  useEffect(() => {
-    // Respect user's motion preferences
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-      return;
-    }
-
-    const lenis = new Lenis({
-      duration: 1.15,
-      easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
-      orientation: 'vertical',
-      gestureOrientation: 'vertical',
-      smoothWheel: true,
-      wheelMultiplier: 0.95,
-      touchMultiplier: 1.2,
-      infinite: false,
-    });
-
-    window.__lenis = lenis;
-
-    let rafId;
-    function raf(time) {
-      lenis.raf(time);
-      rafId = requestAnimationFrame(raf);
-    }
-    rafId = requestAnimationFrame(raf);
-
-    return () => {
-      cancelAnimationFrame(rafId);
-      lenis.destroy();
-      window.__lenis = null;
-    };
-  }, []);
 
   // ── Bootstrap: fetch profile whenever a token exists ────────────────────────
   // Runs once on mount. If a token is in localStorage, call /getme to load

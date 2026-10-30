@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { motion } from 'framer-motion';
@@ -62,7 +62,7 @@ const singular = k => {
 };
 const num = x => (x !== null && x !== undefined && x !== '' ? parseFloat(x) : null);
 
-const ProductCard = ({ product, index = 0 }) => {
+const ProductCard = React.memo(({ product, index = 0, compactMobile = false }) => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const wishlist = useSelector(s => s.wishlist.items) || [];
@@ -215,6 +215,7 @@ const ProductCard = ({ product, index = 0 }) => {
             src={getImageUrl(image) || getPlaceholderSvg(product.name)}
             alt={product.name}
             loading="lazy"
+            decoding="async"
             onLoad={() => setImgLoaded(true)}
             onError={e => { e.target.onerror = null; e.target.src = getPlaceholderSvg(product.name); setImgLoaded(true); }}
             className={`h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-105 ${
@@ -318,6 +319,7 @@ const ProductCard = ({ product, index = 0 }) => {
       </div>
     </motion.article>
   );
-};
+});
 
+ProductCard.displayName = 'ProductCard';
 export default ProductCard;

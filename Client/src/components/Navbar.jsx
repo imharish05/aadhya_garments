@@ -94,6 +94,11 @@ const Navbar = () => {
   const [activeIndex, setActiveIndex] = useState(-1);
   const [mobileOpenCat, setMobileOpenCat] = useState(null);
 
+  const searchDropdownOpenRef = useRef(searchDropdownOpenState);
+  useEffect(() => {
+    searchDropdownOpenRef.current = searchDropdownOpenState;
+  }, [searchDropdownOpenState]);
+
   const searchContainerRef = useRef(null);
   const searchToggleRef = useRef(null);
   const searchInputRef = useRef(null);
@@ -174,6 +179,7 @@ const Navbar = () => {
     let prevScrollY = window.scrollY;
     let scrollAccumulator = 0;
     let ticking = false;
+    let lastDropdownClose = 0;
 
     const handleScroll = () => {
       if (!ticking) {
@@ -181,7 +187,7 @@ const Navbar = () => {
           const currentScrollY = window.scrollY;
           const delta = currentScrollY - prevScrollY;
 
-          if (Math.abs(delta) > 5) {
+          if (searchDropdownOpenRef.current && Math.abs(delta) > 5) {
             dispatch(setDropdownOpen(false));
           }
 
@@ -192,9 +198,9 @@ const Navbar = () => {
 
           const THRESHOLD = 30;
           if (scrollAccumulator > THRESHOLD && currentScrollY > 120) {
-            setHeaderVisible(false);
+            setHeaderVisible(prev => (prev ? false : prev));
           } else if (scrollAccumulator < -THRESHOLD || currentScrollY <= 120) {
-            setHeaderVisible(true);
+            setHeaderVisible(prev => (!prev ? true : prev));
           }
 
           prevScrollY = currentScrollY;

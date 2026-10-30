@@ -5,7 +5,7 @@ import { toast } from 'react-hot-toast';
 import api from '../services/api';
 import Footer from '../components/Footer';
 import Breadcrumb from '../components/Breadcrumb';
-import { FadeUp, EyebrowReveal, StaggeredText } from '../components/animations';
+import { FadeUp, StaggeredText } from '../components/animations';
 import PhoneInput from '../components/PhoneInput';
 import { validatePhoneNumber } from '../utils/validation';
 
@@ -120,33 +120,23 @@ const ContactPage = () => {
 
   return (
     <main id="main-content" className="min-h-screen overflow-x-hidden bg-[#FBF7EE] font-inter text-black">
-      {/* ── 1. Hero ─────────────────────────────────────────────── */}
-      <section className="bg-black text-[#FBF7EE]" aria-label="Contact Twin A Apparels">
-        <div className="mx-auto max-w-site px-6 md:px-12 pt-8 md:pt-10 pb-20 md:pb-28">
-          <Breadcrumb crumbs={[{ label: 'Contact Us' }]} tone="dark" />
-          <div className="pt-14 md:pt-20 text-center">
-            <EyebrowReveal className="mb-6 block font-inter text-[11px] font-semibold uppercase tracking-[0.28em] text-[#DFC481]">
-              {CONTACT.hero.eyebrow}
-            </EyebrowReveal>
-            <StaggeredText
-              as="h1"
-              text={CONTACT.hero.title}
-              segmentBy="words"
-              startDelay={0.1}
-              className="font-playfair mx-auto max-w-4xl text-5xl sm:text-6xl lg:text-7xl font-medium leading-[1.08] text-[#FBF7EE]"
-            />
-            <StaggeredText
-              as="p"
-              text={CONTACT.hero.text}
-              segmentBy="words"
-              blur={false}
-              duration={0.4}
-              startDelay={0.25}
-              className="mx-auto mt-7 max-w-xl text-[15px] md:text-base leading-relaxed text-[#FBF7EE]/70"
-            />
+      {/* ── 1. Header — same layout as the Products page ───────── */}
+      <header className="border-b border-black/10 bg-white" aria-label="Contact Twin A Apparels">
+        <div className="mx-auto max-w-[1840px] px-6 py-8 md:px-8 md:py-12">
+          <Breadcrumb crumbs={[{ label: 'Contact Us' }]} tone="light" />
+          <StaggeredText
+            as="h1"
+            text={CONTACT.hero.title}
+            segmentBy="words"
+            startDelay={0.1}
+            className="font-playfair mt-5 text-4xl font-medium leading-[1.08] text-black sm:text-5xl"
+          />
+          <div className="mt-5 flex items-center gap-4">
+            <span className="h-px w-12 bg-[#BEA266]" />
+            <p className="font-inter text-[13px] text-black/60">{CONTACT.hero.text}</p>
           </div>
         </div>
-      </section>
+      </header>
 
       {/* ── 2. Left: intro + contact cards  |  Right: form (same height) ── */}
       <section className="mx-auto max-w-site px-6 md:px-12 py-16 md:py-24" aria-label="Contact details and message form">
@@ -233,6 +223,8 @@ const ContactPage = () => {
                     name="phone"
                     required
                     value={formData.phone}
+                    allowedCountries={['IN']}
+                    defaultCountry="IN"
                     onChange={val => setFormData(prev => ({ ...prev, phone: val }))}
                     className="w-full"
                     inputClassName="py-3.5 text-sm px-4 bg-transparent"

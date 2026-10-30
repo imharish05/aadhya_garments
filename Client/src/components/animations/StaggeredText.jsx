@@ -144,7 +144,7 @@ export const StaggeredText = ({
   threshold = 0.1,
   rootMargin = '0px',
   direction = 'bottom',
-  blur = true,
+  blur = false,
   staggerDirection = 'forward',
   respectReducedMotion = true,
   exitOnScrollOut = false,
@@ -426,19 +426,25 @@ export const StaggeredText = ({
   // Initial and target animation properties
   const offset = DIRECTION_OFFSETS[direction] || DIRECTION_OFFSETS.bottom;
 
-  const defaultInitial = useMemo(() => ({
-    opacity: 0,
-    x: offset.x,
-    y: offset.y,
-    filter: effectiveBlur ? 'blur(10px)' : 'blur(0px)',
-  }), [offset, effectiveBlur]);
+  const defaultInitial = useMemo(() => {
+    const base = {
+      opacity: 0,
+      x: offset.x,
+      y: offset.y,
+    };
+    if (effectiveBlur) base.filter = 'blur(10px)';
+    return base;
+  }, [offset, effectiveBlur]);
 
-  const defaultAnimate = useMemo(() => ({
-    opacity: 1,
-    x: 0,
-    y: 0,
-    filter: 'blur(0px)',
-  }), []);
+  const defaultAnimate = useMemo(() => {
+    const base = {
+      opacity: 1,
+      x: 0,
+      y: 0,
+    };
+    if (effectiveBlur) base.filter = 'blur(0px)';
+    return base;
+  }, [effectiveBlur]);
 
   const activeInitial = from || defaultInitial;
   const activeAnimate = to || defaultAnimate;
@@ -462,15 +468,18 @@ export const StaggeredText = ({
   const createTransition = (orderIdx) => {
     if (isInstant) return { duration: 0 };
     const segDelay = getSegmentDelay(orderIdx);
-    return {
+    const trans = {
       opacity: { duration, ease: 'easeOut', delay: segDelay },
       x: { duration, ease: easing || [0.22, 1, 0.36, 1], delay: segDelay },
       y: { duration, ease: easing || [0.22, 1, 0.36, 1], delay: segDelay },
-      filter: { duration: duration * 0.7, ease: 'easeOut', delay: segDelay },
     };
+    if (effectiveBlur) {
+      trans.filter = { duration: duration * 0.7, ease: 'easeOut', delay: segDelay };
+    }
+    return trans;
   };
 
-  const willChangeStyle = isAnimating ? { willChange: 'transform, opacity, filter' } : { willChange: 'auto' };
+  const willChangeStyle = isAnimating ? { willChange: 'transform, opacity' } : { willChange: 'auto' };
 
   return (
     <Tag ref={containerRef} className={`relative ${className}`} {...restProps}>

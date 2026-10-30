@@ -9,11 +9,7 @@ const ScrollToTop = () => {
 
   // Scroll to top on route change
   useEffect(() => {
-    if (window.__lenis) {
-      window.__lenis.scrollTo(0, { immediate: true });
-    } else {
-      window.scrollTo(0, 0);
-    }
+    window.scrollTo(0, 0);
   }, [pathname, search]);
 
   // Toggle visibility of the floating button on scroll
@@ -36,14 +32,10 @@ const ScrollToTop = () => {
   }, []);
 
   const scrollToTop = () => {
-    if (window.__lenis) {
-      window.__lenis.scrollTo(0, { duration: 1.2 });
-    } else {
-      window.scrollTo({
-        top: 0,
-        behavior: 'smooth',
-      });
-    }
+    window.scrollTo({
+      top: 0,
+      behavior: 'smooth',
+    });
   };
 
   return (
