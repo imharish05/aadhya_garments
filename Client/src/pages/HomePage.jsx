@@ -12,7 +12,7 @@ import ProductCard from '../components/ProductCard';
 import HeroBanner from '../components/HeroBanner';
 import CategoryGridExpand from '../components/CategoryGridExpand';
 import NewArrivalsSection from '../components/NewArrivalsSection';
-import { SplitTextReveal, FadeUp, EyebrowReveal } from '../components/animations';
+import { SplitTextReveal, FadeUp, EyebrowReveal, StaggeredText } from '../components/animations';
 import Footer from '../components/Footer';
 import OurPromise from '../components/OurPromise';
 import AboutTeaser from '../components/AboutTeaser';
@@ -348,7 +348,7 @@ const HomePage = () => {
       {(isCarouselLoading || hasBestSellers) && (
         <section className="py-10 bg-white" aria-label="Bestsellers">
           <div className="max-w-site mx-auto px-6 md:px-8">
-            <ScrollReveal>
+            <div>
               <div className="text-center mb-12">
                 <EyebrowReveal className="text-neutral-500 text-xs font-semibold tracking-[0.24em] uppercase mb-3 font-montserrat">
                   Fresh In
@@ -359,7 +359,7 @@ const HomePage = () => {
                   className="font-playfair text-2xl sm:text-3xl md:text-4xl lg:text-[40px] font-normal text-neutral-950 tracking-[-0.015em] leading-[1.18] mx-auto select-none border-b border-neutral-100 pb-6 max-w-xl"
                 />
               </div>
-            </ScrollReveal>
+            </div>
 
             {/* Product grid / Carousel */}
             {isCarouselLoading ? (
@@ -448,9 +448,9 @@ const HomePage = () => {
               )}
               <SplitTextReveal as="h2" text={countdownBanner.title} className="font-playfair text-2xl sm:text-3xl lg:text-4xl font-normal text-white leading-tight mb-2" />
               {countdownBanner.subtitle && (
-                <p className="text-white/70 text-xs sm:text-sm lg:text-base max-w-sm mb-5">
+                <StaggeredText as="p" text={countdownBanner.subtitle} segmentBy="words" blur={false} duration={0.4} startDelay={0.25} className="text-white/70 text-xs sm:text-sm lg:text-base max-w-sm mb-5">
                   {countdownBanner.subtitle}
-                </p>
+                </StaggeredText>
               )}
               {isExpired ? (
                 <button
@@ -510,20 +510,20 @@ const HomePage = () => {
                     loading="lazy"
                   />
                 </div>
-                <ScrollReveal className="bg-brand-text flex items-center p-6 md:p-10">
+                <div className="bg-brand-text flex items-center p-6 md:p-10">
                   <div>
                     {promoBanners[0].badgeText && (
-                      <p className="text-brand-gold text-xs tracking-[0.2em] uppercase mb-2 font-semibold">
+                      <StaggeredText as="p" text={promoBanners[0].badgeText} segmentBy="words" blur={false} duration={0.4} startDelay={0.05} className="text-brand-gold text-xs tracking-[0.2em] uppercase mb-2 font-semibold">
                         {promoBanners[0].badgeText}
-                      </p>
+                      </StaggeredText>
                     )}
                     {promoBanners[0].title && (
                       <SplitTextReveal as="h2" text={promoBanners[0].title} className="font-playfair text-2xl md:text-3xl font-normal text-white leading-snug mb-3" />
                     )}
                     {promoBanners[0].subtitle && (
-                      <p className="text-white/75 text-xs md:text-sm leading-relaxed mb-5 line-clamp-2 max-w-md">
+                      <StaggeredText as="p" text={promoBanners[0].subtitle} segmentBy="words" blur={false} duration={0.4} startDelay={0.25} className="text-white/75 text-xs md:text-sm leading-relaxed mb-5 line-clamp-2 max-w-md">
                         {promoBanners[0].subtitle}
-                      </p>
+                      </StaggeredText>
                     )}
                     <div className="flex flex-col items-start gap-2.5">
                       <Link to={promoBanners[0].ctaLink || "/products"} className="btn-primary py-2 px-5 text-xs" id="bridal-cta">
@@ -532,7 +532,7 @@ const HomePage = () => {
                       <p className="text-white/40 text-[11px] mt-1">Personal styling consultation — <Link to="/account/personal-shopper" className="underline hover:text-brand-gold transition-colors">Book Now</Link></p>
                     </div>
                   </div>
-                </ScrollReveal>
+                </div>
               </div>
             ) : (
               <div className="relative shadow-xl rounded-lg overflow-hidden bg-brand-text group/promo md:h-[340px]">
@@ -554,19 +554,19 @@ const HomePage = () => {
                         <div className="bg-brand-text flex items-center p-6 md:p-10 h-full">
                           <div>
                             {promo.badgeText && (
-                              <p className="text-brand-gold text-xs tracking-[0.2em] uppercase mb-2 font-semibold">
+                              <StaggeredText as="p" text={promo.badgeText} segmentBy="words" blur={false} duration={0.4} startDelay={0.05} className="text-brand-gold text-xs tracking-[0.2em] uppercase mb-2 font-semibold">
                                 {promo.badgeText}
-                              </p>
+                              </StaggeredText>
                             )}
                             {promo.title && (
-                              <h2 className="font-playfair text-2xl md:text-3xl font-bold text-white leading-snug mb-3">
+                              <StaggeredText as="h2" text={promo.title} segmentBy="chars" startDelay={0.15} className="font-playfair text-2xl md:text-3xl font-bold text-white leading-snug mb-3">
                                 {promo.title}
-                              </h2>
+                              </StaggeredText>
                             )}
                             {promo.subtitle && (
-                              <p className="text-white/75 text-xs md:text-sm leading-relaxed mb-5 line-clamp-2 max-w-md">
+                              <StaggeredText as="p" text={promo.subtitle} segmentBy="words" blur={false} duration={0.4} startDelay={0.25} className="text-white/75 text-xs md:text-sm leading-relaxed mb-5 line-clamp-2 max-w-md">
                                 {promo.subtitle}
-                              </p>
+                              </StaggeredText>
                             )}
                             <div className="flex flex-col items-start gap-2.5">
                               <Link to={promo.ctaLink || "/products"} className="btn-primary py-2 px-5 text-xs" id={`promo-cta-${promo.id}`}>
@@ -622,7 +622,7 @@ const HomePage = () => {
       {exclusiveBanners.length === 1 && (
         <section className="py-10 bg-white" aria-label="Promotional offers">
           <div className="max-w-site mx-auto px-6 md:px-8 flex justify-center">
-            <ScrollReveal className="relative overflow-hidden w-full max-w-5xl aspect-[16/9] sm:aspect-[2.5/1] md:aspect-[3/1] shadow-lg group rounded-lg">
+            <div className="relative overflow-hidden w-full max-w-5xl aspect-[16/9] sm:aspect-[2.5/1] md:aspect-[3/1] shadow-lg group rounded-lg">
               <img
                 src={getImageUrl(exclusiveBanners[0].image)}
                 alt={exclusiveBanners[0].title || 'Exclusive Collection'}
@@ -637,14 +637,14 @@ const HomePage = () => {
                   </span>
                 )}
                 {exclusiveBanners[0].title && (
-                  <h3 className="font-playfair text-xl md:text-4xl font-bold text-white mb-1 md:mb-2 max-w-2xl line-clamp-2">
+                  <StaggeredText as="h3" text={exclusiveBanners[0].title} segmentBy="chars" startDelay={0.1} className="font-playfair text-xl md:text-4xl font-bold text-white mb-1 md:mb-2 max-w-2xl line-clamp-2">
                     {exclusiveBanners[0].title}
-                  </h3>
+                  </StaggeredText>
                 )}
                 {exclusiveBanners[0].subtitle && (
-                  <p className="text-white/70 text-xs md:text-base mb-3 md:mb-6 max-w-xl line-clamp-2">
+                  <StaggeredText as="p" text={exclusiveBanners[0].subtitle} segmentBy="words" blur={false} duration={0.4} startDelay={0.25} className="text-white/70 text-xs md:text-base mb-3 md:mb-6 max-w-xl line-clamp-2">
                     {exclusiveBanners[0].subtitle}
-                  </p>
+                  </StaggeredText>
                 )}
                 {exclusiveBanners[0].ctaText && (
                   <Link
@@ -656,7 +656,7 @@ const HomePage = () => {
                   </Link>
                 )}
               </div>
-            </ScrollReveal>
+            </div>
           </div>
         </section>
       )}
@@ -664,7 +664,7 @@ const HomePage = () => {
       {exclusiveBanners.length >= 2 && (
         <section className="py-10 bg-white overflow-hidden" aria-label="Promotional offers">
           <div className="max-w-site mx-auto px-6 md:px-8">
-            <ScrollReveal className="relative group/carousel">
+            <div className="relative group/carousel">
               <div className="flex items-center justify-between mb-8">
                 <div>
                   <p className="text-brand-gold text-xs font-medium tracking-[0.2em] uppercase mb-2">Limited Offers</p>
@@ -725,14 +725,14 @@ const HomePage = () => {
                           </span>
                         )}
                         {banner.title && (
-                          <h3 className="font-playfair text-lg sm:text-2xl md:text-3xl font-bold text-white mb-1 md:mb-2 line-clamp-2 leading-tight">
+                          <StaggeredText key={`ex-title-${banner.id}-${currentExclusiveSlide}`} as="h3" text={banner.title} segmentBy="chars" startDelay={0.1} className="font-playfair text-lg sm:text-2xl md:text-3xl font-bold text-white mb-1 md:mb-2 line-clamp-2 leading-tight">
                             {banner.title}
-                          </h3>
+                          </StaggeredText>
                         )}
                         {banner.subtitle && (
-                          <p className="text-white/80 text-xs sm:text-sm mb-3 md:mb-4 line-clamp-2 max-w-md">
+                          <StaggeredText key={`ex-sub-${banner.id}-${currentExclusiveSlide}`} as="p" text={banner.subtitle} segmentBy="words" blur={false} duration={0.4} startDelay={0.25} className="text-white/80 text-xs sm:text-sm mb-3 md:mb-4 line-clamp-2 max-w-md">
                             {banner.subtitle}
-                          </p>
+                          </StaggeredText>
                         )}
                         <Link
                           to={banner.ctaLink}
@@ -762,7 +762,7 @@ const HomePage = () => {
                   ))}
                 </div>
               )}
-            </ScrollReveal>
+            </div>
           </div>
         </section>
       )}

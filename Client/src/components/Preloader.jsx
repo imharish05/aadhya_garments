@@ -35,8 +35,20 @@ const Preloader = ({ onFinish, minimumDuration = 1800, autoHide = true }) => {
   }, [minimumDuration, pageLoaded]);
 
   useEffect(() => {
+    window.__preloaderActive = true;
+    return () => {
+      window.__preloaderActive = false;
+      window.dispatchEvent(new CustomEvent('app:preloader-done'));
+    };
+  }, []);
+
+  useEffect(() => {
     if (progress < 100 || !autoHide) return undefined;
-    const open = setTimeout(() => setClosing(true), 250);
+    const open = setTimeout(() => {
+      setClosing(true);
+      window.__preloaderActive = false;
+      window.dispatchEvent(new CustomEvent('app:preloader-done'));
+    }, 250);
     const finish = setTimeout(() => onFinish && onFinish(), 250 + CURTAIN_MS);
     return () => { clearTimeout(open); clearTimeout(finish); };
   }, [progress, autoHide, onFinish]);

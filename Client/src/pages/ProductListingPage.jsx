@@ -7,7 +7,7 @@ import { fetchProducts } from '../redux/slices/productsSlice';
 import { fetchCategories } from '../redux/slices/categoriesSlice';
 import ProductCard from '../components/ProductCard';
 import Footer from '../components/Footer';
-import { SplitTextReveal } from '../components/animations';
+import { StaggeredText, SplitTextReveal } from '../components/animations';
 import { formatPrice } from '../utils/currency';
 import PriceRangeSlider from '../components/PriceRangeSlider';
 import api from '../services/api';
@@ -344,9 +344,9 @@ const ProductListingPage = () => {
               </span>
             ))}
           </nav>
-          <h1 className="font-playfair text-3xl sm:text-4xl font-semibold text-brand-text mb-1">
+          <StaggeredText as="h1" text={pageHeading} segmentBy="chars" startDelay={0.1} className="font-playfair text-3xl sm:text-4xl font-semibold text-brand-text mb-1">
             {pageHeading}
-          </h1>
+          </StaggeredText>
           <p className="text-brand-grey text-sm mt-1">{total} products</p>
         </div>
       </div>
@@ -586,8 +586,8 @@ const ProductListingPage = () => {
                 <div className="w-24 h-24 bg-brand-light flex items-center justify-center mb-6 rounded-lg">
                   <Grid2X2 size={40} className="text-brand-grey" strokeWidth={1} />
                 </div>
-                <h2 className="font-playfair text-2xl mb-2">No products found</h2>
-                <p className="text-brand-grey mb-6">Try adjusting your filters or browse a different category.</p>
+                <StaggeredText as="h2" text="No products found" segmentBy="chars" startDelay={0.1} className="font-playfair text-2xl mb-2" />
+                <StaggeredText as="p" text="Try adjusting your filters or browse a different category." segmentBy="words" blur={false} duration={0.4} startDelay={0.25} className="text-brand-grey mb-6" />
                 <button
                   onClick={() => {
                     setSearchParams({});

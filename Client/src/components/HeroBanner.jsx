@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { getImageUrl } from '../utils/imageUrl';
+import { StaggeredText } from './animations';
 
 const AUTOPLAY_INTERVAL = 5000;
 
@@ -84,16 +85,37 @@ const HeroBanner = () => {
               <Link to={s.ctaLink} tabIndex={active ? 0 : -1} className="absolute inset-0" aria-label={s.alt} />
             )}
 
-            {hasCaption && (
+            {hasCaption && active && (
               <div className="absolute inset-0 flex items-end justify-center bg-gradient-to-t from-black/80 via-black/40 to-transparent">
-                <div className="max-w-xl px-5 pb-12 text-center text-white [text-shadow:0_1px_8px_rgba(0,0,0,0.5)] sm:max-w-2xl sm:px-10 sm:pb-14 lg:pb-16">
-                  {s.title && <h2 className="font-playfair text-2xl font-medium sm:text-4xl">{s.title}</h2>}
-                  {s.subtitle && <p className="font-inter mt-2 text-sm text-white/90 sm:text-base">{s.subtitle}</p>}
+                <div
+                  key={`hero-caption-${s.id}-${current}`}
+                  className="max-w-xl px-5 pb-12 text-center text-white [text-shadow:0_1px_8px_rgba(0,0,0,0.5)] sm:max-w-2xl sm:px-10 sm:pb-14 lg:pb-16"
+                >
+                  {s.title && (
+                    <StaggeredText
+                      as="h2"
+                      text={s.title}
+                      segmentBy="chars"
+                      startDelay={0.1}
+                      className="font-playfair text-2xl font-medium sm:text-4xl text-white"
+                    />
+                  )}
+                  {s.subtitle && (
+                    <StaggeredText
+                      as="p"
+                      text={s.subtitle}
+                      segmentBy="words"
+                      blur={false}
+                      duration={0.4}
+                      startDelay={0.25}
+                      className="font-inter mt-2 text-sm text-white/90 sm:text-base"
+                    />
+                  )}
                   {s.ctaText && (
                     <Link
                       to={s.ctaLink}
                       tabIndex={active ? 0 : -1}
-                      className="font-inter mt-4 inline-block rounded-full bg-white px-6 py-2.5 text-sm font-semibold text-[#2A2014] hover:bg-[#BEA266] hover:text-white"
+                      className="font-inter mt-4 inline-block rounded-full bg-white px-6 py-2.5 text-sm font-semibold text-[#2A2014] hover:bg-[#BEA266] hover:text-white transition-colors"
                     >
                       {s.ctaText}
                     </Link>

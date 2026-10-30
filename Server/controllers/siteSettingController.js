@@ -3,47 +3,44 @@ const { SiteSetting } = require('../models');
 
 const defaultAboutSettings = {
   hero: {
-    subtitle: 'Est. 2019',
-    titleMain: 'Your Premium',
-    titleGold: 'Lifestyle Destination',
-    description: 'Bringing you a meticulously curated selection of cutting-edge electronics, fashion apparel, home styling, beauty, and outdoor sports.',
+    eyebrow: 'About Twin A Apparels',
+    title: 'Founded with a passion for style and comfort',
+    text: "We are manufacturers and wholesale distributors of high-quality men's wear, kid's wear, shorts, cargo pants, 3/4ths and stylish T-shirts, based in Coimbatore.",
+    tags: [
+      { kicker: 'We are', title: 'Manufacturers', foot: 'High-quality clothing' },
+      { kicker: 'We are', title: 'Wholesale distributors', foot: "Men's, kid's & more" },
+      { kicker: 'Based in', title: 'Coimbatore', foot: 'Style · Comfort' },
+    ],
   },
-  story: {
-    subtitle: 'Our Legacy',
-    titleMain: 'Curation For The',
-    titleSub: 'Modern Connoisseur',
-    description1: 'Twin A Apparels was established in 2019 with a singular, clear objective: to redefine how you shop for life\'s essentials. We believed that shopping for premium tech shouldn\'t feel separate from buying designer apparel or selecting elegant home furnishings. By bringing these diverse categories together, we created a unified, luxury-tier marketplace.',
-    description2: 'Today, our catalog is divided into six pillars: Electronics & Gadgets, Apparel & Fashion, Home & Living, Beauty & Personal Care, Sports & Outdoors, and Toys, Hobbies & Media. We verify and partner directly with top manufacturers and authorized brands, filtering out the noise to bring you only products that pass our strict design and quality audits.',
-    feature1Title: 'Authentic Sourcing',
-    feature1Desc: 'We guarantee 100% original products sourced directly from brands or authorized global distributors.',
-    feature2Title: 'Global Standard',
-    feature2Desc: 'Our products are selected based on strict criteria: build quality, performance, aesthetics, and user reviews.',
-    qualityOathTitle: 'Our Quality Oath',
-    qualityOathDesc: 'Every gadget, garment, and home accent is hand-inspected for quality before shipping.',
-    imageUrl: '/about-story-general.png',
+  who: {
+    title: 'Manufacturers and wholesale distributors',
+    text: "High-quality men's wear, kid's wear, shorts, cargo pants, 3/4ths and stylish T-shirts, made and supplied from Coimbatore.",
+    imageUrl: '',
   },
-  stats: [
-    { value: '50000+', label: 'Happy Patrons', sub: 'Verified satisfied customers' },
-    { value: '200000+', label: 'Social Family', sub: 'Engaged lifestyle community' },
-    { value: '150000+', label: 'Orders Delivered', sub: 'Safely packed & shipped items' },
-    { value: '150+', label: 'Curated Brands', sub: 'Top-tier verified partners' },
-  ],
-  values: [
-    { title: 'Our Vision', accent: 'Modern Curation', description: 'To create a single, curated lifestyle ecosystem where cutting-edge electronics, designer fashion, premium home goods, and health essentials seamlessly converge into a single, high-end marketplace.' },
-    { title: 'Our Mission', accent: 'Authenticity & Trust', description: 'To source and deliver strictly authentic, certified products across all categories, ensuring our customers experience top-tier quality, transparent pricing, and concierge-level customer care.' },
-    { title: 'Our Goal', accent: 'Curated Excellence', description: 'To bridge the gap between verified global manufacturers and design-conscious shoppers, offering an unparalleled catalog of curated electronics, apparel, home decor, beauty, and hobbies.' },
-  ],
-  philosophy: {
-    subtitle: 'Our Philosophy',
-    title: 'Pillars of Excellence',
-    description: 'Our foundations are built on sourcing authentic products, providing seamless digital solutions, and earning long-term customer loyalty.',
+  fabrics: {
+    title: 'Superior fabrics, chosen with care',
+    text: 'We use superior fabrics to ensure durability, comfort, and the latest trends for our customers.',
+    list: ['2-way Lycra', 'NS Fabric', 'Loopknit', 'Pure Cotton', 'Muslin'],
   },
-  concierge: {
-    subtitle: 'Need Assistance?',
-    title: 'We are Here to Help',
-    description: 'Whether you need product recommendations, order tracking help, or bulk procurement support across our catalog, our concierge team is always available.',
+  mission:
+    'To deliver exceptional clothing that combines **modern fashion** with **unmatched comfort**, while maintaining the **highest standards** of quality and affordability.',
+  values: ['Style', 'Comfort', 'Quality', 'Affordability', 'Durability', 'Modern fashion', 'Latest trends'],
+  contact: {
+    title: 'Get in touch',
+    text: "Men's wear, kid's wear and ladies' wear, all in one place.",
+    button: 'Contact us',
+    to: '/contact',
   },
-  marqueeWords: ['ELECTRONICS', 'APPAREL', 'HOME', 'BEAUTY', 'SPORTS', 'TOYS', 'EXCLUSIVITY', 'QUALITY', 'CRAFTSMANSHIP']
+  office: {
+    address: [
+      '6/154, 2nd Street, Radhithya Avenue,',
+      'Checkpost, Kinathukadavu - Pollachi Main Road,',
+      'Coimbatore - 642109',
+    ],
+    phone: '+91 98765 43210',
+    email: 'info@twinaapparels.com',
+    mapsUrl: 'https://www.google.com/maps/search/?api=1&query=6%2F154%2C+2nd+Street%2C+Radhithya+Avenue%2C+Checkpost%2C+Kinathukadavu+-+Pollachi+Main+Road%2C+Coimbatore+-+642109',
+  },
 };
 
 const defaultOtpSettings = {
@@ -77,12 +74,135 @@ const defaultTaxSettings = {
   taxRate: 5,
 };
 
+/**
+ * Validates and sanitizes the about page site settings.
+ * Removes all legacy/unused columns so only valid website data is stored in DB.
+ */
+const validateAboutSettings = (input) => {
+  if (!input || typeof input !== 'object') {
+    return { valid: false, message: 'Settings payload must be a valid JSON object' };
+  }
+
+  // Hero validation
+  if (!input.hero || typeof input.hero !== 'object') {
+    return { valid: false, message: 'Hero section data is required' };
+  }
+  const heroTitle = String(input.hero.title || '').trim();
+  const heroText = String(input.hero.text || '').trim();
+  if (!heroTitle) {
+    return { valid: false, message: 'Hero title is required' };
+  }
+  if (!heroText) {
+    return { valid: false, message: 'Hero description text is required' };
+  }
+
+  // Hang tags validation
+  let tags = [];
+  if (Array.isArray(input.hero.tags)) {
+    tags = input.hero.tags.map(t => ({
+      kicker: String(t.kicker || '').trim(),
+      title: String(t.title || '').trim(),
+      foot: String(t.foot || '').trim(),
+    })).filter(t => t.title || t.kicker);
+  }
+
+  // Who We Are validation
+  if (!input.who || typeof input.who !== 'object') {
+    return { valid: false, message: 'Who We Are section data is required' };
+  }
+  const whoTitle = String(input.who.title || '').trim();
+  const whoText = String(input.who.text || '').trim();
+  if (!whoTitle) {
+    return { valid: false, message: 'Who We Are section title is required' };
+  }
+  if (!whoText) {
+    return { valid: false, message: 'Who We Are description text is required' };
+  }
+
+  // Fabrics validation
+  const fabricsTitle = String(input.fabrics?.title || '').trim() || defaultAboutSettings.fabrics.title;
+  const fabricsText = String(input.fabrics?.text || '').trim();
+  const fabricList = Array.isArray(input.fabrics?.list)
+    ? input.fabrics.list.map(f => String(f || '').trim()).filter(Boolean)
+    : defaultAboutSettings.fabrics.list;
+
+  // Mission validation
+  const mission = String(input.mission || '').trim();
+  if (!mission) {
+    return { valid: false, message: 'Mission statement is required' };
+  }
+
+  // Values validation
+  const values = Array.isArray(input.values)
+    ? input.values.map(v => String(v || '').trim()).filter(Boolean)
+    : defaultAboutSettings.values;
+
+  // Contact validation
+  const contactTitle = String(input.contact?.title || '').trim() || defaultAboutSettings.contact.title;
+  const contactText = String(input.contact?.text || '').trim() || defaultAboutSettings.contact.text;
+  const contactButton = String(input.contact?.button || '').trim() || defaultAboutSettings.contact.button;
+  const contactTo = String(input.contact?.to || '').trim() || defaultAboutSettings.contact.to;
+
+  // Office validation
+  let address = Array.isArray(input.office?.address)
+    ? input.office.address.map(a => String(a || '').trim()).filter(Boolean)
+    : (typeof input.office?.address === 'string'
+      ? input.office.address.split('\n').map(a => a.trim()).filter(Boolean)
+      : defaultAboutSettings.office.address);
+
+  const phone = String(input.office?.phone || '').trim();
+  const email = String(input.office?.email || '').trim();
+  const mapsUrl = String(input.office?.mapsUrl || '').trim();
+
+  // Construct cleansed payload — pruned of all obsolete columns/fields
+  const cleanData = {
+    hero: {
+      eyebrow: String(input.hero.eyebrow || '').trim() || defaultAboutSettings.hero.eyebrow,
+      title: heroTitle,
+      text: heroText,
+      tags: tags.length ? tags : defaultAboutSettings.hero.tags,
+    },
+    who: {
+      title: whoTitle,
+      text: whoText,
+      imageUrl: input.who.imageUrl ? String(input.who.imageUrl).trim() : '',
+    },
+    fabrics: {
+      title: fabricsTitle,
+      text: fabricsText,
+      list: fabricList,
+    },
+    mission,
+    values,
+    contact: {
+      title: contactTitle,
+      text: contactText,
+      button: contactButton,
+      to: contactTo,
+    },
+    office: {
+      address,
+      phone,
+      email,
+      mapsUrl,
+    },
+  };
+
+  return { valid: true, cleanData };
+};
+
 const getSetting = async (req, res) => {
   try {
     const { key } = req.params;
     const setting = await SiteSetting.findOne({ where: { key } });
     if (!setting) {
       if (key === 'about') {
+        // Auto-insert default into database so the table is populated
+        try {
+          await SiteSetting.create({ key: 'about', value: JSON.stringify(defaultAboutSettings) });
+        } catch (seedErr) {
+          console.warn('Auto-seed SiteSetting[about] failed:', seedErr.message);
+        }
         return res.json({ success: true, key, data: defaultAboutSettings });
       }
       if (key === 'otp_threshold' || key === 'security') {
@@ -99,7 +219,27 @@ const getSetting = async (req, res) => {
       }
       return res.json({ success: true, key, data: {} });
     }
-    const parsed = JSON.parse(setting.value);
+
+    let parsed = {};
+    try {
+      parsed = JSON.parse(setting.value);
+    } catch {
+      parsed = {};
+    }
+
+    if (key === 'about') {
+      const merged = {
+        hero: { ...defaultAboutSettings.hero, ...(parsed.hero || {}) },
+        who: { ...defaultAboutSettings.who, ...(parsed.who || {}) },
+        fabrics: { ...defaultAboutSettings.fabrics, ...(parsed.fabrics || {}) },
+        mission: parsed.mission || defaultAboutSettings.mission,
+        values: parsed.values?.length ? parsed.values : defaultAboutSettings.values,
+        contact: { ...defaultAboutSettings.contact, ...(parsed.contact || {}) },
+        office: { ...defaultAboutSettings.office, ...(parsed.office || {}) },
+      };
+      return res.json({ success: true, key, data: merged });
+    }
+
     if (key === 'otp_threshold' || key === 'security') {
       return res.json({ success: true, key, data: { ...defaultOtpSettings, ...parsed } });
     }
@@ -111,7 +251,7 @@ const getSetting = async (req, res) => {
     }
     return res.json({ success: true, key, data: parsed });
   } catch (err) {
-    console.error(err);
+    console.error('getSetting error:', err);
     return res.status(500).json({ success: false, message: 'Server error' });
   }
 };
@@ -122,20 +262,30 @@ const updateSetting = async (req, res) => {
     let data = {};
     
     if (req.body.data) {
-      data = typeof req.body.data === 'string' ? JSON.parse(req.body.data) : req.body.data;
+      try {
+        data = typeof req.body.data === 'string' ? JSON.parse(req.body.data) : req.body.data;
+      } catch (e) {
+        return res.status(400).json({ success: false, message: 'Invalid JSON payload in data field' });
+      }
     } else {
       data = req.body;
     }
 
-    if (req.file) {
-      const relativePath = `/uploads/settings/${req.file.filename}`;
-      if (key === 'about') {
-        if (!data.story) data.story = {};
-        data.story.imageUrl = relativePath;
+    let toSave = data;
+
+    if (key === 'about') {
+      const valResult = validateAboutSettings(data);
+      if (!valResult.valid) {
+        return res.status(400).json({ success: false, message: valResult.message });
+      }
+      toSave = valResult.cleanData;
+
+      if (req.file) {
+        toSave.who.imageUrl = `/uploads/settings/${req.file.filename}`;
       }
     }
 
-    const valueStr = JSON.stringify(data);
+    const valueStr = JSON.stringify(toSave);
     let setting = await SiteSetting.findOne({ where: { key } });
     if (setting) {
       await setting.update({ value: valueStr });
@@ -143,15 +293,15 @@ const updateSetting = async (req, res) => {
       setting = await SiteSetting.create({ key, value: valueStr });
     }
 
-    return res.json({ success: true, key, data });
+    return res.json({ success: true, key, data: toSave });
   } catch (err) {
-    console.error(err);
-    return res.status(500).json({ success: false, message: 'Server error' });
+    console.error('updateSetting error:', err);
+    return res.status(500).json({ success: false, message: 'Server error: ' + err.message });
   }
 };
 
 const subscribeNewsletter = async (req, res) => {
-  // Newsletter subscription removed — endpoint kept for backward compat
+  // Newsletter subscription kept for backward compat
   return res.json({ success: true, message: 'Thank you!', pointsAwarded: 0 });
 };
 

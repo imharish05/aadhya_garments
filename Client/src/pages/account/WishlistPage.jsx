@@ -9,6 +9,7 @@ import { addLocal, openCart } from '../../redux/slices/cartSlice';
 import { getImageUrl } from '../../utils/imageUrl';
 import { getPlaceholderSvg } from '../../utils/placeholder';
 import { isCartItemMatch } from '../../utils/variantFormatter';
+import { StaggeredText } from '../../components/animations';
 
 const WishlistPage = () => {
   const dispatch = useDispatch();
@@ -79,17 +80,17 @@ const WishlistPage = () => {
       className="w-full"
     >
       <div className="flex items-center justify-between mb-6 pb-2">
-        <h1 className="font-playfair text-2xl font-semibold text-brand-text">My Wishlist</h1>
+        <StaggeredText as="h1" text="My Wishlist" segmentBy="chars" startDelay={0.1} className="font-playfair text-2xl font-semibold text-brand-text" />
         <span className="text-xs text-brand-grey font-medium">({items.length} {items.length === 1 ? 'item' : 'items'})</span>
       </div>
 
       {items.length === 0 ? (
         <div className="bg-white p-16 text-center rounded-lg">
           <Heart size={48} className="text-brand-gold/40 mx-auto mb-4 animate-pulse" strokeWidth={1} />
-          <p className="font-playfair text-xl text-brand-text mb-2">Your Wishlist is Empty</p>
-          <p className="text-brand-grey text-xs md:text-sm mb-6 max-w-sm mx-auto">
-            Explore our collections and save your favorite products, apparel, and lifestyle curations here.
-          </p>
+          <StaggeredText as="p" text="Your Wishlist is Empty" segmentBy="chars" startDelay={0.1} className="font-playfair text-xl text-brand-text mb-2" />
+          <StaggeredText as="p" text="Explore our collections and save your favorite products, apparel, and lifestyle curations here." segmentBy="words" blur={false} duration={0.4} startDelay={0.25} className="text-brand-grey text-xs md:text-sm mb-6 max-w-sm mx-auto">
+
+          </StaggeredText>
           <Link to="/products" className="btn-primary inline-block" id="wishlist-empty-shop">Explore Products</Link>
         </div>
       ) : (

@@ -1,15 +1,12 @@
 import { Link } from 'react-router-dom';
-import { ArrowRight, ArrowUpRight } from 'lucide-react';
-import { FadeUp } from './animations';
-import { ArchRings} from './Motifs';
+import { ArrowRight } from 'lucide-react';
+import { FadeUp, StaggeredText } from './animations';
+import { ArchRings } from './Motifs';
 
 /**
  * AboutTeaser — home page section that sends visitors to /about.
  * Palette from the Twin A logo: gold #BEA266 / light gold #DFC481 / deep brown #2A2014.
  * Right side: traditional photo inside an arch, with outline arch, circle and bloom shapes.
- *
- * EDIT COPY + IMAGE HERE ↓
- * To use your own photo: put it in Client/public (e.g. /about-traditional.jpg) and set image below.
  */
 const COPY = {
   eyebrow: 'Our Story',
@@ -21,8 +18,6 @@ const COPY = {
   imageAlt: 'Traditional Indian wear from Twin A Apparels',
 };
 
-const BADGE_TEXT = 'TWIN A APPARELS • COIMBATORE • TWIN A APPARELS • COIMBATORE • ';
-
 const AboutTeaser = () => (
   <section
     className="relative mx-3 sm:mx-6 lg:mx-10 my-10 md:my-16 text-[#2A2014] overflow-hidden"
@@ -31,27 +26,31 @@ const AboutTeaser = () => (
     {/* faint background art */}
     <ArchRings className="pointer-events-none absolute -left-10 -bottom-6 h-64 w-52 opacity-[0.12] hidden md:block" />
 
-    <div className="relative  px-6 md:px-12 py-14 md:py-20 grid grid-cols-1 lg:grid-cols-[1.2fr_1fr] gap-14 lg:gap-8 items-center">
+    <div className="relative px-6 md:px-12 py-14 md:py-20 grid grid-cols-1 lg:grid-cols-[1.2fr_1fr] gap-14 lg:gap-8 items-center">
       {/* Left: copy */}
       <div>
-        <FadeUp>
-          <span className="inline-flex items-center gap-3 font-montserrat text-xs font-semibold uppercase tracking-[0.28em] text-[#DFC481]">
-            <span className="h-1.5 w-1.5 rounded-full bg-[#BEA266]" />
-            {COPY.eyebrow}
-          </span>
-        </FadeUp>
+        <div className="inline-flex items-center gap-3 font-montserrat text-xs font-semibold uppercase tracking-[0.28em] text-[#DFC481] mb-2">
+          <span className="h-1.5 w-1.5 rounded-full bg-[#BEA266]" />
+          <StaggeredText as="span" text={COPY.eyebrow} segmentBy="words" blur={false} startDelay={0.05} />
+        </div>
 
-        <FadeUp delay={0.2}>
-          <h2 className="font-playfair mt-5 text-3xl sm:text-4xl lg:text-5xl font-semibold leading-[1.1] max-w-2xl text-[#000]">
-            {COPY.title}
-          </h2>
-        </FadeUp>
+        <StaggeredText
+          as="h2"
+          text={COPY.title}
+          startDelay={0.1}
+          segmentBy="chars"
+          className="font-playfair mt-5 text-3xl sm:text-4xl lg:text-5xl font-semibold leading-[1.1] max-w-2xl text-[#000]"
+        />
 
-        <FadeUp delay={0.3}>
-          <p className="font-montserrat mt-6 max-w-xl text-[16px] leading-relaxed text-[#2A2014]/70 font-normal">
-            {COPY.body}
-          </p>
-        </FadeUp>
+        <StaggeredText
+          as="p"
+          text={COPY.body}
+          startDelay={0.25}
+          segmentBy="words"
+          blur={false}
+          duration={0.4}
+          className="font-montserrat mt-6 max-w-xl text-[16px] leading-relaxed text-[#2A2014]/70 font-normal"
+        />
 
         <FadeUp delay={0.4}>
           <div className="mt-9 flex flex-wrap items-center gap-x-8 gap-y-5">
@@ -95,30 +94,6 @@ const AboutTeaser = () => (
               className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
             />
           </span>
-
-          {/* bloom, top-right */}
-          {/* <Bloom className="absolute -right-8 -top-4 h-20 w-20 motion-safe:animate-spin [animation-duration:30s]" /> */}
-
-          {/* rotating text badge, bottom-left */}
-          {/* <span className="absolute -bottom-8 -left-8 flex h-28 w-28 items-center justify-center rounded-full bg-[#2A2014]">
-            <svg
-              viewBox="0 0 200 200"
-              className="absolute inset-0 h-full w-full animate-spin motion-reduce:animate-none [animation-duration:22s] group-hover:[animation-duration:8s]"
-              aria-hidden="true"
-            >
-              <defs>
-                <path id="aboutBadgePath" d="M 100,100 m -76,0 a 76,76 0 1,1 152,0 a 76,76 0 1,1 -152,0" />
-              </defs>
-              <text className="font-montserrat" fill="#DFC481" fontSize="14" fontWeight="600" letterSpacing="2">
-                <textPath href="#aboutBadgePath" textLength="470" lengthAdjust="spacing">
-                  {BADGE_TEXT}
-                </textPath>
-              </text>
-            </svg>
-            <span className="relative flex h-12 w-12 items-center justify-center rounded-full bg-[#BEA266] text-[#2A2014] transition-colors duration-300 group-hover:bg-[#DFC481]">
-              <ArrowUpRight size={22} strokeWidth={1.6} className="transition-transform duration-500 group-hover:rotate-45" />
-            </span>
-          </span> */}
         </Link>
       </FadeUp>
     </div>

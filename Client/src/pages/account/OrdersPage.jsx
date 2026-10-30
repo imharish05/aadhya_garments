@@ -7,6 +7,7 @@ import { fetchMyOrders } from '../../redux/slices/ordersSlice';
 import { formatPrice, formatOrderAmount } from '../../utils/currency';
 import { getImageUrl } from '../../utils/imageUrl';
 import { getPlaceholderSvg } from '../../utils/placeholder';
+import { StaggeredText } from '../../components/animations';
 
 const STATUS_COLORS = {
   PENDING_PAYMENT: 'bg-yellow-50 text-yellow-700 border border-yellow-200',
@@ -74,8 +75,8 @@ const OrdersPage = () => {
       ) : sortedOrders.length === 0 ? (
         <div className="bg-white shadow-sm rounded-lg p-12 text-center">
           <Package size={40} className="text-brand-light mx-auto mb-3" strokeWidth={1} />
-          <p className="font-playfair text-xl mb-2">No orders yet</p>
-          <p className="text-brand-grey text-sm mb-4">Start exploring our luxury curated collections</p>
+          <StaggeredText as="p" text="No orders yet" segmentBy="chars" startDelay={0.1} className="font-playfair text-xl mb-2" />
+          <StaggeredText as="p" text="Start exploring our luxury curated collections" segmentBy="words" blur={false} duration={0.4} startDelay={0.25} className="text-brand-grey text-sm mb-4" />
           <Link to="/products" className="btn-primary" id="orders-empty-shop">Shop Now</Link>
         </div>
       ) : (

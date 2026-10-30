@@ -1,5 +1,5 @@
 import { Truck, Lock, Headphones } from 'lucide-react';
-import { FadeUp } from './animations';
+import { FadeUp, StaggeredText } from './animations';
 
 /** EDIT COPY HERE ↓ */
 const PROMISES = [
@@ -22,16 +22,28 @@ const OurPromise = () => (
     <Ornament />
     <FadeUp className="max-w-site mx-auto px-6 md:px-8 py-9 md:py-11">
       <ul className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-0 md:divide-x md:divide-brand-gold/25">
-        {PROMISES.map(({ icon: Icon, title, text }) => (
+        {PROMISES.map(({ icon: Icon, title, text }, i) => (
           <li key={title} className="flex items-center gap-4 md:justify-center md:px-6">
             <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-brand-gold/50 text-brand-gold">
               <Icon size={20} strokeWidth={1.5} />
             </span>
             <div>
-              <h3 className="font-inter text-[13px] font-semibold uppercase tracking-[0.14em] text-neutral-900">
-                {title}
-              </h3>
-              <p className="font-inter mt-1 text-[13px] text-neutral-500">{text}</p>
+              <StaggeredText
+                as="h3"
+                text={title}
+                segmentBy="chars"
+                startDelay={0.1 + i * 0.1}
+                className="font-inter text-[13px] font-semibold uppercase tracking-[0.14em] text-neutral-900"
+              />
+              <StaggeredText
+                as="p"
+                text={text}
+                segmentBy="words"
+                blur={false}
+                duration={0.4}
+                startDelay={0.2 + i * 0.1}
+                className="font-inter mt-1 text-[13px] text-neutral-500"
+              />
             </div>
           </li>
         ))}

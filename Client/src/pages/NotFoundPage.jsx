@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Home, ArrowLeft } from 'lucide-react';
 import Footer from '../components/Footer';
+import { StaggeredText } from '../components/animations';
 
 const NotFoundPage = () => (
   <main id="main-content" className="min-h-screen flex flex-col">
@@ -19,12 +20,22 @@ const NotFoundPage = () => (
         >
           404
         </h1>
-        <h2 className="font-playfair text-2xl md:text-3xl font-semibold text-brand-text mt-2 mb-3">
-          Page Not Found
-        </h2>
-        <p className="text-brand-grey text-base max-w-md mx-auto mb-8">
-          The page you're looking for has moved, been removed, or doesn't exist. Let's get you back to the good stuff.
-        </p>
+        <StaggeredText
+          as="h2"
+          text="Page Not Found"
+          segmentBy="chars"
+          startDelay={0.1}
+          className="font-playfair text-2xl md:text-3xl font-semibold text-brand-text mt-2 mb-3"
+        />
+        <StaggeredText
+          as="p"
+          text="The page you're looking for has moved, been removed, or doesn't exist. Let's get you back to the good stuff."
+          segmentBy="words"
+          blur={false}
+          duration={0.4}
+          startDelay={0.25}
+          className="text-brand-grey text-base max-w-md mx-auto mb-8"
+        />
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
           <Link to="/" className="btn-primary flex items-center gap-2" id="404-home">
             <Home size={16} /> Back to Home

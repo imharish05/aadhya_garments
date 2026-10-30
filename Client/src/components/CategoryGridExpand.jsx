@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
+import { StaggeredText } from "./animations";
 
 const Arrow = () => (
   <svg
@@ -184,14 +185,24 @@ export default function CategoryGridExpand({ categories = [], allHref = "/produc
   return (
     <div className="relative bg-white">
       <div className="mx-auto flex max-w-5xl flex-col px-4 py-10 md:px-5 md:py-12">
-        {/* Header: centered, static */}
+        {/* Header: centered */}
         <div className="mb-5 text-center">
-          <h2 className="font-playfair text-2xl sm:text-3xl font-semibold tracking-tight text-neutral-900">
-            Shop by category
-          </h2>
-          <p className="mx-auto mt-1 hidden max-w-md text-sm sm:text-base text-neutral-600 sm:block font-montserrat">
-            Six collections, each curated by our stylists.
-          </p>
+          <StaggeredText
+            as="h2"
+            text="Shop by category"
+            segmentBy="chars"
+            startDelay={0.1}
+            className="font-playfair text-2xl sm:text-3xl font-semibold tracking-tight text-neutral-900"
+          />
+          <StaggeredText
+            as="p"
+            text="Six collections, each curated by our stylists."
+            segmentBy="words"
+            blur={false}
+            duration={0.4}
+            startDelay={0.25}
+            className="mx-auto mt-1 hidden max-w-md text-sm sm:text-base text-neutral-600 sm:block font-montserrat"
+          />
         </div>
 
         <div className={`relative ${showArrows ? "md:px-12" : ""}`}>

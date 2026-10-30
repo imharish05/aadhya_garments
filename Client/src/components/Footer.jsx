@@ -3,8 +3,7 @@ import { Link } from 'react-router-dom';
 import { Instagram, Facebook, Youtube, Twitter, Mail, Phone } from 'lucide-react';
 import Logo from './Logo';
 import api from '../services/api';
-
-
+import { StaggeredText } from './animations';
 
 const Footer = () => {
   const [categories, setCategories] = useState([]);
@@ -43,9 +42,15 @@ const Footer = () => {
         {/* Brand */}
         <div>
           <Logo size="lg" className="mb-4" />
-          <p className="text-white/60 text-sm leading-relaxed mb-6">
-            Curating India's finest luxury fashion, jewelry, perfumes and accessories since 2019. Where heritage meets modernity.
-          </p>
+          <StaggeredText
+            as="p"
+            text="Curating India's finest luxury fashion, jewelry, perfumes and accessories since 2019. Where heritage meets modernity."
+            segmentBy="words"
+            blur={false}
+            duration={0.4}
+            startDelay={0.1}
+            className="text-white/60 text-sm leading-relaxed mb-6"
+          />
           <div className="flex gap-3">
             {[Instagram, Facebook, Youtube, Twitter].map((Icon, i) => (
               <a key={i} href="#" className="w-9 h-9 border border-white/20 rounded-lg flex items-center justify-center hover:border-brand-gold hover:text-brand-gold transition-all duration-200 focus-visible:outline-white" aria-label={`Social link ${i+1}`}>
@@ -57,7 +62,13 @@ const Footer = () => {
 
         {/* Categories */}
         <div>
-          <h3 className="font-playfair text-lg font-semibold text-white mb-5">Categories</h3>
+          <StaggeredText
+            as="h3"
+            text="Categories"
+            segmentBy="chars"
+            startDelay={0.15}
+            className="font-playfair text-lg font-semibold text-white mb-5"
+          />
           <ul className="space-y-3">
             {displayCategories.map(cat => (
               <li key={cat.name}>
@@ -71,7 +82,13 @@ const Footer = () => {
 
         {/* Customer Service */}
         <div>
-          <h3 className="font-playfair text-lg font-semibold text-white mb-5">Help & Info</h3>
+          <StaggeredText
+            as="h3"
+            text="Help & Info"
+            segmentBy="chars"
+            startDelay={0.2}
+            className="font-playfair text-lg font-semibold text-white mb-5"
+          />
           <ul className="space-y-3">
             {[
               { label: 'About', to: '/about' },
@@ -93,7 +110,13 @@ const Footer = () => {
 
         {/* Contact */}
         <div>
-          <h3 className="font-playfair text-lg font-semibold text-white mb-5">Contact Us</h3>
+          <StaggeredText
+            as="h3"
+            text="Contact Us"
+            segmentBy="chars"
+            startDelay={0.25}
+            className="font-playfair text-lg font-semibold text-white mb-5"
+          />
           <ul className="space-y-3">
             <li className="flex gap-2.5 text-white/60 text-sm">
               <Phone size={15} className="text-brand-gold mt-0.5 flex-shrink-0" />

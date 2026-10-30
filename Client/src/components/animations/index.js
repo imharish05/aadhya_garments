@@ -1,3 +1,4 @@
+export { StaggeredText } from './StaggeredText';
 export { SplitTextReveal } from './SplitTextReveal';
 export { FadeUp } from './FadeUp';
 export { EyebrowReveal } from './EyebrowReveal';

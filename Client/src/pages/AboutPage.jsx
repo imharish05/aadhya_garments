@@ -1,432 +1,559 @@
-import { getImageUrl } from '../utils/imageUrl';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { motion, useMotionValue, useTransform, animate, useInView } from 'framer-motion';
-import { Eye, Target, Compass, Award, Sparkles, Users, Instagram, Package, Heart, ChevronRight, ArrowRight } from 'lucide-react';
+import { motion, useReducedMotion } from 'framer-motion';
+import { ArrowUpRight, MapPin, Phone, Mail, Compass } from 'lucide-react';
 import Footer from '../components/Footer';
-import { SplitTextReveal, FadeUp, EyebrowReveal } from '../components/animations';
+import { FadeUp, EyebrowReveal, StaggeredText } from '../components/animations';
 import api from '../services/api';
+import { getImageUrl } from '../utils/imageUrl';
 
-// Count-Up Animation Component
-const Counter = ({ value }) => {
-  const ref = useRef(null);
-  const inView = useInView(ref, { once: true, margin: '-50px' });
+import twoWayLycraImg from '../assets/fabrics/2-way Lycra.png';
+import loopknitImg from '../assets/fabrics/Loopknit.png';
+import nsFabricImg from '../assets/fabrics/NS Fabric.png';
+import pureCottonImg from '../assets/fabrics/Pure Cotton.png';
 
-  // Extract number and suffix (like "K" or "+")
-  const numStr = value.replace(/[^0-9]/g, '');
-  const num = parseInt(numStr, 10) || 0;
-  const suffix = value.replace(/[0-9]/g, '');
+/* ────────────────────────────────────────────────────────────────────────────
+   Twin A Apparels — About page
+   Copy comes from site settings API (backed by the company profile sheet).
+   Palette: logo black + gold. Fonts: font-playfair + font-inter only.
+──────────────────────────────────────────────────────────────────────────── */
+const DEFAULT_ABOUT = {
+  hero: {
+    eyebrow: 'About Twin A Apparels',
+    title: 'Founded with a passion for style and comfort',
+    text: "We are manufacturers and wholesale distributors of high-quality men's wear, kid's wear, shorts, cargo pants, 3/4ths and stylish T-shirts, based in Coimbatore.",
+    tags: [
+      { kicker: 'We are', title: 'Manufacturers', foot: 'High-quality clothing' },
+      { kicker: 'We are', title: 'Wholesale distributors', foot: "Men's, kid's & more" },
+      { kicker: 'Based in', title: 'Coimbatore', foot: 'Style · Comfort' },
+    ],
+  },
+  who: {
+    title: 'Manufacturers and wholesale distributors',
+    text: "High-quality men's wear, kid's wear, shorts, cargo pants, 3/4ths and stylish T-shirts, made and supplied from Coimbatore.",
+    imageUrl: '',
+  },
+  values: ['Style', 'Comfort', 'Quality', 'Affordability', 'Durability', 'Modern fashion', 'Latest trends'],
+  fabrics: {
+    title: 'Superior fabrics, chosen with care',
+    text: 'We use superior fabrics to ensure durability, comfort, and the latest trends for our customers.',
+    list: ['2-way Lycra', 'NS Fabric', 'Loopknit', 'Pure Cotton', 'Muslin'],
+  },
+  mission:
+    'To deliver exceptional clothing that combines **modern fashion** with **unmatched comfort**, while maintaining the **highest standards** of quality and affordability.',
+  // Empty = fall back to bundled fabric photos. Set via site settings API.
+  missionImages: {
+    main: '',
+    accent: '',
+  },
+  contact: {
+    title: 'Get in touch',
+    text: "Men's wear, kid's wear and ladies' wear, all in one place. We welcome wholesale partners, distributors, and bulk custom inquiries.",
+    button: 'Contact us',
+    to: '/contact',
+  },
+  office: {
+    address: [
+      '6/154, 2nd Street, Radhithya Avenue,',
+      'Checkpost, Kinathukadavu - Pollachi Main Road,',
+      'Coimbatore - 642109',
+    ],
+    phone: '+91 98765 43210',
+    email: 'info@twinaapparels.com',
+    mapsUrl: 'https://www.google.com/maps/search/?api=1&query=6%2F154%2C+2nd+Street%2C+Radhithya+Avenue%2C+Checkpost%2C+Kinathukadavu+-+Pollachi+Main+Road%2C+Coimbatore+-+642109',
+  },
+};
 
-  const motionValue = useMotionValue(0);
-  const rounded = useTransform(motionValue, (latest) => {
-    return Math.floor(latest).toLocaleString();
-  });
+// Fabric photos by name. While null, a drawn weave swatch is shown instead.
+const FABRIC_IMAGES = {
+  '2-way Lycra': twoWayLycraImg,
+  'NS Fabric': nsFabricImg,
+  Loopknit: loopknitImg,
+  'Pure Cotton': pureCottonImg,
+  Muslin: null,
+};
 
-  useEffect(() => {
-    if (inView) {
-      const controls = animate(motionValue, num, {
-        duration: 2.2,
-        ease: 'easeOut',
-      });
-      return controls.stop;
-    }
-  }, [inView, motionValue, num]);
+/* ── Hero hang tags ──────────────────────────────────────────────────────── */
+const THREAD = ['#BEA266', '#FBF7EE', '#BEA266'];
+const TAG_THEMES = ['bg-[#FBF7EE] text-black', 'bg-[#BEA266] text-black', 'bg-[#FBF7EE] text-black'];
 
+const HangTags = ({ tags = [], reduce }) => {
+  const displayTags = tags.length ? tags : DEFAULT_ABOUT.hero.tags;
   return (
-    <span ref={ref} className="font-playfair text-4xl md:text-5xl font-bold text-brand-gold tracking-tight">
-      <motion.span>{rounded}</motion.span>
-      <span>{suffix}</span>
-    </span>
+    <div className="relative mx-auto mt-14 md:mt-20 max-w-5xl">
+      <div className="absolute left-0 right-0 top-0 hidden items-center sm:flex" aria-hidden="true">
+        <span className="h-3 w-3 rounded-full bg-[#DFC481]" />
+        <span className="h-[3px] flex-1 rounded-full bg-[#DFC481]" />
+        <span className="h-3 w-3 rounded-full bg-[#DFC481]" />
+      </div>
+
+      <ul className="mx-auto grid max-w-[17rem] grid-cols-1 gap-3 px-2 sm:max-w-none sm:grid-cols-3 sm:gap-4 sm:px-6 sm:pt-1.5 md:gap-8 md:px-10">
+        {displayTags.map((tag, i) => (
+          <li key={tag.title || i} className="relative">
+            <span className="absolute left-1/2 top-0 h-3 w-3 -translate-x-1/2 rounded-full sm:hidden" style={{ backgroundColor: THREAD[i % THREAD.length] }} aria-hidden="true" />
+            <motion.div
+              initial={{ opacity: 0, y: -40, rotate: i % 2 ? 7 : -7 }}
+              animate={{ opacity: 1, y: 0, rotate: 0 }}
+              transition={{ type: 'spring', stiffness: 90, damping: 11, delay: 0.5 + i * 0.15 }}
+              style={{ transformOrigin: 'top center' }}
+              whileHover={{ scale: 1.04 }}
+            >
+              <motion.div
+                style={{ transformOrigin: 'top center' }}
+                animate={reduce ? undefined : { rotate: [-2.2, 2.2] }}
+                transition={reduce ? undefined : { duration: 3.4 + i * 0.5, repeat: Infinity, repeatType: 'mirror', ease: 'easeInOut' }}
+                className="relative flow-root"
+              >
+                <div className={`relative mt-7 sm:mt-11 rounded-[1.5rem] sm:rounded-[1.75rem] px-5 pb-5 pt-8 sm:px-4 sm:pb-5 sm:pt-9 md:px-6 md:pb-6 md:pt-10 text-center shadow-[0_18px_40px_rgba(0,0,0,0.35)] ${TAG_THEMES[i % TAG_THEMES.length]}`}>
+                  <span className="absolute left-1/2 top-3 h-3 w-3 md:h-3.5 md:w-3.5 -translate-x-1/2 rounded-full bg-black" aria-hidden="true" />
+                  <span
+                    className="absolute left-1/2 z-10 -top-7 h-[46px] w-[2px] -translate-x-1/2 rounded-full sm:-top-11 sm:h-[62px]"
+                    style={{ backgroundColor: THREAD[i % THREAD.length] }}
+                    aria-hidden="true"
+                  />
+                  <p className="font-inter text-[10px] md:text-[11px] font-semibold uppercase tracking-[0.2em] text-black/55">{tag.kicker}</p>
+                  <h3 className="font-playfair mt-2 text-xl sm:text-lg md:text-2xl lg:text-3xl font-medium leading-tight">{tag.title}</h3>
+                  <div className="my-3 md:my-4 border-t border-dashed border-black/30" />
+                  <p className="font-inter text-[11px] sm:text-[10px] md:text-xs font-semibold uppercase tracking-[0.14em]">{tag.foot}</p>
+                </div>
+              </motion.div>
+            </motion.div>
+          </li>
+        ))}
+      </ul>
+    </div>
   );
 };
 
-const defaultAboutSettings = {
-  hero: {
-    subtitle: 'Est. 2019',
-    title: 'Your Premium\nLifestyle Destination',
-    description: 'Bringing you a meticulously curated selection of cutting-edge electronics, fashion apparel, home styling, beauty, and outdoor sports.',
-  },
-  story: {
-    subtitle: 'Our Legacy',
-    title: 'Curation For The\nModern Connoisseur',
-    description1: 'Twin A Apparels was established in 2019 with a singular, clear objective: to redefine how you shop for life\'s essentials. We believed that shopping for premium tech shouldn\'t feel separate from buying designer apparel or selecting elegant home furnishings. By bringing these diverse categories together, we created a unified, luxury-tier marketplace.',
-    description2: 'Today, our catalog is divided into six pillars: Electronics & Gadgets, Apparel & Fashion, Home & Living, Beauty & Personal Care, Sports & Outdoors, and Toys, Hobbies & Media. We verify and partner directly with top manufacturers and authorized brands, filtering out the noise to bring you only products that pass our strict design and quality audits.',
-    feature1Title: 'Authentic Sourcing',
-    feature1Desc: 'We guarantee 100% original products sourced directly from brands or authorized global distributors.',
-    feature2Title: 'Global Standard',
-    feature2Desc: 'Our products are selected based on strict criteria: build quality, performance, aesthetics, and user reviews.',
-    qualityOathTitle: 'Our Quality Oath',
-    qualityOathDesc: 'Every gadget, garment, and home accent is hand-inspected for quality before shipping.',
-    imageUrl: '/about-story-general.png',
-  },
-  stats: [
-    { value: '50000+', label: 'Happy Patrons', sub: 'Verified satisfied customers' },
-    { value: '200000+', label: 'Social Family', sub: 'Engaged lifestyle community' },
-    { value: '150000+', label: 'Orders Delivered', sub: 'Safely packed & shipped items' },
-    { value: '150+', label: 'Curated Brands', sub: 'Top-tier verified partners' },
-  ],
-  values: [
-    { title: 'Our Vision', accent: 'Modern Curation', description: 'To create a single, curated lifestyle ecosystem where cutting-edge electronics, designer fashion, premium home goods, and health essentials seamlessly converge into a single, high-end marketplace.' },
-    { title: 'Our Mission', accent: 'Authenticity & Trust', description: 'To source and deliver strictly authentic, certified products across all categories, ensuring our customers experience top-tier quality, transparent pricing, and concierge-level customer care.' },
-    { title: 'Our Goal', accent: 'Curated Excellence', description: 'To bridge the gap between verified global manufacturers and design-conscious shoppers, offering an unparalleled catalog of curated electronics, apparel, home decor, beauty, and hobbies.' },
-  ],
-  philosophy: {
-    subtitle: 'Our Philosophy',
-    title: 'Pillars of Excellence',
-    description: 'Our foundations are built on sourcing authentic products, providing seamless digital solutions, and earning long-term customer loyalty.',
-  },
-  concierge: {
-    subtitle: 'Need Assistance?',
-    title: 'We are Here to Help',
-    description: 'Whether you need product recommendations, order tracking help, or bulk procurement support across our catalog, our concierge team is always available.',
-  },
-  marqueeWords: ['ELECTRONICS', 'APPAREL', 'HOME', 'BEAUTY', 'SPORTS', 'TOYS', 'EXCLUSIVITY', 'QUALITY', 'CRAFTSMANSHIP']
+/* ────────────────────────────────────────────────────────────────────────────
+   2. WHO WE ARE
+──────────────────────────────────────────────────────────────────────────── */
+const Who = ({ who = {} }) => {
+  const photo = who.imageUrl ? getImageUrl(who.imageUrl) : null;
+  return (
+    <section className="bg-white px-6 py-16 md:px-12 md:py-24" aria-label="Who we are">
+      <div className="mx-auto max-w-site">
+        <div className={`grid items-center gap-10 md:gap-16 ${photo ? 'lg:grid-cols-2' : 'md:grid-cols-12'}`}>
+          {photo && (
+            <FadeUp>
+              <div
+                className="aspect-[3/4] w-full max-w-sm overflow-hidden border-2 border-dashed border-[#BEA266] p-1.5"
+                style={{ borderRadius: '9999px 9999px 1.25rem 1.25rem' }}
+              >
+                <img
+                  src={photo}
+                  alt={who.title || "Twin A Apparels"}
+                  className="h-full w-full object-cover"
+                  style={{ borderRadius: '9999px 9999px 0.9rem 0.9rem' }}
+                  loading="lazy"
+                />
+              </div>
+            </FadeUp>
+          )}
+
+          <FadeUp className={photo ? '' : 'md:col-span-5'}>
+            <span className="mb-3 inline-flex items-center gap-3 text-[11px] font-semibold uppercase tracking-[0.28em] text-[#7A5F28]">
+              <span className="h-px w-8 bg-[#BEA266]" />
+              Who We Are
+            </span>
+            <h2 className="font-playfair text-2xl font-medium leading-snug text-black sm:text-3xl lg:text-[2.2rem]">
+              {who.title || DEFAULT_ABOUT.who.title}
+            </h2>
+          </FadeUp>
+
+          <FadeUp delay={0.1} className={photo ? '' : 'md:col-span-7'}>
+            <p className="border-l-2 border-[#BEA266] pl-6 text-base leading-[1.85] text-black/75 md:pl-10 md:text-lg md:leading-[1.85]">
+              {who.text || DEFAULT_ABOUT.who.text}
+            </p>
+          </FadeUp>
+        </div>
+      </div>
+    </section>
+  );
 };
 
-const VALUE_ICONS = [
-  <Eye className="w-8 h-8 text-brand-gold" />,
-  <Target className="w-8 h-8 text-brand-gold" />,
-  <Compass className="w-8 h-8 text-brand-gold" />
+/* ────────────────────────────────────────────────────────────────────────────
+   3. FABRICS — cream
+──────────────────────────────────────────────────────────────────────────── */
+const INK = 'rgba(0,0,0,0.35)';
+const WEAVES = [
+  {
+    backgroundImage: `repeating-linear-gradient(0deg, ${INK} 0 1px, transparent 1px 6px), repeating-linear-gradient(90deg, ${INK} 0 1px, transparent 1px 6px)`,
+  },
+  {
+    backgroundImage: `radial-gradient(circle, ${INK} 1px, transparent 1.5px)`,
+    backgroundSize: '7px 7px',
+  },
+  {
+    backgroundImage: `radial-gradient(circle at 50% 0%, transparent 4px, ${INK} 4.5px, ${INK} 5.5px, transparent 6px)`,
+    backgroundSize: '11px 8px',
+  },
+  {
+    backgroundImage: `repeating-linear-gradient(45deg, ${INK} 0 1px, transparent 1px 5px), repeating-linear-gradient(-45deg, ${INK} 0 1px, transparent 1px 5px)`,
+  },
+  {
+    backgroundImage: `repeating-linear-gradient(0deg, rgba(0,0,0,0.2) 0 1px, transparent 1px 3px), repeating-linear-gradient(90deg, rgba(0,0,0,0.2) 0 1px, transparent 1px 3px)`,
+  },
 ];
 
-const STAT_ICONS = [
-  <Users className="w-6 h-6 text-brand-gold" />,
-  <Instagram className="w-6 h-6 text-brand-gold" />,
-  <Package className="w-6 h-6 text-brand-gold" />,
-  <Award className="w-6 h-6 text-brand-gold" />
-];
+const Fabrics = ({ fabrics = {} }) => {
+  const fabricList = fabrics.list?.length ? fabrics.list : DEFAULT_ABOUT.fabrics.list;
+  return (
+    <section className="bg-[#FBF7EE] px-6 py-16 md:px-12 md:py-24" aria-label="Our fabrics">
+      <div className="mx-auto max-w-site">
+        <FadeUp className="mx-auto max-w-xl text-center">
+          <span className="mb-4 inline-flex items-center gap-3 text-[11px] font-semibold uppercase tracking-[0.28em] text-[#7A5F28]">
+            <span className="h-px w-8 bg-[#BEA266]" />
+            Superior Materials
+            <span className="h-px w-8 bg-[#BEA266]" />
+          </span>
+          <h2 className="font-playfair text-2xl font-medium leading-snug text-black sm:text-3xl lg:text-[2rem]">
+            {fabrics.title || DEFAULT_ABOUT.fabrics.title}
+          </h2>
+          <p className="mt-4 text-base leading-relaxed text-[#5A4D38]">
+            {fabrics.text || DEFAULT_ABOUT.fabrics.text}
+          </p>
+        </FadeUp>
 
-const AboutPage = () => {
-  const [data, setData] = useState(defaultAboutSettings);
+        <FadeUp delay={0.1}>
+          <ul className="mt-14 flex flex-wrap justify-center gap-5 md:mt-20 md:gap-6">
+            {fabricList.map((name, i) => {
+              const src = FABRIC_IMAGES[name];
+              const staggered = i % 2 === 1;
+              return (
+                <li
+                  key={name}
+                  className={`group w-[calc(50%-0.65rem)] md:w-[calc(33.333%-1rem)] lg:w-[calc(20%-1.2rem)] ${
+                    staggered ? 'lg:translate-y-5' : ''
+                  }`}
+                >
+                  <div
+                    className="relative aspect-[3/4] overflow-hidden border-2 border-dashed border-[#BEA266]/70 bg-white p-1.5 transition-colors duration-300 group-hover:border-[#BEA266]"
+                    style={{ borderRadius: '9999px 9999px 1.25rem 1.25rem' }}
+                  >
+                    <div
+                      className="relative h-full w-full overflow-hidden bg-[#F4EEDD]"
+                      style={{ borderRadius: '9999px 9999px 0.95rem 0.95rem' }}
+                    >
+                      {src ? (
+                        <img
+                          src={src}
+                          alt={name}
+                          className="h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-110 motion-reduce:transition-none"
+                          loading="lazy"
+                        />
+                      ) : (
+                        <span className="absolute inset-0" style={WEAVES[i % WEAVES.length]} aria-hidden="true" />
+                      )}
+                      <span className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent" />
+                    </div>
+                  </div>
 
-  useEffect(() => {
-    document.title = 'Our Story — Twin A Apparels';
-    window.scrollTo(0, 0);
+                  <div className="pt-4 text-center">
+                    <p className="font-playfair text-lg font-medium leading-tight text-black">{name}</p>
+                    <span className="mx-auto mt-2.5 block h-px w-6 border-b border-dashed border-[#BEA266]" aria-hidden="true" />
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+        </FadeUp>
+      </div>
+    </section>
+  );
+};
 
-    const fetchData = async () => {
-      try {
-        const res = await api.get('/site-settings/about');
-        if (res.data && res.data.success) {
-          setData(res.data.data);
-        }
-      } catch (err) {
-        console.error('Error fetching site settings for about page:', err);
-      }
-    };
-    fetchData();
-  }, []);
+/* ────────────────────────────────────────────────────────────────────────────
+   4. MISSION & CORE VALUES — big image + overlapping framed small image + text
+   Images come from site settings (about.missionImages.main / .accent),
+   falling back to fabric photos already imported above.
+──────────────────────────────────────────────────────────────────────────── */
+const Mission = ({ mission = '', values = [], images = {} }) => {
+  const missionText = mission || DEFAULT_ABOUT.mission;
+  const valuesList = values.length ? values : DEFAULT_ABOUT.values;
+  const parts = missionText.split('**');
 
-  const renderFormattedText = (text) => {
-    if (!text) return null;
-    const parts = text.split('**');
-    return parts.map((part, idx) => {
-      if (idx % 2 === 1) {
-        return <strong key={idx} className="font-semibold text-brand-text">{part}</strong>;
-      }
-      return part;
-    });
-  };
-
-  const values = (data.values || []).map((val, idx) => ({
-    ...val,
-    icon: VALUE_ICONS[idx] || <Sparkles className="w-8 h-8 text-brand-gold" />
-  }));
-
-  const stats = (data.stats || []).map((stat, idx) => ({
-    ...stat,
-    icon: STAT_ICONS[idx] || <Users className="w-6 h-6 text-brand-gold" />
-  }));
-
-  const marqueeWords = data.marqueeWords && data.marqueeWords.length > 0
-    ? data.marqueeWords
-    : defaultAboutSettings.marqueeWords;
+  const mainSrc = images.main ? getImageUrl(images.main) : loopknitImg;
+  const accentSrc = images.accent ? getImageUrl(images.accent) : pureCottonImg;
 
   return (
-    <main id="main-content" className="min-h-screen bg-brand-bg text-brand-text overflow-x-hidden">
-      
-      {/* Hero Section */}
-      <section className="relative h-[65vh] md:h-[80vh] flex items-center justify-center bg-black overflow-hidden">
-        {/* Luxury Background Image */}
-        <div 
-          className="absolute inset-0 bg-cover bg-center bg-no-repeat scale-105 transform transition-transform duration-10000 ease-out opacity-60"
-          style={{ backgroundImage: `url('/about-luxury-bg.png')` }}
-        />
-        {/* Dark Radial Overlay */}
-        <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-black/70 to-brand-text" />
-        
-        {/* Decorative Grid */}
-        <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff05_1px,transparent_1px),linear-gradient(to_bottom,#ffffff05_1px,transparent_1px)] bg-[size:40px_40px] pointer-events-none" />
+    <section className="bg-white px-6 py-16 md:px-12 md:py-28" aria-label="Our mission and values">
+      <div className="mx-auto max-w-site">
+        <div className="grid items-center gap-16 lg:grid-cols-2 lg:gap-24">
+          {/* Image collage */}
+          <FadeUp>
+            <div className="relative pb-14 pr-0 sm:pb-16 lg:pb-20">
+              <div className="aspect-[4/3] w-[92%] overflow-hidden rounded-3xl bg-[#F4EEDD] shadow-[0_20px_50px_rgba(0,0,0,0.12)] lg:w-[88%]">
+                <img
+                  src={mainSrc}
+                  alt="Twin A Apparels craftsmanship"
+                  className="h-full w-full object-cover"
+                  loading="lazy"
+                />
+              </div>
 
-        <div className="relative max-w-site mx-auto px-6 md:px-8 text-center z-10 flex flex-col items-center">
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8 }}
-            className="space-y-4"
-          >
-            <EyebrowReveal className="text-xs font-semibold tracking-widest text-brand-gold uppercase block">{data.hero.subtitle}</EyebrowReveal>
-            <h1 className="font-playfair text-3xl sm:text-4xl md:text-5xl lg:text-6xl text-white max-w-4xl leading-tight">
-              {data.hero.titleMain} <br />
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-brand-gold via-yellow-400 to-brand-gold">
-                {data.hero.titleGold}
-              </span>
-            </h1>
-            <p className="text-white/70 max-w-2xl mx-auto text-sm md:text-base font-light leading-relaxed text-center">
-              {data.hero.description}
-            </p>
-          </motion.div>
+              <div className="absolute bottom-0 right-0 w-[42%] max-w-[18rem] rounded-[1.75rem] bg-white p-2.5 shadow-[0_18px_45px_rgba(0,0,0,0.18)] sm:p-3">
+                <div className="aspect-square overflow-hidden rounded-[1.25rem] bg-[#F4EEDD]">
+                  <img
+                    src={accentSrc}
+                    alt="Fabric detail"
+                    className="h-full w-full object-cover"
+                    loading="lazy"
+                  />
+                </div>
+              </div>
+            </div>
+          </FadeUp>
 
-          <motion.div 
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.5, duration: 0.6 }}
-            className="mt-8"
-          >
-            <div className="w-[1px] h-16 bg-gradient-to-b from-brand-gold to-transparent animate-pulse" />
-          </motion.div>
-        </div>
-      </section>
-
-      {/* Brand Story Section */}
-      <section className="py-12 md:py-20 max-w-site mx-auto px-6 md:px-8">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-center">
-          
-          {/* Left: Text Contents of the Company */}
-          <motion.div 
-            initial={{ opacity: 0, x: -30 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.8 }}
-            className="lg:col-span-7 space-y-6"
-          >
-            <EyebrowReveal className="text-xs font-semibold tracking-widest text-brand-gold uppercase block">{data.story.subtitle}</EyebrowReveal>
-            <h2 className="font-playfair text-3xl md:text-4xl lg:text-5xl font-bold text-brand-text leading-tight">
-              {data.story.titleMain} <br />
-              {data.story.titleSub}
+          {/* Mission words */}
+          <FadeUp delay={0.1}>
+            <h2 className="font-playfair text-2xl font-medium text-black sm:text-3xl">
+              Our mission
             </h2>
-            <div className="h-[2px] w-20 bg-brand-gold" />
-            
-            <p className="text-brand-grey text-sm md:text-base leading-relaxed text-justify">
-              {renderFormattedText(data.story.description1)}
-            </p>
-            
-            <p className="text-brand-grey text-sm md:text-base leading-relaxed text-justify">
-              {renderFormattedText(data.story.description2)}
-            </p>
 
-            <div className="pt-4 grid grid-cols-2 gap-6 border-t border-brand-light">
-              <div>
-                <h4 className="font-playfair text-lg font-semibold text-brand-text mb-1">{data.story.feature1Title}</h4>
-                <p className="text-xs text-brand-grey leading-relaxed text-justify">
-                  {data.story.feature1Desc}
-                </p>
-              </div>
-              <div>
-                <h4 className="font-playfair text-lg font-semibold text-brand-text mb-1">{data.story.feature2Title}</h4>
-                <p className="text-xs text-brand-grey leading-relaxed text-justify">
-                  {data.story.feature2Desc}
-                </p>
-              </div>
-            </div>
-          </motion.div>
-
-          {/* Right: Premium General Boutique Display Image */}
-          <motion.div 
-            initial={{ opacity: 0, x: 30 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.8 }}
-            className="lg:col-span-5 relative"
-          >
-            <div className="absolute -inset-4 border border-brand-gold/20 translate-x-2 translate-y-2 pointer-events-none rounded-lg" />
-            <div className="relative bg-neutral-100 border border-brand-light shadow-lg overflow-hidden group rounded-lg">
-              <img 
-                src={getImageUrl(data.story?.imageUrl || '/about-story-general.png')}
-                alt="Premium multi-category lifestyle curation showroom display" 
-                className="w-full h-[280px] sm:h-[350px] md:h-[450px] object-cover filter contrast-[1.03] transition-transform duration-700 group-hover:scale-105"
-                onError={(e) => {
-                  e.target.onerror = null;
-                  e.target.src = '/about-story-general.png';
-                }}
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-              
-              {/* Floating badge inside image */}
-              <div className="absolute bottom-4 left-4 bg-white/95 backdrop-blur-sm border border-brand-light p-4 shadow-xl max-w-[180px] z-10 rounded-lg">
-                <span className="text-[10px] text-brand-gold font-semibold uppercase block mb-1">{data.story.qualityOathTitle}</span>
-                <p className="text-[9px] text-brand-grey leading-normal text-justify">
-                  {data.story.qualityOathDesc}
-                </p>
-              </div>
-            </div>
-          </motion.div>
-
-        </div>
-      </section>
-
-      {/* Stats Counter Section (with Wavy pattern) */}
-      <section className="relative bg-brand-text text-white py-12 md:py-20 my-8 overflow-hidden">
-        
-        {/* Wave Top */}
-        <div className="absolute top-0 left-0 w-full overflow-hidden leading-none select-none pointer-events-none">
-          <svg viewBox="0 0 1440 120" fill="none" xmlns="http://www.w3.org/2000/svg" className="relative block w-full h-[30px] md:h-[50px]">
-            <path d="M0,32L120,42.7C240,53,480,75,720,74.7C960,75,1200,53,1320,42.7L1440,32L1440,0L1320,0C1200,0,960,0,720,0C480,0,240,0,120,0L0,0Z" className="fill-brand-bg"></path>
-          </svg>
-        </div>
-
-        {/* Decorative background glow */}
-        <div className="absolute top-1/2 left-1/4 -translate-y-1/2 w-96 h-96 rounded-full bg-brand-gold/10 blur-[120px] pointer-events-none" />
-        <div className="absolute top-1/3 right-1/4 -translate-y-1/2 w-[400px] h-[400px] rounded-full bg-yellow-600/5 blur-[150px] pointer-events-none" />
-
-        <div className="relative max-w-site mx-auto px-6 md:px-8 z-10">
-          
-          <div className="text-center max-w-2xl mx-auto mb-16 space-y-3">
-            <span className="text-xs font-semibold tracking-widest text-brand-gold uppercase block">By The Numbers</span>
-            <h3 className="font-playfair text-3xl md:text-4xl font-bold text-white">Our Growing Footprint</h3>
-            <p className="text-white/60 text-xs md:text-sm leading-relaxed">
-              From high-end electronics to designer outerwear and sports gear, our numbers reflect our commitment to excellence.
-            </p>
-          </div>
-
-          {/* Stats Grid */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-8 lg:gap-12">
-            {stats.map((item, index) => (
-              <motion.div
-                key={index}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.5, delay: index * 0.1 }}
-                className="flex flex-col items-center text-center p-6 bg-white/5 border border-white/10 rounded-lg hover:border-brand-gold/30 hover:bg-white/10 transition-all duration-300 group"
-              >
-                <div className="w-12 h-12 border border-brand-gold/20 flex items-center justify-center mb-4 rounded-full bg-black/40 group-hover:border-brand-gold/50 transition-colors">
-                  {item.icon}
-                </div>
-                <Counter value={item.value} />
-                <h5 className="font-playfair text-sm font-semibold text-white mt-3 mb-1">
-                  {item.label}
-                </h5>
-                <p className="text-white/50 text-[11px] leading-tight">
-                  {item.sub}
-                </p>
-              </motion.div>
-            ))}
-          </div>
-
-          {/* Slider/Marquee section */}
-          <div className="mt-20 border-t border-b border-white/10 py-6 overflow-hidden relative select-none">
-            <div className="absolute left-0 top-0 bottom-0 w-24 bg-gradient-to-r from-brand-text to-transparent z-10" />
-            <div className="absolute right-0 top-0 bottom-0 w-24 bg-gradient-to-l from-brand-text to-transparent z-10" />
-            
-            <motion.div 
-              className="flex whitespace-nowrap gap-16 text-sm font-semibold tracking-[0.3em] text-white/40"
-              animate={{ x: [0, -1000] }}
-              transition={{
-                x: {
-                  repeat: Infinity,
-                  repeatType: 'loop',
-                  duration: 25,
-                  ease: 'linear',
-                },
-              }}
-            >
-              {/* Render twice for continuous loop */}
-              {[...marqueeWords, ...marqueeWords, ...marqueeWords].map((word, idx) => (
-                <div key={idx} className="flex items-center gap-6">
-                  <span>{word}</span>
-                  <span className="w-1.5 h-1.5 bg-brand-gold rounded-full" />
-                </div>
-              ))}
-            </motion.div>
-          </div>
-
-        </div>
-
-        {/* Wave Bottom */}
-        <div className="absolute bottom-0 left-0 w-full overflow-hidden leading-none select-none pointer-events-none">
-          <svg viewBox="0 0 1440 120" fill="none" xmlns="http://www.w3.org/2000/svg" className="relative block w-full h-[30px] md:h-[50px] transform rotate-180">
-            <path d="M0,32L120,42.7C240,53,480,75,720,74.7C960,75,1200,53,1320,42.7L1440,32L1440,0L1320,0C1200,0,960,0,720,0C480,0,240,0,120,0L0,0Z" className="fill-brand-bg"></path>
-          </svg>
-        </div>
-
-      </section>
-
-      {/* Core Values Section (Premium Cards) */}
-      <section className="py-12 md:py-20 max-w-site mx-auto px-6 md:px-8">
-        <div className="text-center max-w-2xl mx-auto mb-16 space-y-3">
-          <span className="text-xs font-semibold tracking-widest text-brand-gold uppercase block">{data.philosophy.subtitle}</span>
-          <h2 className="font-playfair text-3xl md:text-4xl lg:text-5xl font-bold text-brand-text">{data.philosophy.title}</h2>
-          <div className="h-[2px] w-20 bg-brand-gold mx-auto" />
-          <p className="text-brand-grey text-sm max-w-lg mx-auto text-center">
-            {data.philosophy.description}
-          </p>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8">
-          {values.map((val, idx) => (
-            <motion.div
-              key={idx}
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.6, delay: idx * 0.15 }}
-              whileHover={{ y: -8, transition: { duration: 0.3 } }}
-              className="bg-white border border-brand-light p-6 sm:p-8 flex flex-col justify-between shadow-sm hover:shadow-lg hover:border-brand-gold/30 transition-all duration-300 relative overflow-hidden group rounded-lg"
-            >
-              {/* Decorative Corner Gold accent */}
-              <div className="absolute top-0 right-0 w-16 h-16 bg-gradient-to-br from-brand-gold/10 to-transparent transform rotate-45 translate-x-8 -translate-y-8 group-hover:translate-x-6 group-hover:-translate-y-6 transition-all duration-300" />
-              
-              <div className="space-y-6">
-                <div className="w-16 h-16 border border-brand-light flex items-center justify-center bg-brand-muted/50 rounded-lg group-hover:border-brand-gold/40 group-hover:bg-white transition-all duration-300">
-                  {val.icon}
-                </div>
-                <div>
-                  <span className="text-[10px] text-brand-gold font-semibold uppercase tracking-wider block mb-1">
-                    {val.accent}
+            <p className="font-playfair mt-6 text-2xl font-normal leading-[1.4] text-black/85 sm:text-3xl lg:text-[2.1rem]">
+              {parts.map((part, i) =>
+                i % 2 === 1 ? (
+                  <span key={i} className="italic font-medium text-[#7A5F28]">
+                    {part}
                   </span>
-                  <h4 className="font-playfair text-xl font-bold text-brand-text mb-3">
-                    {val.title}
-                  </h4>
-                  <p className="text-brand-grey text-xs md:text-sm leading-relaxed text-justify">
-                    {val.description}
-                  </p>
+                ) : (
+                  <span key={i}>{part}</span>
+                )
+              )}
+            </p>
+
+            <div className="my-9 h-px w-full bg-gradient-to-r from-[#BEA266] to-transparent" />
+
+            <p className="text-sm font-semibold text-black/60">What we stand for</p>
+            <ul className="mt-4 flex flex-wrap gap-2.5">
+              {valuesList.map((val) => (
+                <li
+                  key={val}
+                  className="rounded-full border border-[#BEA266]/60 bg-[#FBF7EE] px-5 py-2 text-sm font-medium text-black transition-colors hover:border-[#BEA266] hover:bg-[#BEA266]"
+                >
+                  {val}
+                </li>
+              ))}
+            </ul>
+          </FadeUp>
+        </div>
+      </div>
+    </section>
+  );
+};
+
+/* ────────────────────────────────────────────────────────────────────────────
+   5. CONTACT & SHOWROOM — Architectural Couture Lounge
+   Fully connected to API office address, phone, email, and Google maps.
+──────────────────────────────────────────────────────────────────────────── */
+const Contact = ({ contact = {}, office = {} }) => {
+  const title = contact.title || DEFAULT_ABOUT.contact.title;
+  const text = contact.text || DEFAULT_ABOUT.contact.text;
+  const button = contact.button || DEFAULT_ABOUT.contact.button;
+  const to = contact.to || DEFAULT_ABOUT.contact.to;
+
+  const addressLines = Array.isArray(office.address)
+    ? office.address
+    : (typeof office.address === 'string'
+        ? office.address.split('\n').filter(Boolean)
+        : DEFAULT_ABOUT.office.address);
+
+  const phone = office.phone || DEFAULT_ABOUT.office.phone;
+  const email = office.email || DEFAULT_ABOUT.office.email;
+  const mapsUrl = office.mapsUrl || DEFAULT_ABOUT.office.mapsUrl;
+
+  return (
+    <section className="bg-[#FBF7EE] px-6 py-16 md:px-12 md:py-24" aria-label="Contact and Showroom">
+      <div className="mx-auto max-w-site">
+        <FadeUp>
+          <div className="relative overflow-hidden rounded-[2.5rem] bg-[#0E0C09] px-7 py-14 sm:px-14 sm:py-18 lg:p-20 text-[#FBF7EE] shadow-[0_24px_60px_rgba(0,0,0,0.18)] border border-[#BEA266]/35">
+            {/* Ambient luxury lighting */}
+            <span
+              className="pointer-events-none absolute -right-24 -top-24 h-80 w-80 rounded-full bg-[#BEA266]/15 blur-3xl"
+              aria-hidden="true"
+            />
+            <span
+              className="pointer-events-none absolute -bottom-24 -left-20 h-72 w-72 rounded-full bg-[#BEA266]/10 blur-3xl"
+              aria-hidden="true"
+            />
+
+            <div className="relative z-10 grid grid-cols-1 lg:grid-cols-[1.25fr_1fr] gap-12 lg:gap-16 items-center">
+              {/* Left Column: Heading, intro & action */}
+              <div>
+                <span className="inline-flex items-center gap-3 text-[11px] font-semibold uppercase tracking-[0.28em] text-[#DFC481]">
+                  <span className="h-px w-6 bg-[#BEA266]" />
+                  Wholesale & Retail Inquiries
+                </span>
+
+                <h2 className="font-playfair mt-4 text-3xl sm:text-4xl lg:text-5xl font-medium leading-[1.15] text-[#FBF7EE]">
+                  {title}
+                </h2>
+
+                <p className="mt-5 text-base sm:text-lg leading-relaxed text-[#FBF7EE]/70 max-w-lg">
+                  {text}
+                </p>
+
+                <div className="mt-9 flex flex-wrap items-center gap-4">
+                  <Link
+                    to={to}
+                    className="group inline-flex items-center gap-4 rounded-full bg-[#BEA266] pl-7 pr-2.5 py-2.5 text-xs font-semibold uppercase tracking-[0.16em] text-black transition-all duration-300 hover:bg-[#DFC481] hover:shadow-[0_10px_25px_rgba(190,162,102,0.3)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#DFC481]"
+                  >
+                    <span>{button}</span>
+                    <span className="flex h-10 w-10 items-center justify-center rounded-full bg-black text-[#DFC481] transition-transform duration-300 group-hover:translate-x-1">
+                      <ArrowUpRight size={18} />
+                    </span>
+                  </Link>
+
+                  {mapsUrl && (
+                    <a
+                      href={mapsUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-2 rounded-full border border-white/20 px-6 py-3.5 text-xs font-semibold uppercase tracking-[0.14em] text-[#FBF7EE] transition-colors hover:border-[#BEA266] hover:text-[#DFC481]"
+                    >
+                      <Compass size={15} />
+                      <span>Showroom Location</span>
+                    </a>
+                  )}
                 </div>
               </div>
 
-              {/* Bottom decorative bar */}
-              <div className="h-[2px] w-0 bg-brand-gold mt-8 group-hover:w-full transition-all duration-500" />
-            </motion.div>
-          ))}
+              {/* Right Column: Office & Direct contact cards */}
+              <div className="space-y-4 lg:border-l lg:border-white/10 lg:pl-12">
+                {/* Physical address card */}
+                <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-6 backdrop-blur-xs">
+                  <div className="flex items-start gap-4">
+                    <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#BEA266]/15 text-[#DFC481]">
+                      <MapPin size={20} />
+                    </span>
+                    <div>
+                      <p className="text-[10px] font-semibold uppercase tracking-[0.24em] text-[#BEA266]">
+                        Manufacturing & Office
+                      </p>
+                      <address className="not-italic mt-2 font-playfair text-base sm:text-lg leading-snug text-[#FBF7EE]">
+                        {addressLines.map((line) => (
+                          <span key={line} className="block">{line}</span>
+                        ))}
+                      </address>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Direct contact pills */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {phone && (
+                    <a
+                      href={`tel:${phone.replace(/\s+/g, '')}`}
+                      className="group flex items-center gap-3 rounded-xl border border-white/10 bg-white/[0.03] p-4 transition-colors hover:border-[#BEA266]/50 hover:bg-white/[0.06]"
+                    >
+                      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#BEA266]/15 text-[#DFC481]">
+                        <Phone size={15} />
+                      </span>
+                      <div className="overflow-hidden">
+                        <span className="text-[9px] uppercase tracking-wider text-white/50 block">Direct Line</span>
+                        <span className="text-xs font-medium text-[#FBF7EE] truncate block group-hover:text-[#DFC481]">
+                          {phone}
+                        </span>
+                      </div>
+                    </a>
+                  )}
+
+                  {email && (
+                    <a
+                      href={`mailto:${email}`}
+                      className="group flex items-center gap-3 rounded-xl border border-white/10 bg-white/[0.03] p-4 transition-colors hover:border-[#BEA266]/50 hover:bg-white/[0.06]"
+                    >
+                      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#BEA266]/15 text-[#DFC481]">
+                        <Mail size={15} />
+                      </span>
+                      <div className="overflow-hidden">
+                        <span className="text-[9px] uppercase tracking-wider text-white/50 block">Inquiries</span>
+                        <span className="text-xs font-medium text-[#FBF7EE] truncate block group-hover:text-[#DFC481]">
+                          {email}
+                        </span>
+                      </div>
+                    </a>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        </FadeUp>
+      </div>
+    </section>
+  );
+};
+
+const AboutPage = () => {
+  const reduce = useReducedMotion();
+  const [about, setAbout] = useState(DEFAULT_ABOUT);
+
+  useEffect(() => {
+    document.title = 'About — Twin A Apparels';
+    window.scrollTo(0, 0);
+
+    // Fetch dynamic site settings from backend
+    api.get('/site-settings/about')
+      .then(res => {
+        if (res.data?.success && res.data?.data) {
+          const d = res.data.data;
+          setAbout(prev => ({
+            ...prev,
+            ...d,
+            hero: { ...prev.hero, ...(d.hero || {}) },
+            who: { ...prev.who, ...(d.who || {}) },
+            fabrics: { ...prev.fabrics, ...(d.fabrics || {}) },
+            missionImages: { ...prev.missionImages, ...(d.missionImages || {}) },
+            contact: { ...prev.contact, ...(d.contact || {}) },
+            office: { ...prev.office, ...(d.office || {}) },
+          }));
+        }
+      })
+      .catch(err => {
+        console.warn('Failed to fetch site settings for About page:', err.message);
+      });
+  }, []);
+
+  return (
+    <main id="main-content" className="min-h-screen overflow-x-hidden bg-[#FBF7EE] font-inter text-black">
+      {/* 1. Hero */}
+      <section className="bg-black text-[#FBF7EE]" aria-label="About Twin A Apparels">
+        <div className="mx-auto max-w-site px-6 md:px-12 pt-14 sm:pt-16 md:pt-24 pb-16 sm:pb-20 md:pb-28 text-center">
+          <EyebrowReveal className="mb-6 block font-inter text-[11px] font-semibold uppercase tracking-[0.28em] text-[#DFC481]">
+            {about.hero.eyebrow}
+          </EyebrowReveal>
+          <StaggeredText
+            as="h1"
+            text={about.hero.title}
+            segmentBy="words"
+            startDelay={0.1}
+            className="font-playfair mx-auto max-w-4xl text-[2rem] sm:text-5xl lg:text-7xl font-medium leading-[1.12] sm:leading-[1.08] text-[#FBF7EE]"
+          />
+          <StaggeredText
+            as="p"
+            text={about.hero.text}
+            segmentBy="words"
+            blur={false}
+            duration={0.4}
+            startDelay={0.25}
+            className="mx-auto mt-7 max-w-2xl text-[15px] md:text-base leading-relaxed text-[#FBF7EE]/70"
+          />
+          <HangTags tags={about.hero.tags} reduce={reduce} />
         </div>
       </section>
 
-      {/* Private Concierge CTA Section */}
-      <section className="bg-brand-muted/50 border-t border-b border-brand-light py-12 md:py-16 text-center">
-        <div className="max-w-xl mx-auto px-6 space-y-6">
-          <span className="text-xs font-semibold tracking-widest text-brand-gold uppercase block">{data.concierge.subtitle}</span>
-          <h3 className="font-playfair text-2xl font-bold text-brand-text">
-            {data.concierge.title}
-          </h3>
-          <p className="text-brand-grey text-sm leading-relaxed text-center">
-            {data.concierge.description}
-          </p>
-          <div className="pt-2 flex flex-col sm:flex-row justify-center items-center gap-4">
-            <Link 
-              to="/contact" 
-              className="btn-primary flex items-center gap-2 group w-full sm:w-auto justify-center rounded-lg"
-              id="about-contact-btn"
-            >
-              Contact Support <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
-            </Link>
-            <Link 
-              to="/products" 
-              className="px-6 py-3 border border-brand-light text-brand-text text-sm font-semibold hover:border-brand-gold transition-colors w-full sm:w-auto justify-center inline-flex rounded-lg"
-            >
-              Start Shopping
-            </Link>
-          </div>
-        </div>
-      </section>
+      {/* 2. Who We Are */}
+      <Who who={about.who} />
+
+      {/* 3. Fabrics */}
+      <Fabrics fabrics={about.fabrics} />
+
+      {/* 4. Mission & Values */}
+      <Mission mission={about.mission} values={about.values} images={about.missionImages} />
+
+      {/* 5. Contact & Showroom */}
+      <Contact contact={about.contact} office={about.office} />
 
       <Footer />
     </main>

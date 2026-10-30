@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Trash2, ShoppingBag, ChevronRight, Tag } from 'lucide-react';
 import { removeLocal, addLocal, clearLocal, openCart, fetchCart, syncCart } from '../redux/slices/cartSlice';
 import Footer from '../components/Footer';
+import { StaggeredText } from '../components/animations';
 import { formatPrice } from '../utils/currency';
 import { getImageUrl } from '../utils/imageUrl';
 import api from '../services/api';
@@ -41,8 +42,8 @@ const CartPage = () => {
       <main id="main-content">
         <div className="max-w-site mx-auto px-6 md:px-8 py-24 flex flex-col items-center text-center">
           <ShoppingBag size={64} className="text-brand-light mb-6" strokeWidth={1} />
-          <h1 className="font-playfair text-3xl font-bold mb-3">Your Cart is Empty</h1>
-          <p className="text-brand-grey mb-8">Looks like you haven't added anything yet. Explore our curated collections.</p>
+          <StaggeredText as="h1" text="Your Cart is Empty" segmentBy="chars" startDelay={0.1} className="font-playfair text-3xl font-bold mb-3" />
+          <StaggeredText as="p" text="Looks like you haven't added anything yet. Explore our curated collections." segmentBy="words" blur={false} duration={0.4} startDelay={0.25} className="text-brand-grey mb-8" />
           <Link to="/products" className="btn-primary" id="empty-cart-shop">Start Shopping</Link>
         </div>
         <Footer />
@@ -53,7 +54,7 @@ const CartPage = () => {
   return (
     <main id="main-content">
       <div className="max-w-site mx-auto px-4 sm:px-6 md:px-8 py-8 sm:py-12">
-        <h1 className="font-playfair text-h2 font-bold mb-2">Shopping Cart</h1>
+        <StaggeredText as="h1" text="Shopping Cart" segmentBy="chars" startDelay={0.1} className="font-playfair text-h2 font-bold mb-2" />
         <p className="text-brand-grey mb-8">{items.length} {items.length === 1 ? 'item' : 'items'}</p>
 
 

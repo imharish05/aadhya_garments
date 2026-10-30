@@ -5,7 +5,7 @@ import { motion, AnimatePresence, useScroll, useTransform, useReducedMotion } fr
 import { ArrowRight, ArrowUpRight, ChevronLeft, ChevronRight } from 'lucide-react';
 import { getImageUrl } from '../utils/imageUrl';
 import { formatPrice } from '../utils/currency';
-import { SplitTextReveal, FadeUp, EyebrowReveal, ButtonReveal } from './animations';
+import { SplitTextReveal, FadeUp, EyebrowReveal, ButtonReveal, StaggeredText } from './animations';
 
 // High-fashion editorial campaign fallback in case real inventory image is loading or unavailable
 const EDITORIAL_FALLBACK_IMAGE = 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=1600&q=85';
@@ -196,7 +196,7 @@ export const NewArrivalsSection = () => {
               transition={{ duration: 0.55, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
               className="font-montserrat text-neutral-600 text-base sm:text-[17px] leading-relaxed font-normal max-w-md mb-8 sm:mb-9"
             >
-              Discover the latest styles and thoughtfully selected pieces for your wardrobe.
+              <StaggeredText as="span" text="Discover the latest styles and thoughtfully selected pieces for your wardrobe." segmentBy="words" blur={false} duration={0.4} startDelay={0.25} />
             </motion.p>
 
             {/* Minimal Black CTA Button */}
@@ -226,7 +226,7 @@ export const NewArrivalsSection = () => {
                 <div className="flex items-center justify-between mb-3 w-full">
                   <div className="flex items-center gap-2">
                     <span className="text-[11px] font-inter uppercase tracking-[0.2em] text-neutral-500 font-medium">
-                      RECENT RELEASES ({newArrivalsList.length})
+                      <StaggeredText as="span" text={`RECENT RELEASES (${newArrivalsList.length})`} segmentBy="words" blur={false} duration={0.4} startDelay={0.3} />
                     </span>
                     {/* <span className="hidden sm:inline-block text-[11px] text-neutral-400 font-light font-inter">
                       • Select to preview

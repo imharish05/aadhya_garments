@@ -5,7 +5,7 @@ import { Mail, Phone, MapPin, Clock, Send, Globe, Star } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import api from '../services/api';
 import Footer from '../components/Footer';
-import { SplitTextReveal, FadeUp, EyebrowReveal } from '../components/animations';
+import { SplitTextReveal, FadeUp, EyebrowReveal, StaggeredText } from '../components/animations';
 import PhoneInput from '../components/PhoneInput';
 import { validatePhoneNumber } from '../utils/validation';
 
@@ -33,31 +33,21 @@ const ContactPage = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!formData.name.trim() || !formData.email.trim() || !formData.message.trim()) {
-      return toast.error('Please fill in all required fields.');
+    if (!formData.name || !formData.email || !formData.phone || !formData.message) {
+      toast.error('Please complete all required fields.');
+      return;
     }
 
-    if (!formData.phone || !formData.phone.trim()) {
-      return toast.error('Please enter your phone number.');
-    }
-    const phoneVal = validatePhoneNumber(formData.phone, { required: true });
-    if (!phoneVal.isValid) {
-      return toast.error(phoneVal.message);
+    if (!validatePhoneNumber(formData.phone)) {
+      toast.error('Please enter a valid phone number with country code.');
+      return;
     }
 
+    setIsSubmitting(true);
     try {
-      setIsSubmitting(true);
-      const res = await api.post('/contact-enquiries', formData);
-      if (res.data?.success) {
-        toast.success(res.data.message || 'Thank you! Your message has been sent successfully.', {
-          duration: 5000,
-          style: {
-            border: '1px solid #C58837',
-            padding: '16px',
-            color: '#111111',
-            fontFamily: 'Montserrat, sans-serif',
-          },
-        });
+      const res = await api.post('/contact', formData);
+      if (res.data && res.data.success) {
+        toast.success(res.data.message || 'Your inquiry has been received. Our concierge will contact you shortly.');
         setFormData({
           name: '',
           email: '',
@@ -65,27 +55,43 @@ const ContactPage = () => {
           subject: 'General Inquiry',
           message: ''
         });
+      } else {
+        toast.error(res.data?.message || 'Unable to submit your message. Please try again.');
       }
     } catch (err) {
-      console.error('Contact submit error:', err);
-      toast.error(err.response?.data?.message || 'Failed to send message. Please try again.');
+      console.error('Contact form submission error:', err);
+      toast.error(err.response?.data?.message || 'A network error occurred. Please try contacting us via phone.');
     } finally {
       setIsSubmitting(false);
     }
   };
 
   return (
-    <main id="main-content" className="min-h-screen bg-brand-bg">
-      {/* Breadcrumb banner */}
-      <div className="bg-brand-light/30  py-8">
+    <main id="main-content" className="min-h-screen bg-brand-bg text-brand-text">
+      {/* Top Banner / Breadcrumb */}
+      <div className="bg-brand-light/30 py-8">
         <div className="max-w-site mx-auto px-6 md:px-8">
           <nav className="text-xs text-brand-grey mb-2" aria-label="Breadcrumb">
             <Link to="/" className="hover:text-brand-gold transition-colors">Home</Link>
             <span className="mx-2">/</span>
             <span className="text-brand-text">Contact Us</span>
           </nav>
-          <SplitTextReveal as="h1" text="Contact Us" className="font-playfair text-3xl md:text-4xl font-normal text-brand-text" />
-          <FadeUp as="p" delay={0.2} className="text-brand-grey text-sm mt-1">Get in touch with our luxury concierge desk.</FadeUp>
+          <StaggeredText
+            as="h1"
+            text="Contact Us"
+            segmentBy="chars"
+            startDelay={0.1}
+            className="font-playfair text-3xl md:text-4xl font-normal text-brand-text"
+          />
+          <StaggeredText
+            as="p"
+            text="Get in touch with our luxury concierge desk."
+            segmentBy="words"
+            blur={false}
+            duration={0.4}
+            startDelay={0.2}
+            className="text-brand-grey text-sm mt-1"
+          />
         </div>
       </div>
 
@@ -96,10 +102,22 @@ const ContactPage = () => {
           <div className="lg:col-span-5 space-y-8">
             <div>
               <EyebrowReveal className="text-xs font-semibold text-brand-gold tracking-widest uppercase block mb-2">Our Boutique</EyebrowReveal>
-              <SplitTextReveal as="h2" text="Visit Twin A Apparels" className="font-playfair text-2xl md:text-3xl font-normal text-brand-text mb-4" />
-              <p className="text-brand-grey text-sm leading-relaxed text-justify">
-                Step into a world where heritage meets luxury. Explore our curated collections of Indian bridal couture, fine jewelry, rare perfumes, and accessories in person at our flagship boutique.
-              </p>
+              <StaggeredText
+                as="h2"
+                text="Visit Twin A Apparels"
+                segmentBy="chars"
+                startDelay={0.1}
+                className="font-playfair text-2xl md:text-3xl font-normal text-brand-text mb-4"
+              />
+              <StaggeredText
+                as="p"
+                text="Step into a world where heritage meets luxury. Explore our curated collections of Indian bridal couture, fine jewelry, rare perfumes, and accessories in person at our flagship boutique."
+                segmentBy="words"
+                blur={false}
+                duration={0.4}
+                startDelay={0.2}
+                className="text-brand-grey text-sm leading-relaxed text-justify"
+              />
             </div>
 
             <div className="space-y-6">
@@ -109,7 +127,13 @@ const ContactPage = () => {
                   <MapPin size={18} />
                 </div>
                 <div>
-                  <h4 className="font-playfair text-base font-semibold text-brand-text mb-1">Flagship Boutique</h4>
+                  <StaggeredText
+                    as="h4"
+                    text="Flagship Boutique"
+                    segmentBy="chars"
+                    startDelay={0.15}
+                    className="font-playfair text-base font-semibold text-brand-text mb-1"
+                  />
                   <p className="text-brand-grey text-sm leading-relaxed">
                     14 Linking Road, Bandra West,<br />
                     Mumbai, Maharashtra 400050
@@ -123,11 +147,16 @@ const ContactPage = () => {
                   <Phone size={18} />
                 </div>
                 <div>
-                  <h4 className="font-playfair text-base font-semibold text-brand-text mb-1">Concierge Phone</h4>
+                  <StaggeredText
+                    as="h4"
+                    text="Concierge Phone"
+                    segmentBy="chars"
+                    startDelay={0.2}
+                    className="font-playfair text-base font-semibold text-brand-text mb-1"
+                  />
                   <p className="text-brand-grey text-sm">
                     <a href="tel:+919999999999" className="hover:text-brand-gold transition-colors">+91 99999 99999</a>
                   </p>
-                  {/* <p className="text-xs text-brand-grey/80 mt-0.5">Toll-free within India</p> */}
                 </div>
               </div>
 
@@ -137,7 +166,13 @@ const ContactPage = () => {
                   <Mail size={18} />
                 </div>
                 <div>
-                  <h4 className="font-playfair text-base font-semibold text-brand-text mb-1">Email Inquiries</h4>
+                  <StaggeredText
+                    as="h4"
+                    text="Email Inquiries"
+                    segmentBy="chars"
+                    startDelay={0.25}
+                    className="font-playfair text-base font-semibold text-brand-text mb-1"
+                  />
                   <p className="text-brand-grey text-sm">
                     <a href="mailto:hello@twinapparels.com" className="hover:text-brand-gold transition-colors">hello@twinapparels.com</a>
                   </p>
@@ -146,18 +181,6 @@ const ContactPage = () => {
                   </p>
                 </div>
               </div>
-
-              {/* Working Hours */}
-              {/* <div className="flex gap-4">
-                <div className="w-10 h-10 border border-brand-light flex items-center justify-center flex-shrink-0 text-brand-gold">
-                  <Clock size={18} />
-                </div>
-                <div>
-                  <h4 className="font-playfair text-base font-semibold text-brand-text mb-1">Working Hours</h4>
-                  <p className="text-brand-grey text-sm">Monday – Saturday: 10:00 AM – 8:00 PM IST</p>
-                  <p className="text-brand-grey text-sm">Sunday: Closed</p>
-                </div>
-              </div> */}
             </div>
 
             {/* Premium Note */}
@@ -169,20 +192,44 @@ const ContactPage = () => {
                 <Star size={14} className="fill-brand-gold" />
                 <Star size={14} className="fill-brand-gold" />
               </div>
-              <h4 className="font-playfair text-sm font-semibold text-brand-text mb-1">Private Styling Consultations</h4>
-              <p className="text-brand-grey text-xs leading-relaxed text-justify">
-                Book a one-on-one session with our master stylists. Reach out via email or call us directly to schedule a private gallery viewing.
-              </p>
+              <StaggeredText
+                as="h4"
+                text="Private Styling Consultations"
+                segmentBy="words"
+                startDelay={0.1}
+                className="font-playfair text-sm font-semibold text-brand-text mb-1"
+              />
+              <StaggeredText
+                as="p"
+                text="Book a one-on-one session with our master stylists. Reach out via email or call us directly to schedule a private gallery viewing."
+                segmentBy="words"
+                blur={false}
+                duration={0.4}
+                startDelay={0.2}
+                className="text-brand-grey text-xs leading-relaxed text-justify"
+              />
             </div>
           </div>
 
           {/* Right Column: Contact form */}
           <div className="lg:col-span-7 bg-white border border-brand-light p-8 md:p-10 shadow-sm rounded-lg">
             <div>
-              <h3 className="font-playfair text-xl md:text-2xl font-semibold text-brand-text mb-2">Send Us a Message</h3>
-              <p className="text-brand-grey text-sm mb-8 text-justify">
-                Please complete the form below. Our customer experience team will respond to your inquiry within 24 business hours.
-              </p>
+              <StaggeredText
+                as="h3"
+                text="Send Us a Message"
+                segmentBy="chars"
+                startDelay={0.1}
+                className="font-playfair text-xl md:text-2xl font-semibold text-brand-text mb-2"
+              />
+              <StaggeredText
+                as="p"
+                text="Please complete the form below. Our customer experience team will respond to your inquiry within 24 business hours."
+                segmentBy="words"
+                blur={false}
+                duration={0.4}
+                startDelay={0.2}
+                className="text-brand-grey text-sm mb-8 text-justify"
+              />
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-6">
