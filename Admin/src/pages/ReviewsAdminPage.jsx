@@ -8,6 +8,7 @@ import api from '../services/api';
 import toast from 'react-hot-toast';
 import { checkPermission } from '../utils/rbac';
 import { getImageUrl } from '../utils/imageUrl';
+import { safeBackdropProps } from '../utils/modalBackdrop';
 
 const ReviewsAdminPage = () => {
   const { admin } = useSelector((s) => s.auth);
@@ -368,7 +369,7 @@ const ReviewsAdminPage = () => {
         {/* View Full Review Details Modal */}
         <AnimatePresence>
           {viewingReview && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs" onClick={() => setViewingReview(null)}>
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs" {...safeBackdropProps(() => setViewingReview(null))}>
               <motion.div
                 initial={{ opacity: 0, scale: 0.96 }}
                 animate={{ opacity: 1, scale: 1 }}

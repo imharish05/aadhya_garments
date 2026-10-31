@@ -155,7 +155,7 @@ const renderFieldCounter = (value, config) => {
 const BannersAdminPage = () => {
   const [banners, setBanners] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState('All');
+  const [activeTab, setActiveTab] = useState('Hero');
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState(null);
   const [saving, setSaving] = useState(false);
@@ -300,6 +300,7 @@ const BannersAdminPage = () => {
       }
     }
 
+/* Non-Hero banner validations commented out (Hero only)
     if (form.type === 'COUNTDOWN') {
       if (!form.title?.trim()) {
         setUploadError('Title is required for Countdown banner.');
@@ -364,6 +365,7 @@ const BannersAdminPage = () => {
         setSaving(false); setUploadProgress(null); return;
       }
     }
+    */
 
     // Word and character limits validation
     if (form.title && countWords(form.title) > BANNER_LIMITS.title.maxWords) {
@@ -531,17 +533,14 @@ const BannersAdminPage = () => {
   };
 
   // Tabs order matching homepage display sequence: Hero (1st) -> CountDown (2nd) -> Exclusive Deal (3rd) -> Promo (4th)
-  const TABS = ['All', 'Hero', 'CountDown', 'Exclusive Deal', 'Promo'];
+  // const TABS = ['All', 'Hero', 'CountDown', 'Exclusive Deal', 'Promo'];
+  const TABS = ['Hero'];
   const { admin } = useSelector((s) => s.auth);
   const canAddBanner = checkPermission(admin, 'add_banner');
   const canDeleteBanner = checkPermission(admin, 'delete_banner');
 
-  const filteredBanners = activeTab === 'All'
-    ? banners
-    : banners.filter(b => {
-        if (activeTab === 'Exclusive Deal') return b.type === 'EXCLUSIVE_DEAL';
-        return b.type === activeTab.toUpperCase();
-      });
+  // Only Hero banners are present in the table
+  const filteredBanners = banners.filter(b => b.type === 'HERO');
 
   return (
     <AdminLayout title="Banners">
@@ -658,30 +657,10 @@ const BannersAdminPage = () => {
               </div>
 
               <form onSubmit={handleSave} className="p-6 space-y-4">
-                {/* Banner Type select dropdown — ordered exactly like homepage display (1st Hero, 2nd Countdown, 3rd Exclusive Deal, 4th Promo) */}
-                <div className={`grid ${form.type === 'COUNTDOWN' ? 'grid-cols-1' : 'grid-cols-2'} gap-4`}>
-                  <div>
-                    <label className="block text-xs font-semibold text-brand-grey mb-1.5" htmlFor="ban-type">
-                      Banner Type (Section Order) *
-                    </label>
-                    <select
-                      id="ban-type"
-                      value={form.type}
-                      onChange={e => handleTypeChange(e.target.value)}
-                      className="w-full border border-brand-light px-3 py-2 text-sm focus:outline-none focus:border-brand-gold bg-white rounded-sm font-medium text-brand-text"
-                    >
-                      <option value="HERO">HERO</option>
-                      <option value="COUNTDOWN">COUNTDOWN</option>
-                      <option value="EXCLUSIVE_DEAL">EXCLUSIVE DEAL</option>
-                      <option value="PROMO">PROMO</option>
-                    </select>
-                  </div>
-                  {form.type !== 'COUNTDOWN' && (
-                    <div>
-                      <label className="block text-xs font-semibold text-brand-grey mb-1.5" htmlFor="ban-pos">Position Order</label>
-                      <input id="ban-pos" type="number" min="1" value={form.position} onChange={e => setForm(p => ({ ...p, position: Number(e.target.value) }))} className="w-full border border-brand-light px-3 py-2 text-sm focus:outline-none focus:border-brand-gold rounded-sm" />
-                    </div>
-                  )}
+                {/* Position Order (Banner Section field removed - default is HERO) */}
+                <div>
+                  <label className="block text-xs font-semibold text-brand-grey mb-1.5" htmlFor="ban-pos">Position Order</label>
+                  <input id="ban-pos" type="number" min="1" value={form.position} onChange={e => setForm(p => ({ ...p, position: Number(e.target.value) }))} className="w-full border border-brand-light px-3 py-2 text-sm focus:outline-none focus:border-brand-gold rounded-sm" />
                 </div>
 
                 {/* Banner Image Upload & Live Dimension Inspector */}

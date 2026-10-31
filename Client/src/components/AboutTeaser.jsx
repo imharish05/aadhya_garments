@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { ArrowRight } from 'lucide-react';
 import { FadeUp, StaggeredText } from './animations';
+import SectionHeading from './SectionHeading';
 import { ArchRings } from './Motifs';
 
 /**
@@ -29,17 +30,19 @@ const AboutTeaser = () => (
     <div className="relative px-6 md:px-12 py-14 md:py-20 grid grid-cols-1 lg:grid-cols-[1.2fr_1fr] gap-14 lg:gap-8 items-center">
       {/* Left: copy */}
       <div>
-        <div className="inline-flex items-center gap-3 font-montserrat text-xs font-semibold uppercase tracking-[0.28em] text-[#DFC481] mb-2">
-          <span className="h-1.5 w-1.5 rounded-full bg-[#BEA266]" />
-          <StaggeredText as="span" text={COPY.eyebrow} segmentBy="words" blur={false} startDelay={0.05} />
-        </div>
+        <SectionHeading
+          eyebrow="Our Heritage"
+          title="Our Story"
+          align="left"
+          className="mb-3"
+        />
 
         <StaggeredText
-          as="h2"
+          as="h3"
           text={COPY.title}
           startDelay={0.1}
           segmentBy="chars"
-          className="font-playfair mt-5 text-3xl sm:text-4xl lg:text-5xl font-semibold leading-[1.1] max-w-2xl text-[#000]"
+          className="font-playfair mt-4 text-2xl sm:text-3xl lg:text-4xl font-semibold leading-[1.18] max-w-2xl text-neutral-950"
         />
 
         <StaggeredText

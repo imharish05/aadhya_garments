@@ -18,12 +18,12 @@ const Logo = ({ size = 'md', className = '', showText = true }) => {
         alt="Twin A Apparels Logo"
         className={`${imageSizes[size]} object-contain`}
       />
-      {showText && (
+      {/* {showText && (
         <span style={{ fontFamily: '"Cinzel", Georgia, serif', fontSize: textSizes[size], fontWeight: 700 }}>
           <span style={{ color: 'var(--color-gold, #C58837)' }}>Twin A</span>{' '}
           <span style={{ color: 'var(--color-text, #1A1A1A)' }}>Apparels</span>
         </span>
-      )}
+      )} */}
     </div>
   );
 };

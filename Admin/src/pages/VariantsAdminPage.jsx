@@ -10,6 +10,7 @@ import api from '../services/api';
 import { checkPermission } from '../utils/rbac';
 import { getImageUrl } from '../utils/imageUrl';
 import { validateImageFile, validateImageDimensionsAndSize } from '../utils/fileValidation';
+import { safeBackdropProps } from '../utils/modalBackdrop';
 
 const fmt = (v) => currencyJs(v, { symbol: '₹', precision: 0 }).format();
 
@@ -466,7 +467,7 @@ const VariantModal = ({ variant, variants = [], onClose, onSave, products }) => 
   };
 
   return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto" onClick={e => e.target === e.currentTarget && onClose()}>
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto" {...safeBackdropProps(onClose)}>
       <motion.div
         initial={{ opacity: 0, scale: 0.96, y: 10 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.96, y: 10 }}
         className="bg-white rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl border border-neutral-200/80 my-auto"

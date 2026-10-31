@@ -23,6 +23,7 @@ import api from '../services/api';
 import toast from 'react-hot-toast';
 import { checkPermission } from '../utils/rbac';
 import { getImageUrl } from '../utils/imageUrl';
+import { safeBackdropProps } from '../utils/modalBackdrop';
 
 const SubCategoriesAdminPage = () => {
   const { admin } = useSelector((s) => s.auth);
@@ -34,6 +35,7 @@ const SubCategoriesAdminPage = () => {
   const [subCategories, setSubCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('');
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
   const [total, setTotal] = useState(0);
@@ -59,7 +61,7 @@ const SubCategoriesAdminPage = () => {
       setLoading(true);
       const categoriesRes = await api.get('/categories?all=true');
       setParentCategories(categoriesRes.data.categories || []);
-      const query = `/subcategories?all=true&page=${page}&limit=${limit}${search ? `&search=${encodeURIComponent(search)}` : ''}`;
+      const query = `/subcategories?all=true&page=${page}&limit=${limit}${selectedCategory ? `&categoryId=${selectedCategory}` : ''}${search ? `&search=${encodeURIComponent(search)}` : ''}`;
       const subRes = await api.get(query);
       setSubCategories(subRes.data.subCategories || []);
       setTotal(subRes.data.total || 0);
@@ -70,7 +72,7 @@ const SubCategoriesAdminPage = () => {
     } finally {
       setLoading(false);
     }
-  }, [page, limit, search]);
+  }, [page, limit, search, selectedCategory]);
 
   useEffect(() => { loadData(); }, [loadData]);
 
@@ -88,7 +90,7 @@ const SubCategoriesAdminPage = () => {
       await api.patch('/subcategories/reorder', {
         items: reordered.map((s, idx) => ({ id: s.id, sortOrder: idx })),
       });
-      toast.success('Order saved!');
+      toast.success('Order saved! Website menu updated.');
     } catch (err) {
       toast.error('Failed to save order');
       loadData();
@@ -104,7 +106,7 @@ const SubCategoriesAdminPage = () => {
       slug: sub.slug || '',
       isActive: sub.isActive
     } : {
-      categoryId: '',
+      categoryId: selectedCategory ? String(selectedCategory) : '',
       name: '',
       slug: '',
       isActive: true
@@ -281,7 +283,11 @@ const SubCategoriesAdminPage = () => {
   return (
     <AdminLayout title="Sub-Categories">
       <div className="flex justify-between items-center mb-6">
-        <p className="text-sm text-brand-grey">{subCategories.length} sub-categories · drag rows to reorder</p>
+        <p className="text-sm text-brand-grey">
+          {selectedCategory
+            ? `Showing sub-categories for "${getParentName(Number(selectedCategory))}" · Drag rows to set menu order`
+            : `${total} sub-categories · Filter by category below to reorder per menu`}
+        </p>
         {canAddSubCategory && (
           <button onClick={() => openModal()} className="btn-primary flex items-center gap-2" id="add-subcat-btn" disabled={parentCategories.length === 0}>
             <Plus size={16} /> Add Sub-Category
@@ -295,6 +301,35 @@ const SubCategoriesAdminPage = () => {
         </div>
       )}
 
+      
+      {/* Category Filter Tabs */}
+      <div className="flex items-center gap-2 overflow-x-auto pb-2 mb-4 scrollbar-none">
+        <button
+          type="button"
+          onClick={() => { setSelectedCategory(''); setPage(1); }}
+          className={`px-3.5 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all shadow-2xs ${
+            selectedCategory === ''
+              ? 'bg-neutral-900 text-white'
+              : 'bg-white text-neutral-600 hover:bg-neutral-100 border border-neutral-200'
+          }`}
+        >
+          All Categories
+        </button>
+        {parentCategories.map(cat => (
+          <button
+            key={cat.id}
+            type="button"
+            onClick={() => { setSelectedCategory(String(cat.id)); setPage(1); }}
+            className={`px-3.5 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all shadow-2xs ${
+              String(selectedCategory) === String(cat.id)
+                ? 'bg-brand-gold text-white shadow-xs'
+                : 'bg-white text-neutral-600 hover:bg-neutral-100 border border-neutral-200'
+            }`}
+          >
+            {cat.name}
+          </button>
+        ))}
+      </div>
       <div className="bg-white rounded-xl shadow-sm overflow-hidden">
         <PaginationTop
           search={search}
@@ -399,7 +434,7 @@ const SubCategoriesAdminPage = () => {
 
       <AnimatePresence>
         {modalOpen && (
-          <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={e => e.target === e.currentTarget && !saving && setModalOpen(false)}>
+          <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" {...safeBackdropProps(() => setModalOpen(false), !saving)}>
             <motion.div initial={{ opacity: 0, scale: 0.96 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.96 }} className="bg-white rounded-xl w-full max-w-md shadow-xl overflow-hidden">
               <div className="flex items-center justify-between px-6 py-4 border-b border-brand-light">
                 <h2 className="font-playfair text-lg font-semibold">{editing ? 'Edit Sub-Category' : 'Add Sub-Category'}</h2>

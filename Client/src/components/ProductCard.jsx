@@ -306,7 +306,7 @@ const ProductCard = React.memo(({ product, index = 0, compactMobile = false }) =
             disabled={soldOut}
             id={`add-cart-${product.id}`}
             aria-label={info.hasOptions ? `Select options for ${product.name}` : inCart ? `View ${product.name} in cart` : `Add ${product.name} to cart`}
-            className="flex w-full items-center justify-center rounded-full bg-black py-1.5 font-inter text-[10px] font-semibold uppercase tracking-[0.08em] text-[#DFC481] transition-colors hover:bg-[#BEA266] hover:text-black sm:py-2.5 sm:text-[11px] sm:tracking-[0.14em] disabled:cursor-not-allowed disabled:bg-black/10 disabled:text-black/40"
+            className="flex w-full items-center justify-center rounded-full bg-black py-1.5 font-inter text-[10px] font-semibold uppercase tracking-[0.08em] text-white transition-colors hover:bg-neutral-800 hover:text-white sm:py-2.5 sm:text-[11px] sm:tracking-[0.14em] disabled:cursor-not-allowed disabled:bg-black/10 disabled:text-black/40"
           >
             {soldOut ? 'Sold out' : info.hasOptions ? 'Select options' : inCart ? 'View cart' : 'Add to cart'}
           </button>

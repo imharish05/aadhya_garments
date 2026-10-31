@@ -4,13 +4,14 @@ import { useDispatch, useSelector } from 'react-redux';
 import {
   ShoppingBag,
   ChevronDown,
+  ChevronLeft,
+  ChevronRight,
   Heart,
   Search,
   Menu,
   X,
   User,
   ArrowRight,
-  ChevronRight,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toggleMobileMenu, closeMobileMenu } from '../redux/slices/uiSlice';
@@ -103,6 +104,8 @@ const Navbar = () => {
   const catTimer = useRef(null);
   const searchClosedAt = useRef(0);
   const stripRef = useRef(null);
+  const [canLeft, setCanLeft] = useState(false);
+  const [canRight, setCanRight] = useState(false);
   const [localQuery, setLocalQuery] = useState('');
   const [activeIndex, setActiveIndex] = useState(-1);
   const [mobileOpenCat, setMobileOpenCat] = useState(null);
@@ -150,12 +153,41 @@ const Navbar = () => {
     fetchHeaderCategories();
   }, []);
 
+  // Category strip: arrow visibility (slider)
+  const updateArrows = useCallback(() => {
+    const el = stripRef.current;
+    if (!el) return;
+    setCanLeft(el.scrollLeft > 4);
+    setCanRight(el.scrollLeft + el.clientWidth < el.scrollWidth - 4);
+  }, []);
+
+  useEffect(() => {
+    const el = stripRef.current;
+    if (!el) return undefined;
+    updateArrows();
+    const onScroll = () => { updateArrows(); setHoverCat(null); };
+    el.addEventListener('scroll', onScroll, { passive: true });
+    const ro = new ResizeObserver(updateArrows);
+    ro.observe(el);
+    window.addEventListener('resize', updateArrows);
+    return () => {
+      el.removeEventListener('scroll', onScroll);
+      ro.disconnect();
+      window.removeEventListener('resize', updateArrows);
+    };
+  }, [updateArrows, categoryTree.length]);
+
+  const scrollStrip = (dir) => {
+    const el = stripRef.current;
+    if (!el) return;
+    el.scrollBy({ left: dir * Math.max(240, el.clientWidth * 0.6), behavior: 'smooth' });
+  };
+
   // Header scroll detection
   useEffect(() => {
     let prevScrollY = window.scrollY;
     let scrollAccumulator = 0;
     let ticking = false;
-    let lastDropdownClose = 0;
 
     const handleScroll = () => {
       if (!ticking) {
@@ -340,16 +372,16 @@ const Navbar = () => {
       .filter(sc => sc.isActive !== false)
       .map(sc => ({ ...sc, imageUrl: sc.image ? getImageUrl(sc.image) : null })),
   }));
-  const allActive = location.pathname === '/products';
 
   const searchPhrases = [...displayCategories.map(c => c.name), 'your next outfit'];
 
-  const iconBtn = 'group/ic relative flex h-10 w-10 shrink-0 flex-col items-center justify-center gap-1 rounded-full text-[#F3E7C6] hover:bg-white/10 transition-colors focus:outline-none 2xl:h-auto 2xl:w-auto 2xl:rounded-2xl 2xl:px-2.5 2xl:py-1.5';
-  const iconLabel = 'hidden 2xl:block text-[10.5px] font-medium uppercase tracking-[0.12em] text-[#A89A78] group-hover/ic:text-[#F3E7C6]';
+  const iconBtn = 'group/ic relative flex h-10 w-10 shrink-0 flex-col items-center justify-center gap-1 rounded-full text-white hover:bg-white/10 transition-colors focus:outline-none 2xl:h-auto 2xl:w-auto 2xl:rounded-2xl 2xl:px-2.5 2xl:py-1.5';
+  const iconLabel = 'hidden 2xl:block text-[10.5px] font-medium uppercase tracking-[0.12em] text-white/90 group-hover/ic:text-white';
   const navLinkCls = (active) =>
     `flex items-center gap-1.5 rounded-full px-3.5 xl:px-4 py-2.5 text-[12.5px] font-medium uppercase tracking-[0.12em] whitespace-nowrap transition-all duration-300 ${
-      active ? 'bg-[#BEA266]/20 text-[#DFC481]' : 'text-[#BFB08A] hover:bg-[#BEA266]/15 hover:text-white'
+      active ? 'bg-white/20 text-white font-semibold' : 'text-white/90 hover:bg-white/15 hover:text-white'
     }`;
+  const arrowBtn = 'absolute top-1/2 z-10 -translate-y-1/2 flex h-8 w-8 items-center justify-center rounded-full border border-white/30 bg-black text-white transition-all duration-300 hover:bg-white hover:text-black focus:outline-none';
 
   const megaCat = catItems.find(c => c.key === hoverCat && c.subs.length > 0);
 
@@ -378,7 +410,7 @@ const Navbar = () => {
             <div className="flex items-center justify-self-start">
               <button
                 onClick={() => dispatch(toggleMobileMenu())}
-                className="lg:hidden -ml-2 flex h-10 w-10 items-center justify-center rounded-full text-[#F3E7C6] hover:bg-white/10 transition-colors focus:outline-none"
+                className="lg:hidden -ml-2 flex h-10 w-10 items-center justify-center rounded-full text-white hover:bg-white/10 transition-colors focus:outline-none"
                 aria-label="Toggle mobile menu"
               >
                 <Menu size={22} strokeWidth={1.75} />
@@ -393,9 +425,36 @@ const Navbar = () => {
               <img src="/logo.png" alt="Twin A Apparels Logo" className="h-12 w-auto object-contain" />
             </Link>
 
-            {/* desktop categories + About/Contact (centre) */}
-            <nav className="hidden lg:block h-full min-w-0" aria-label="Shop by category">
-              <ul ref={stripRef} className="flex h-full items-center justify-center">
+            {/* desktop categories + About/Contact (centre) — slider when overflowing */}
+            <nav className="hidden lg:block relative h-full min-w-0" aria-label="Shop by category">
+              {/* fade edges */}
+              <div className={`pointer-events-none absolute inset-y-0 left-0 z-[5] w-20 bg-gradient-to-r from-black via-black/80 to-transparent transition-opacity duration-300 ${canLeft ? 'opacity-100' : 'opacity-0'}`} />
+              <div className={`pointer-events-none absolute inset-y-0 right-0 z-[5] w-20 bg-gradient-to-l from-black via-black/80 to-transparent transition-opacity duration-300 ${canRight ? 'opacity-100' : 'opacity-0'}`} />
+
+              <button
+                type="button"
+                onClick={() => scrollStrip(-1)}
+                aria-label="Scroll categories left"
+                tabIndex={canLeft ? 0 : -1}
+                className={`${arrowBtn} left-0 ${canLeft ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
+              >
+                <ChevronLeft size={16} />
+              </button>
+              <button
+                type="button"
+                onClick={() => scrollStrip(1)}
+                aria-label="Scroll categories right"
+                tabIndex={canRight ? 0 : -1}
+                className={`${arrowBtn} right-0 ${canRight ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
+              >
+                <ChevronRight size={16} />
+              </button>
+
+              {/* auto margins on first/last li = centered when fits, scrollable from start when overflow */}
+              <ul
+                ref={stripRef}
+                className="flex h-full items-center overflow-x-auto scroll-smooth scrollbar-hide [&>li:first-child]:ml-auto [&>li:last-child]:mr-auto"
+              >
                 {catItems.map(cat => (
                   <li
                     key={cat.key}
@@ -414,73 +473,6 @@ const Navbar = () => {
                         <ChevronDown size={12} className={`transition-transform duration-300 ${hoverCat === cat.key ? 'rotate-180' : ''}`} />
                       )}
                     </Link>
-
-                    {/* Full-width mega panel (positioned against the header, not this li) */}
-                    <AnimatePresence>
-                      {hoverCat === cat.key && cat.subs.length > 0 && (
-                        <motion.div
-                          initial={{ opacity: 0, y: -8 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          exit={{ opacity: 0, y: -6 }}
-                          transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
-                          onMouseEnter={() => openCat(cat.key)}
-                          className="absolute left-0 right-0 top-full z-50 bg-[#0E0C07] border-t border-[#BEA266]/40 shadow-[0_30px_60px_rgba(0,0,0,0.55)]"
-                        >
-                          <div className="max-w-[1440px] mx-auto px-12 py-9 grid grid-cols-[minmax(0,240px)_minmax(0,1fr)] gap-12 items-center">
-                            {/* title */}
-                            <div>
-                              <p className="text-[10px] font-semibold uppercase tracking-[0.26em] text-[#BEA266]">Shop</p>
-                              <h3 className="font-playfair mt-2 text-3xl font-medium leading-tight text-[#F3E7C6]">{cat.name}</h3>
-                              <span className="mt-4 block h-px w-12 bg-[#BEA266]" />
-                              <Link
-                                to={cat.to}
-                                className="group/all mt-5 inline-flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.2em] text-[#DFC481] hover:text-white transition-colors"
-                              >
-                                View all
-                                <ArrowRight size={14} className="transition-transform duration-300 group-hover/all:translate-x-1" />
-                              </Link>
-                            </div>
-
-                            {/* sub-category cards with images */}
-                            <ul className="flex gap-6 overflow-x-auto scrollbar-hide border-l border-[#2B2416] pl-12 py-1">
-                              {cat.subs.map((sc, i) => (
-                                <motion.li
-                                  key={sc.slug || sc.id}
-                                  className="shrink-0"
-                                  initial={{ opacity: 0, y: 10 }}
-                                  animate={{ opacity: 1, y: 0 }}
-                                  transition={{ delay: 0.05 * i, duration: 0.3 }}
-                                >
-                                  <Link
-                                    to={`/category/${cat.key}/${sc.slug}`}
-                                    className="group/sub flex w-[132px] flex-col items-center text-center"
-                                  >
-                                    <span className="relative block aspect-[3/4] w-full overflow-hidden rounded-t-[999px] rounded-b-2xl border border-[#BEA266]/30 bg-[#17130B] transition-colors duration-300 group-hover/sub:border-[#BEA266]">
-                                      {sc.imageUrl ? (
-                                        <img
-                                          src={sc.imageUrl}
-                                          alt=""
-                                          loading="lazy"
-                                          className="h-full w-full object-cover transition-transform duration-700 group-hover/sub:scale-110"
-                                        />
-                                      ) : (
-                                        <span className="font-playfair flex h-full w-full items-center justify-center text-4xl text-[#BEA266]/60">
-                                          {sc.name?.charAt(0)}
-                                        </span>
-                                      )}
-                                    </span>
-                                    <span className="mt-3 text-[11.5px] font-medium uppercase tracking-[0.14em] text-[#D9CBA6] transition-colors duration-300 group-hover/sub:text-white">
-                                      {sc.name}
-                                    </span>
-                                    <span className="mt-1.5 block h-px w-0 bg-[#BEA266] transition-all duration-300 group-hover/sub:w-8" />
-                                  </Link>
-                                </motion.li>
-                              ))}
-                            </ul>
-                          </div>
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
                   </li>
                 ))}
                 <li className="shrink-0 h-full flex items-center">
@@ -569,126 +561,195 @@ const Navbar = () => {
             </div>
           </div>
 
+          {/* ── Mega panel: sibling of the scroll strip so it is never clipped ── */}
+          <AnimatePresence>
+            {megaCat && (
+              <motion.div
+                key={megaCat.key}
+                initial={{ opacity: 0, y: -8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -6 }}
+                transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
+                onMouseEnter={() => openCat(megaCat.key)}
+                onMouseLeave={closeCat}
+                className="hidden lg:block absolute left-0 right-0 top-full z-50 bg-[#0E0C07] border-t border-[#BEA266]/40 shadow-[0_30px_60px_rgba(0,0,0,0.55)]"
+              >
+                <div className="max-w-[1440px] mx-auto px-12 py-9 grid grid-cols-[minmax(0,240px)_minmax(0,1fr)] gap-12 items-center">
+                  {/* title */}
+                  <div>
+                    <p className="text-[10px] font-semibold uppercase tracking-[0.26em] text-[#BEA266]">Shop</p>
+                    <h3 className="font-playfair mt-2 text-3xl font-medium leading-tight text-[#F3E7C6]">{megaCat.name}</h3>
+                    <span className="mt-4 block h-px w-12 bg-[#BEA266]" />
+                    <Link
+                      to={megaCat.to}
+                      className="group/all mt-5 inline-flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.2em] text-[#DFC481] hover:text-white transition-colors"
+                    >
+                      View all
+                      <ArrowRight size={14} className="transition-transform duration-300 group-hover/all:translate-x-1" />
+                    </Link>
+                  </div>
+
+                  {/* sub-category cards with images */}
+                  <ul className="flex gap-6 overflow-x-auto scrollbar-hide border-l border-[#2B2416] pl-12 py-1">
+                    {megaCat.subs.map((sc, i) => (
+                      <motion.li
+                        key={sc.slug || sc.id}
+                        className="shrink-0"
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.05 * i, duration: 0.3 }}
+                      >
+                        <Link
+                          to={`/category/${megaCat.key}/${sc.slug}`}
+                          className="group/sub flex w-[132px] flex-col items-center text-center"
+                        >
+                          <span className="relative block aspect-[3/4] w-full overflow-hidden rounded-t-[999px] rounded-b-2xl border border-[#BEA266]/30 bg-[#17130B] transition-colors duration-300 group-hover/sub:border-[#BEA266]">
+                            {sc.imageUrl ? (
+                              <img
+                                src={sc.imageUrl}
+                                alt=""
+                                loading="lazy"
+                                className="h-full w-full object-cover transition-transform duration-700 group-hover/sub:scale-110"
+                              />
+                            ) : (
+                              <span className="font-playfair flex h-full w-full items-center justify-center text-4xl text-[#BEA266]/60">
+                                {sc.name?.charAt(0)}
+                              </span>
+                            )}
+                          </span>
+                          <span className="mt-3 text-[11.5px] font-medium uppercase tracking-[0.14em] text-[#D9CBA6] transition-colors duration-300 group-hover/sub:text-white">
+                            {sc.name}
+                          </span>
+                          <span className="mt-1.5 block h-px w-0 bg-[#BEA266] transition-all duration-300 group-hover/sub:w-8" />
+                        </Link>
+                      </motion.li>
+                    ))}
+                  </ul>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
           {/* ── Search: covers the row on desktop, drops below it on mobile ── */}
           {searchOpen && (
-              <div
-                ref={searchContainerRef}
-                className="px-4 sm:px-8 pb-3 lg:pb-0 lg:px-12 lg:absolute lg:inset-x-0 lg:top-0 lg:h-20 lg:bg-black lg:z-20 lg:flex lg:items-center"
-              >
-                <div className="relative w-full max-w-[720px] mx-auto">
-                  <form onSubmit={handleSearchSubmit} role="search" className="relative flex items-center h-11 lg:h-12">
-                    <Search size={18} strokeWidth={1.75} className="absolute left-4 text-[#A89A78] pointer-events-none" />
-                    {localQuery === '' && (
-                      <span
-                        className="absolute left-11 right-28 flex items-center truncate pointer-events-none text-[16px] lg:text-[13.5px] text-[#9A8B70]"
-                        aria-hidden="true"
-                      >
-                        <TypedPlaceholder phrases={searchPhrases} />
-                      </span>
-                    )}
-                    <input
-                      ref={searchInputRef}
-                      type="text"
-                      value={localQuery}
-                      onChange={handleSearchInput}
-                      onFocus={handleSearchFocus}
-                      onKeyDown={handleKeyDown}
-                      aria-label="Search products"
-                      autoComplete="off"
-                      className="h-full w-full rounded-full bg-[#17130B] border border-[#2B2416] pl-11 pr-[148px] text-[16px] lg:text-[13.5px] text-[#F3E7C6] placeholder-[#9A8B70] transition-all focus:outline-none focus:bg-black focus:border-[#BEA266] focus:shadow-[0_0_0_4px_rgba(190,162,102,0.18)]"
-                    />
-                    <div className="absolute right-1.5 flex items-center gap-1">
-                      {searchLoadingState && <div className="w-3.5 h-3.5 border-2 border-[#BEA266] border-t-transparent rounded-full animate-spin mr-1" />}
-                      {localQuery && (
-                        <button
-                          type="button"
-                          onClick={() => { setLocalQuery(''); dispatch(clearSearch()); dispatch(setDropdownOpen(false)); searchInputRef.current?.focus(); }}
-                          className="p-1.5 text-[#9A8B70] hover:text-white transition-colors"
-                          aria-label="Clear search"
-                        >
-                          <X size={15} />
-                        </button>
-                      )}
-                      <button
-                        type="submit"
-                        className="h-8 lg:h-9 rounded-full bg-[#BEA266] px-4 text-[11px] font-semibold uppercase tracking-[0.14em] text-black hover:bg-[#DFC481] transition-colors"
-                      >
-                        Search
-                      </button>
+            <div
+              ref={searchContainerRef}
+              className="px-4 sm:px-8 pb-3 lg:pb-0 lg:px-12 lg:absolute lg:inset-x-0 lg:top-0 lg:h-20 lg:bg-black lg:z-20 lg:flex lg:items-center"
+            >
+              <div className="relative w-full max-w-[720px] mx-auto">
+                <form onSubmit={handleSearchSubmit} role="search" className="relative flex items-center h-11 lg:h-12">
+                  <Search size={18} strokeWidth={1.75} className="absolute left-4 text-[#A89A78] pointer-events-none" />
+                  {localQuery === '' && (
+                    <span
+                      className="absolute left-11 right-28 flex items-center truncate pointer-events-none text-[16px] lg:text-[13.5px] text-[#9A8B70]"
+                      aria-hidden="true"
+                    >
+                      <TypedPlaceholder phrases={searchPhrases} />
+                    </span>
+                  )}
+                  <input
+                    ref={searchInputRef}
+                    type="text"
+                    value={localQuery}
+                    onChange={handleSearchInput}
+                    onFocus={handleSearchFocus}
+                    onKeyDown={handleKeyDown}
+                    aria-label="Search products"
+                    autoComplete="off"
+                    className="h-full w-full rounded-full bg-[#17130B] border border-[#2B2416] pl-11 pr-[148px] text-[16px] lg:text-[13.5px] text-[#F3E7C6] placeholder-[#9A8B70] transition-all focus:outline-none focus:bg-black focus:border-[#BEA266] focus:shadow-[0_0_0_4px_rgba(190,162,102,0.18)]"
+                  />
+                  <div className="absolute right-1.5 flex items-center gap-1">
+                    {searchLoadingState && <div className="w-3.5 h-3.5 border-2 border-[#BEA266] border-t-transparent rounded-full animate-spin mr-1" />}
+                    {localQuery && (
                       <button
                         type="button"
-                        onClick={closeSearch}
-                        className="p-1.5 text-[#F3E7C6] hover:text-white transition-colors"
-                        aria-label="Close search"
+                        onClick={() => { setLocalQuery(''); dispatch(clearSearch()); dispatch(setDropdownOpen(false)); searchInputRef.current?.focus(); }}
+                        className="p-1.5 text-[#9A8B70] hover:text-white transition-colors"
+                        aria-label="Clear search"
                       >
-                        <X size={18} />
+                        <X size={15} />
                       </button>
-                    </div>
-                  </form>
+                    )}
+                    <button
+                      type="submit"
+                      className="h-8 lg:h-9 rounded-full bg-[#BEA266] px-4 text-[11px] font-semibold uppercase tracking-[0.14em] text-black hover:bg-[#DFC481] transition-colors"
+                    >
+                      Search
+                    </button>
+                    <button
+                      type="button"
+                      onClick={closeSearch}
+                      className="p-1.5 text-[#F3E7C6] hover:text-white transition-colors"
+                      aria-label="Close search"
+                    >
+                      <X size={18} />
+                    </button>
+                  </div>
+                </form>
 
-                  {/* Autocomplete panel */}
-                  <AnimatePresence>
-                    {searchDropdownOpenState && localQuery.trim().length > 0 && (
-                      <motion.div
-                        initial={{ opacity: 0, y: 6 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: 4 }}
-                        transition={{ duration: 0.15 }}
-                        className="absolute left-0 right-0 top-full mt-2 z-[60] rounded-3xl bg-[#0E0C07] border border-[#2B2416] shadow-[0_20px_50px_rgba(42,32,20,0.15)] p-4 max-h-[420px] overflow-y-auto"
-                      >
-                        {autocompleteSuggestions.length > 0 && (
-                          <div className="mb-3">
-                            <p className="px-2 mb-1 text-[10px] font-bold uppercase tracking-[0.16em] text-[#9A8B70]">Suggestions</p>
-                            {autocompleteSuggestions.map((kw, i) => (
+                {/* Autocomplete panel */}
+                <AnimatePresence>
+                  {searchDropdownOpenState && localQuery.trim().length > 0 && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 6 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: 4 }}
+                      transition={{ duration: 0.15 }}
+                      className="absolute left-0 right-0 top-full mt-2 z-[60] rounded-3xl bg-[#0E0C07] border border-[#2B2416] shadow-[0_20px_50px_rgba(42,32,20,0.15)] p-4 max-h-[420px] overflow-y-auto"
+                    >
+                      {autocompleteSuggestions.length > 0 && (
+                        <div className="mb-3">
+                          <p className="px-2 mb-1 text-[10px] font-bold uppercase tracking-[0.16em] text-[#9A8B70]">Suggestions</p>
+                          {autocompleteSuggestions.map((kw, i) => (
+                            <button
+                              key={kw}
+                              type="button"
+                              onClick={() => handleKeywordClick(kw)}
+                              className={`w-full flex items-center justify-between rounded-full px-3.5 py-2 text-left text-[13px] transition-colors ${
+                                activeIndex === i ? 'bg-white/10 text-[#F3E7C6] font-semibold' : 'text-[#F3E7C6] hover:bg-white/10'
+                              }`}
+                            >
+                              <span className="flex items-center gap-2.5"><Search size={13} className="text-[#9A8B70]" />{kw}</span>
+                              <ArrowRight size={13} className="text-[#9A8B70]" />
+                            </button>
+                          ))}
+                        </div>
+                      )}
+
+                      {autocompleteProducts.length > 0 && (
+                        <div>
+                          <p className="px-2 mb-1.5 text-[10px] font-bold uppercase tracking-[0.16em] text-[#9A8B70]">Products</p>
+                          <div className="space-y-1">
+                            {autocompleteProducts.map(product => (
                               <button
-                                key={kw}
+                                key={product.id || product._id}
                                 type="button"
-                                onClick={() => handleKeywordClick(kw)}
-                                className={`w-full flex items-center justify-between rounded-full px-3.5 py-2 text-left text-[13px] transition-colors ${
-                                  activeIndex === i ? 'bg-white/10 text-[#F3E7C6] font-semibold' : 'text-[#F3E7C6] hover:bg-white/10'
-                                }`}
+                                onClick={() => handleSuggestionClick(product)}
+                                className="group w-full flex items-center gap-3 rounded-2xl p-2 text-left hover:bg-white/10 transition-colors"
                               >
-                                <span className="flex items-center gap-2.5"><Search size={13} className="text-[#9A8B70]" />{kw}</span>
-                                <ArrowRight size={13} className="text-[#9A8B70]" />
+                                <div className="h-14 w-11 shrink-0 overflow-hidden rounded-xl bg-white/10">
+                                  {product.image && <img src={product.image} alt="" className="h-full w-full object-cover transition-transform group-hover:scale-105" />}
+                                </div>
+                                <div className="min-w-0 flex-1">
+                                  <p className="truncate text-[13px] font-medium text-[#F3E7C6]">{product.name}</p>
+                                  <p className="mt-0.5 text-[13px] font-semibold text-[#DFC481]">{formatPrice(product.price, 'INR')}</p>
+                                </div>
+                                <ArrowRight size={14} className="text-[#9A8B70] opacity-0 group-hover:opacity-100 transition-opacity" />
                               </button>
                             ))}
                           </div>
-                        )}
+                        </div>
+                      )}
 
-                        {autocompleteProducts.length > 0 && (
-                          <div>
-                            <p className="px-2 mb-1.5 text-[10px] font-bold uppercase tracking-[0.16em] text-[#9A8B70]">Products</p>
-                            <div className="space-y-1">
-                              {autocompleteProducts.map(product => (
-                                <button
-                                  key={product.id || product._id}
-                                  type="button"
-                                  onClick={() => handleSuggestionClick(product)}
-                                  className="group w-full flex items-center gap-3 rounded-2xl p-2 text-left hover:bg-white/10 transition-colors"
-                                >
-                                  <div className="h-14 w-11 shrink-0 overflow-hidden rounded-xl bg-white/10">
-                                    {product.image && <img src={product.image} alt="" className="h-full w-full object-cover transition-transform group-hover:scale-105" />}
-                                  </div>
-                                  <div className="min-w-0 flex-1">
-                                    <p className="truncate text-[13px] font-medium text-[#F3E7C6]">{product.name}</p>
-                                    <p className="mt-0.5 text-[13px] font-semibold text-[#DFC481]">{formatPrice(product.price, 'INR')}</p>
-                                  </div>
-                                  <ArrowRight size={14} className="text-[#9A8B70] opacity-0 group-hover:opacity-100 transition-opacity" />
-                                </button>
-                              ))}
-                            </div>
-                          </div>
-                        )}
-
-                        {autocompleteSuggestions.length === 0 && autocompleteProducts.length === 0 && !searchLoadingState && (
-                          <p className="py-5 text-center text-[13px] text-[#A89A78]">No matches for “{localQuery}”</p>
-                        )}
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </div>
+                      {autocompleteSuggestions.length === 0 && autocompleteProducts.length === 0 && !searchLoadingState && (
+                        <p className="py-5 text-center text-[13px] text-[#A89A78]">No matches for “{localQuery}”</p>
+                      )}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
-            )}
+            </div>
+          )}
         </div>
       </header>
 
@@ -737,7 +798,7 @@ const Navbar = () => {
                 </Link>
                 <button
                   onClick={() => dispatch(closeMobileMenu())}
-                  className="-mr-2 flex h-10 w-10 items-center justify-center rounded-full text-[#F3E7C6] hover:bg-white/10 transition-colors focus:outline-none"
+                  className="-mr-2 flex h-10 w-10 items-center justify-center rounded-full text-white hover:bg-white/10 transition-colors focus:outline-none"
                   aria-label="Close menu"
                 >
                   <X size={22} strokeWidth={1.75} />
@@ -766,7 +827,7 @@ const Navbar = () => {
                     key={l.to}
                     to={l.to}
                     onClick={() => dispatch(closeMobileMenu())}
-                    className="flex h-14 items-center border-b border-[#2B2416] text-[13px] font-medium uppercase tracking-[0.16em] text-[#F3E7C6]"
+                    className="flex h-14 items-center border-b border-[#2B2416] text-[13px] font-medium uppercase tracking-[0.16em] text-white"
                   >
                     {l.label}
                   </Link>
@@ -782,7 +843,7 @@ const Navbar = () => {
                         <Link
                           to={cat.to}
                           onClick={() => dispatch(closeMobileMenu())}
-                          className="flex-1 text-[13px] font-medium uppercase tracking-[0.16em] text-[#F3E7C6]"
+                          className="flex-1 text-[13px] font-medium uppercase tracking-[0.16em] text-white"
                         >
                           {cat.name}
                         </Link>
@@ -812,7 +873,7 @@ const Navbar = () => {
                                 <Link
                                   to={`/category/${cat.key}/${sc.slug}`}
                                   onClick={() => dispatch(closeMobileMenu())}
-                                  className="flex h-12 items-center gap-3 pl-1 text-[14px] text-[#D9CBA6] hover:text-white"
+                                  className="flex h-12 items-center gap-3 pl-1 text-[14px] text-white/90 hover:text-white"
                                 >
                                   {sc.imageUrl ? (
                                     <img src={sc.imageUrl} alt="" loading="lazy" className="h-8 w-8 shrink-0 rounded-full border border-[#BEA266]/40 object-cover" />
@@ -840,7 +901,7 @@ const Navbar = () => {
                     key={l.to}
                     to={l.to}
                     onClick={() => dispatch(closeMobileMenu())}
-                    className="flex h-14 items-center border-b border-[#2B2416] text-[13px] font-medium uppercase tracking-[0.16em] text-[#F3E7C6]"
+                    className="flex h-14 items-center border-b border-[#2B2416] text-[13px] font-medium uppercase tracking-[0.16em] text-white"
                   >
                     {l.label}
                   </Link>
@@ -858,7 +919,7 @@ const Navbar = () => {
                     key={label}
                     to={to}
                     onClick={() => dispatch(closeMobileMenu())}
-                    className={`flex h-16 flex-col items-center justify-center gap-1 text-[#F3E7C6] hover:bg-white/5 ${i > 0 ? 'border-l border-[#2B2416]' : ''}`}
+                    className={`flex h-16 flex-col items-center justify-center gap-1 text-white hover:bg-white/5 ${i > 0 ? 'border-l border-[#2B2416]' : ''}`}
                   >
                     <span className="relative">
                       <Icon size={20} strokeWidth={1.6} />
@@ -866,7 +927,7 @@ const Navbar = () => {
                         <span className="absolute -right-2.5 -top-1.5 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-[#BEA266] px-1 text-[9px] font-bold text-black">{count}</span>
                       )}
                     </span>
-                    <span className="text-[10px] font-medium uppercase tracking-[0.14em] text-[#A89A78]">{label}</span>
+                    <span className="text-[10px] font-medium uppercase tracking-[0.14em] text-white/80">{label}</span>
                   </Link>
                 ))}
               </div>

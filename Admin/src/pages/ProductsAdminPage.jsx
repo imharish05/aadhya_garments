@@ -12,6 +12,7 @@ import toast from 'react-hot-toast';
 import api from '../services/api';
 import { checkPermission } from '../utils/rbac';
 import { validateImageFile, validateImageDimensionsAndSize } from '../utils/fileValidation';
+import { safeBackdropProps } from '../utils/modalBackdrop';
 
 const fmt = (v) => currencyJs(v, { symbol: '₹', precision: 0 }).format();
 
@@ -295,7 +296,7 @@ const ProductLivePreviewModal = ({ product, onClose }) => {
   const attributes = typeof product.attributes === 'string' ? JSON.parse(product.attributes) : (product.attributes || {});
 
   return (
-    <div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4" onClick={e => e.target === e.currentTarget && onClose()}>
+    <div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4" {...safeBackdropProps(onClose)}>
       <motion.div
         initial={{ opacity: 0, scale: 0.96 }}
         animate={{ opacity: 1, scale: 1 }}
@@ -981,7 +982,16 @@ const ProductModal = ({ product, onClose, onSave }) => {
 
     const firstVar = productVariants[0];
     const topPrice = (firstVar && firstVar.price !== undefined && firstVar.price !== '') ? firstVar.price : (form.price || '0');
+    const topComparePrice = (firstVar && firstVar.mrp !== undefined && firstVar.mrp !== '') ? firstVar.mrp : (form.comparePrice || '');
     
+    const fd = new FormData();
+    fd.append('name', form.name.trim());
+    fd.append('slug', form.slug && form.slug.trim() !== '' ? form.slug.trim() : generatedSlug);
+    fd.append('sku', finalProductSku);
+    fd.append('price', String(topPrice));
+    if (topComparePrice) {
+      fd.append('comparePrice', String(topComparePrice));
+    }
     fd.append('stock', form.stock === '' ? '0' : String(form.stock));
     fd.append('shortDescription', form.shortDescription || '');
     fd.append('description', form.description || '');
@@ -1045,7 +1055,7 @@ const ProductModal = ({ product, onClose, onSave }) => {
       });
     }
 
-    fd.append('isSingleVariantEdit', 'true');
+    fd.append('isSingleVariantEdit', productVariants.length <= 1 ? 'true' : 'false');
     const preservedImages = [
       ...existingVariantImages.filter(img => !isLocalPreviewUrl(img)),
       ...(defaultProductImagePreview && !isLocalPreviewUrl(defaultProductImagePreview) && !existingVariantImages.includes(defaultProductImagePreview) ? [defaultProductImagePreview] : [])
@@ -1076,7 +1086,7 @@ const ProductModal = ({ product, onClose, onSave }) => {
   };
 
   return (
-    <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4" onClick={e => e.target === e.currentTarget && onClose()}>
+    <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4" {...safeBackdropProps(onClose)}>
       <motion.div
         initial={{ opacity: 0, scale: 0.96 }}
         animate={{ opacity: 1, scale: 1 }}

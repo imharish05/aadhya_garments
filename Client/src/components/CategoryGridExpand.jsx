@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 import { StaggeredText } from "./animations";
+import SectionHeading from "./SectionHeading";
 
 const Arrow = () => (
   <svg
@@ -194,14 +195,12 @@ export default function CategoryGridExpand({ categories = [], allHref = "/produc
   return (
     <div className="relative bg-white">
       <div className="mx-auto flex max-w-5xl flex-col px-4 py-10 md:px-5 md:py-12">
-        {/* Header: centered */}
-        <div className="mb-5 text-center">
-          <StaggeredText
-            as="h2"
-            text="Shop by category"
-            segmentBy="words"
-            startDelay={0.1}
-            className="font-playfair text-2xl sm:text-3xl font-semibold tracking-tight text-neutral-900"
+        {/* Header: centered with luxury line decoration */}
+        <div className="mb-6 text-center">
+          <SectionHeading
+            eyebrow="Curated"
+            title="Shop by category"
+            align="center"
           />
           <StaggeredText
             as="p"
@@ -210,7 +209,7 @@ export default function CategoryGridExpand({ categories = [], allHref = "/produc
             blur={false}
             duration={0.4}
             startDelay={0.25}
-            className="mx-auto mt-1 hidden max-w-md text-sm sm:text-base text-neutral-600 sm:block font-montserrat"
+            className="mx-auto mt-3 hidden max-w-md text-sm sm:text-base text-neutral-600 sm:block font-montserrat"
           />
         </div>
 
@@ -246,7 +245,7 @@ export default function CategoryGridExpand({ categories = [], allHref = "/produc
                 key={cat.id}
                 to={cat.href}
                 aria-label={`${cat.name}, ${cat.count} items`}
-                className="group relative isolate aspect-[5/6] w-[62vw] sm:w-[42vw] md:w-[calc((100%-24px)/3)] shrink-0 snap-start overflow-hidden rounded-[18px] bg-neutral-200 text-white shadow-[0_8px_24px_rgba(0,0,0,0.16)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[3px] focus-visible:outline-neutral-900"
+                className="group relative isolate aspect-[5/6] w-[62vw] sm:w-[42vw] md:w-[calc((100%-24px)/3)] shrink-0 snap-start overflow-hidden rounded-[18px] bg-transparent text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[3px] focus-visible:outline-neutral-900"
               >
                 <div data-img className="absolute inset-0 -z-20">
                   <img
@@ -261,7 +260,6 @@ export default function CategoryGridExpand({ categories = [], allHref = "/produc
                     className="h-full w-full object-cover transition-transform duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-105"
                   />
                 </div>
-                <div className="absolute inset-0 -z-10 bg-gradient-to-t from-black/50 via-black/15 to-transparent to-60%" />
                 <div
                   data-chip
                   className="absolute bottom-2.5 left-2.5 flex items-center gap-2 rounded-full bg-white/95 py-[5px] pl-3 pr-[5px] text-[13px] font-medium text-neutral-900 shadow-sm"

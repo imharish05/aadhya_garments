@@ -12,6 +12,7 @@ import ProductCard from '../components/ProductCard';
 import HeroBanner from '../components/HeroBanner';
 import CategoryGridExpand from '../components/CategoryGridExpand';
 import NewArrivalsSection from '../components/NewArrivalsSection';
+import SectionHeading from '../components/SectionHeading';
 import { SplitTextReveal, FadeUp, EyebrowReveal, StaggeredText } from '../components/animations';
 import Footer from '../components/Footer';
 import OurPromise from '../components/OurPromise';
@@ -349,14 +350,11 @@ const HomePage = () => {
         <section className="py-10 bg-white" aria-label="Bestsellers">
           <div className="max-w-site mx-auto px-6 md:px-8">
             <div>
-              <div className="text-center mb-12">
-                <EyebrowReveal className="text-neutral-500 text-xs font-semibold tracking-[0.24em] uppercase mb-3 font-montserrat">
-                  Fresh In
-                </EyebrowReveal>
-                <SplitTextReveal
-                  as="h2"
-                  text="Best Sellers"
-                  className="font-playfair text-2xl sm:text-3xl md:text-4xl lg:text-[40px] font-normal text-neutral-950 tracking-[-0.015em] leading-[1.18] mx-auto select-none border-b border-neutral-100 pb-6 max-w-xl"
+              <div className="mb-10 text-center">
+                <SectionHeading
+                  eyebrow="Fresh In"
+                  title="Best Sellers"
+                  align="center"
                 />
               </div>
             </div>
@@ -449,9 +447,9 @@ const HomePage = () => {
                   {countdownBanner.badgeText}
                 </span>
               )}
-              <SplitTextReveal as="h2" text={countdownBanner.title} className="font-playfair text-2xl sm:text-3xl lg:text-4xl font-normal text-white leading-tight mb-2" />
+              <SplitTextReveal as="h2" text={countdownBanner.title} className="font-playfair text-2xl sm:text-3xl lg:text-4xl font-semibold tracking-tight text-white leading-tight mb-2" />
               {countdownBanner.subtitle && (
-                <StaggeredText as="p" text={countdownBanner.subtitle} segmentBy="words" blur={false} duration={0.4} startDelay={0.25} className="text-white/70 text-xs sm:text-sm lg:text-base max-w-sm mb-5">
+                <StaggeredText as="p" text={countdownBanner.subtitle} segmentBy="words" blur={false} duration={0.4} startDelay={0.25} className="font-montserrat text-white/70 text-xs sm:text-sm lg:text-base max-w-sm mb-5 leading-relaxed">
                   {countdownBanner.subtitle}
                 </StaggeredText>
               )}
@@ -521,10 +519,10 @@ const HomePage = () => {
                       </StaggeredText>
                     )}
                     {promoBanners[0].title && (
-                      <SplitTextReveal as="h2" text={promoBanners[0].title} className="font-playfair text-2xl md:text-3xl font-normal text-white leading-snug mb-3" />
+                      <SplitTextReveal as="h2" text={promoBanners[0].title} className="font-playfair text-2xl md:text-3xl font-semibold tracking-tight text-white leading-snug mb-3" />
                     )}
                     {promoBanners[0].subtitle && (
-                      <StaggeredText as="p" text={promoBanners[0].subtitle} segmentBy="words" blur={false} duration={0.4} startDelay={0.25} className="text-white/75 text-xs md:text-sm leading-relaxed mb-5 line-clamp-2 max-w-md">
+                      <StaggeredText as="p" text={promoBanners[0].subtitle} segmentBy="words" blur={false} duration={0.4} startDelay={0.25} className="font-montserrat text-white/75 text-xs md:text-sm leading-relaxed mb-5 line-clamp-2 max-w-md">
                         {promoBanners[0].subtitle}
                       </StaggeredText>
                     )}
@@ -562,12 +560,12 @@ const HomePage = () => {
                               </StaggeredText>
                             )}
                             {promo.title && (
-                              <StaggeredText as="h2" text={promo.title} segmentBy="chars" startDelay={0.15} className="font-playfair text-2xl md:text-3xl font-bold text-white leading-snug mb-3">
+                              <StaggeredText as="h2" text={promo.title} segmentBy="chars" startDelay={0.15} className="font-playfair text-2xl md:text-3xl font-semibold tracking-tight text-white leading-snug mb-3">
                                 {promo.title}
                               </StaggeredText>
                             )}
                             {promo.subtitle && (
-                              <StaggeredText as="p" text={promo.subtitle} segmentBy="words" blur={false} duration={0.4} startDelay={0.25} className="text-white/75 text-xs md:text-sm leading-relaxed mb-5 line-clamp-2 max-w-md">
+                              <StaggeredText as="p" text={promo.subtitle} segmentBy="words" blur={false} duration={0.4} startDelay={0.25} className="font-montserrat text-white/75 text-xs md:text-sm leading-relaxed mb-5 line-clamp-2 max-w-md">
                                 {promo.subtitle}
                               </StaggeredText>
                             )}
@@ -640,12 +638,12 @@ const HomePage = () => {
                   </span>
                 )}
                 {exclusiveBanners[0].title && (
-                  <StaggeredText as="h3" text={exclusiveBanners[0].title} segmentBy="chars" startDelay={0.1} className="font-playfair text-xl md:text-4xl font-bold text-white mb-1 md:mb-2 max-w-2xl line-clamp-2">
+                  <StaggeredText as="h3" text={exclusiveBanners[0].title} segmentBy="chars" startDelay={0.1} className="font-playfair text-xl md:text-4xl font-semibold tracking-tight text-white mb-1 md:mb-2 max-w-2xl line-clamp-2">
                     {exclusiveBanners[0].title}
                   </StaggeredText>
                 )}
                 {exclusiveBanners[0].subtitle && (
-                  <StaggeredText as="p" text={exclusiveBanners[0].subtitle} segmentBy="words" blur={false} duration={0.4} startDelay={0.25} className="text-white/70 text-xs md:text-base mb-3 md:mb-6 max-w-xl line-clamp-2">
+                  <StaggeredText as="p" text={exclusiveBanners[0].subtitle} segmentBy="words" blur={false} duration={0.4} startDelay={0.25} className="font-montserrat text-white/70 text-xs md:text-base mb-3 md:mb-6 max-w-xl line-clamp-2 leading-relaxed">
                     {exclusiveBanners[0].subtitle}
                   </StaggeredText>
                 )}
@@ -671,7 +669,7 @@ const HomePage = () => {
               <div className="flex items-center justify-between mb-8">
                 <div>
                   <p className="text-brand-gold text-xs font-medium tracking-[0.2em] uppercase mb-2">Limited Offers</p>
-                  <SplitTextReveal as="h2" text="Exclusive Deals" className="font-playfair text-2xl md:text-3xl font-normal text-brand-text" />
+                  <SplitTextReveal as="h2" text="Exclusive Deals" className="font-playfair text-2xl md:text-3xl font-semibold tracking-tight text-brand-text" />
                 </div>
                 
                 {(isMobileViewport ? exclusiveBanners.length > 1 : exclusiveBanners.length > 2) && (
@@ -728,12 +726,12 @@ const HomePage = () => {
                           </span>
                         )}
                         {banner.title && (
-                          <StaggeredText key={`ex-title-${banner.id}-${currentExclusiveSlide}`} as="h3" text={banner.title} segmentBy="chars" startDelay={0.1} className="font-playfair text-lg sm:text-2xl md:text-3xl font-bold text-white mb-1 md:mb-2 line-clamp-2 leading-tight">
+                          <StaggeredText key={`ex-title-${banner.id}-${currentExclusiveSlide}`} as="h3" text={banner.title} segmentBy="chars" startDelay={0.1} className="font-playfair text-lg sm:text-2xl md:text-3xl font-semibold tracking-tight text-white mb-1 md:mb-2 line-clamp-2 leading-tight">
                             {banner.title}
                           </StaggeredText>
                         )}
                         {banner.subtitle && (
-                          <StaggeredText key={`ex-sub-${banner.id}-${currentExclusiveSlide}`} as="p" text={banner.subtitle} segmentBy="words" blur={false} duration={0.4} startDelay={0.25} className="text-white/80 text-xs sm:text-sm mb-3 md:mb-4 line-clamp-2 max-w-md">
+                          <StaggeredText key={`ex-sub-${banner.id}-${currentExclusiveSlide}`} as="p" text={banner.subtitle} segmentBy="words" blur={false} duration={0.4} startDelay={0.25} className="font-montserrat text-white/80 text-xs sm:text-sm mb-3 md:mb-4 line-clamp-2 max-w-md leading-relaxed">
                             {banner.subtitle}
                           </StaggeredText>
                         )}

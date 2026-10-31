@@ -8,6 +8,7 @@ import Switch from '../components/Switch';
 import { PaginationTop, PaginationBottom } from '../components/Pagination';
 import api from '../services/api';
 import { checkPermission } from '../utils/rbac';
+import { safeBackdropProps } from '../utils/modalBackdrop';
 
 const getTodayDateStr = () => {
   const d = new Date();
@@ -279,7 +280,7 @@ const CouponsAdminPage = () => {
 
       <AnimatePresence>
         {modalOpen && (
-          <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={e=>e.target===e.currentTarget&&setModalOpen(false)}>
+          <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" {...safeBackdropProps(() => setModalOpen(false))}>
             <motion.div initial={{opacity:0,scale:0.96}} animate={{opacity:1,scale:1}} exit={{opacity:0,scale:0.96}} className="bg-white rounded-xl w-full max-w-3xl overflow-hidden shadow-2xl">
               <div className="flex items-center justify-between px-6 py-4 border-b border-brand-light">
                 <h2 className="font-playfair text-lg font-semibold">{editingId ? 'Edit Coupon' : 'Add Coupon'}</h2>

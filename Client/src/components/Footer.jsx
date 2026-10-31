@@ -36,7 +36,7 @@ const Footer = () => {
       ];
 
   return (
-    <footer className="bg-brand-text text-white" role="contentinfo">
+    <footer className="bg-black text-white" role="contentinfo">
       {/* Main Footer Grid */}
       <div className="max-w-site mx-auto px-4 sm:px-6 md:px-8 py-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10">
         {/* Brand */}

@@ -37,7 +37,6 @@ const seedAll = async () => {
 
     await AdminUser.bulkCreate([
       { name: 'Sai Arjun Kumar', email: 'admin@twinapparels.com', password: adminHash, roleId: adminRole?.id },
-      { name: 'Admin Fallback', email: 'admin@twinapparels.com', password: adminHash, roleId: adminRole?.id },
       { name: 'Priya Sharma', email: 'staff@twinapparels.com', password: staffHash, roleId: staffRole?.id },
     ]);
     console.log('✅ Admin users seeded (admin@twinapparels.com / Admin@123)');

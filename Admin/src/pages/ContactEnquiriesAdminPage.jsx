@@ -8,6 +8,7 @@ import { toast } from 'react-hot-toast';
 import AdminLayout from '../components/AdminLayout';
 import { PaginationTop, PaginationBottom } from '../components/Pagination';
 import api from '../services/api';
+import { safeBackdropProps } from '../utils/modalBackdrop';
 
 const ContactEnquiriesAdminPage = () => {
   const [enquiries, setEnquiries] = useState([]);
@@ -368,7 +369,7 @@ const ContactEnquiriesAdminPage = () => {
           {modalOpen && selectedEnquiry && (
             <div
               className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 md:p-6 bg-black/50 backdrop-blur-sm"
-              onClick={(e) => e.target === e.currentTarget && setModalOpen(false)}
+              {...safeBackdropProps(() => setModalOpen(false))}
             >
               <motion.div
                 initial={{ opacity: 0, scale: 0.96, y: 8 }}

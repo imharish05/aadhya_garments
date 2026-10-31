@@ -21,6 +21,7 @@ import SortableRow from '../components/SortableRow';
 import api from '../services/api';
 import toast from 'react-hot-toast';
 import { checkPermission } from '../utils/rbac';
+import { safeBackdropProps } from '../utils/modalBackdrop';
 
 const SliderMessagesAdminPage = () => {
   const { admin } = useSelector((s) => s.auth);
@@ -291,7 +292,7 @@ const SliderMessagesAdminPage = () => {
         {modalOpen && (
           <div
             className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
-            onClick={(e) => e.target === e.currentTarget && setModalOpen(false)}
+            {...safeBackdropProps(() => setModalOpen(false))}
           >
             <motion.div
               initial={{ opacity: 0, scale: 0.96 }}

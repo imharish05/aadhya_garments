@@ -12,7 +12,7 @@ const Category = sequelize.define('Category', {
   attributes: { type: DataTypes.JSON, defaultValue: [] },
   sortOrder: { type: DataTypes.INTEGER, defaultValue: 0 },
   isActive: { type: DataTypes.BOOLEAN, defaultValue: true },
-  showHeader: { type: DataTypes.BOOLEAN, defaultValue: false },
+  showHeader: { type: DataTypes.BOOLEAN, defaultValue: true },
 });
 
 module.exports = Category;

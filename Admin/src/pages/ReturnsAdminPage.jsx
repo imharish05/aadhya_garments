@@ -35,6 +35,7 @@ import toast from 'react-hot-toast';
 import { checkPermission } from '../utils/rbac';
 import { getImageUrl } from '../utils/imageUrl';
 import { getPlaceholderSvg } from '../utils/placeholder';
+import { safeBackdropProps } from '../utils/modalBackdrop';
 import currencyJs from 'currency.js';
 
 const fmt = (v) => {
@@ -655,7 +656,7 @@ const ReturnsAdminPage = () => {
         {selectedReturn && (
           <div
             className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 overflow-y-auto"
-            onClick={() => setSelectedReturn(null)}
+            {...safeBackdropProps(() => setSelectedReturn(null))}
           >
             <motion.div
               initial={{ opacity: 0, scale: 0.96 }}
@@ -1297,7 +1298,7 @@ const ReturnsAdminPage = () => {
           <div
             className="fixed inset-0 z-[99999] bg-black/70 backdrop-blur-sm flex items-center justify-center p-4"
             style={{ zIndex: 99999 }}
-            onClick={() => !isRefunding && setShowRefundConfirm(false)}
+            {...safeBackdropProps(() => setShowRefundConfirm(false), !isRefunding)}
           >
             <motion.div
               initial={{ opacity: 0, scale: 0.94, y: 12 }}
@@ -1405,7 +1406,7 @@ const ReturnsAdminPage = () => {
         {previewVideoUrl && (
           <div
             className="fixed inset-0 z-50 bg-black/85 flex items-center justify-center p-4"
-            onClick={() => setPreviewVideoUrl(null)}
+            {...safeBackdropProps(() => setPreviewVideoUrl(null))}
           >
             <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
@@ -1445,7 +1446,7 @@ const ReturnsAdminPage = () => {
         {previewImageUrl && (
           <div
             className="fixed inset-0 z-50 bg-black/85 flex items-center justify-center p-4"
-            onClick={() => setPreviewImageUrl(null)}
+            {...safeBackdropProps(() => setPreviewImageUrl(null))}
           >
             <motion.div
               initial={{ opacity: 0, scale: 0.95 }}

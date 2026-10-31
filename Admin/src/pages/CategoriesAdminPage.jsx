@@ -18,6 +18,7 @@ import { restrictToVerticalAxis } from '@dnd-kit/modifiers';
 import AdminLayout from '../components/AdminLayout';
 import Switch from '../components/Switch';
 import SortableRow from '../components/SortableRow';
+import { safeBackdropProps } from '../utils/modalBackdrop';
 import { PaginationTop, PaginationBottom } from '../components/Pagination';
 import api from '../services/api';
 import toast from 'react-hot-toast';
@@ -42,7 +43,7 @@ const CategoriesAdminPage = () => {
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState(null);
   
-  const [form, setForm] = useState({ name: '', slug: '', isActive: true, showHeader: false });
+  const [form, setForm] = useState({ name: '', slug: '', isActive: true, showHeader: true });
   const [imagePreview, setImagePreview] = useState(null);
   const [imageFile, setImageFile] = useState(null);
   const [isDragging, setIsDragging] = useState(false);
@@ -101,12 +102,12 @@ const CategoriesAdminPage = () => {
       name: cat.name,
       slug: cat.slug || '',
       isActive: cat.isActive,
-      showHeader: cat.showHeader || false
+      showHeader: cat.showHeader !== undefined ? Boolean(cat.showHeader) : true
     } : {
       name: '',
       slug: '',
       isActive: true,
-      showHeader: false
+      showHeader: true
     });
     setImagePreview(cat?.image || null);
     setImageFile(null);
@@ -337,7 +338,7 @@ const CategoriesAdminPage = () => {
                     <th className="px-5 py-3 w-24">Image</th>
                     <th className="px-5 py-3">Category Name</th>
                     <th className="px-5 py-3 w-32">Status</th>
-                    <th className="px-5 py-3 w-32">Header</th>
+                    {/* <th className="px-5 py-3 w-32">Header</th> */}
                     {canShowActions && <th className="px-5 py-3 w-28 text-right">Actions</th>}
                   </tr>
                 </thead>
@@ -369,13 +370,13 @@ const CategoriesAdminPage = () => {
                             {cat.isActive ? 'Active' : 'Inactive'}
                           </span>
                         </td>
-                        <td className="px-5 py-4">
+                        {/* <td className="px-5 py-4">
                           <span className={`text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full ${
                             cat.showHeader ? 'bg-amber-50 text-brand-gold border border-amber-200' : 'bg-gray-50 text-gray-500 border border-gray-200'
                           }`}>
                             {cat.showHeader ? 'Show' : 'Hide'}
                           </span>
-                        </td>
+                        </td> */}
                         {canShowActions && (
                           <td className="px-5 py-4 text-right">
                             <div className="flex justify-end gap-1.5">
@@ -410,7 +411,7 @@ const CategoriesAdminPage = () => {
 
       <AnimatePresence>
         {modalOpen && (
-          <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={e => e.target === e.currentTarget && !saving && setModalOpen(false)}>
+          <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" {...safeBackdropProps(() => setModalOpen(false), !saving)}>
             <motion.div initial={{ opacity: 0, scale: 0.96 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.96 }} className="bg-white rounded-xl w-full max-w-md shadow-xl overflow-hidden">
               <div className="flex items-center justify-between px-6 py-4 border-b border-brand-light">
                 <h2 className="font-playfair text-lg font-semibold">{editing ? 'Edit Category' : 'Add Category'}</h2>
@@ -474,10 +475,10 @@ const CategoriesAdminPage = () => {
                     <Switch checked={form.isActive} onChange={e => setForm(p => ({ ...p, isActive: typeof e === 'boolean' ? e : Boolean(e?.target?.checked) }))} id="cat-active" />
                     <label className="text-xs font-semibold text-brand-text cursor-pointer select-none" htmlFor="cat-active">Active (Visible in store)</label>
                   </div>
-                  <div className="flex items-center gap-2">
+                  {/* <div className="flex items-center gap-2">
                     <Switch checked={form.showHeader} onChange={e => setForm(p => ({ ...p, showHeader: typeof e === 'boolean' ? e : Boolean(e?.target?.checked) }))} id="cat-header" />
                     <label className="text-xs font-semibold text-brand-text cursor-pointer select-none" htmlFor="cat-header">Show in header</label>
-                  </div>
+                  </div> */}
                 </div>
 
                 <div className="flex gap-3 pt-3 border-t border-brand-light">
