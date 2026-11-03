@@ -6,12 +6,21 @@ export const fetchAdminProducts = createAsyncThunk('adminProducts/fetch', async 
   catch (err) { return rejectWithValue(err.response?.data?.message || err.message || 'Failed to fetch products'); }
 });
 
-export const createProduct = createAsyncThunk('adminProducts/create', async (data, { rejectWithValue }) => {
-  try { const res = await api.post('/products', data); return res.data.product; }
+export const createProduct = createAsyncThunk('adminProducts/create', async (payload, { rejectWithValue }) => {
+  try {
+    const data = (payload && !(payload instanceof FormData) && payload.data) ? payload.data : payload;
+    const config = payload?.onUploadProgress ? { onUploadProgress: payload.onUploadProgress } : undefined;
+    const res = await api.post('/products', data, config);
+    return res.data.product;
+  }
   catch (err) { return rejectWithValue(err.response?.data?.message || err.message || 'Failed to create product'); }
 });
-export const updateProduct = createAsyncThunk('adminProducts/update', async ({ id, data }, { rejectWithValue }) => {
-  try { const res = await api.put(`/products/${id}`, data); return res.data.product; }
+export const updateProduct = createAsyncThunk('adminProducts/update', async ({ id, data, onUploadProgress }, { rejectWithValue }) => {
+  try {
+    const config = onUploadProgress ? { onUploadProgress } : undefined;
+    const res = await api.put(`/products/${id}`, data, config);
+    return res.data.product;
+  }
   catch (err) { return rejectWithValue(err.response?.data?.message || err.message || 'Failed to update product'); }
 });
 export const deleteProduct = createAsyncThunk('adminProducts/delete', async (id, { rejectWithValue }) => {

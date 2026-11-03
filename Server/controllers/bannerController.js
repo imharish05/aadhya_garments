@@ -155,13 +155,7 @@ const create = async (req, res) => {
         }
         return res.status(400).json({ success: false, message: 'Countdown date & time cannot be in the past.' });
       }
-      const existing = await Banner.findOne({ where: { type: 'COUNTDOWN' } });
-      if (existing) {
-        if (req.file) {
-          try { fs.unlinkSync(req.file.path); } catch (e) {}
-        }
-        return res.status(400).json({ success: false, message: 'A countdown banner already exists. Please edit the existing one instead.' });
-      }
+      // Multiple countdown banners supported for offer carousel
     }
     if (req.file) {
       if (req.file.size > 5 * 1024 * 1024) {
@@ -201,16 +195,7 @@ const update = async (req, res) => {
         }
         return res.status(400).json({ success: false, message: 'Countdown date & time cannot be in the past.' });
       }
-      if (banner.type !== 'COUNTDOWN') {
-        const { Op } = require('sequelize');
-        const existing = await Banner.findOne({ where: { type: 'COUNTDOWN', id: { [Op.ne]: banner.id } } });
-        if (existing) {
-          if (req.file) {
-            try { fs.unlinkSync(req.file.path); } catch (e) {}
-          }
-          return res.status(400).json({ success: false, message: 'A countdown banner already exists. Please edit the existing one instead.' });
-        }
-      }
+      // Multiple countdown banners supported for offer carousel
     }
     if (req.file) {
       if (req.file.size > 5 * 1024 * 1024) {

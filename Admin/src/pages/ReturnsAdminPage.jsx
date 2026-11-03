@@ -1281,8 +1281,11 @@ const ReturnsAdminPage = () => {
                       disabled={isUpdating || !canUpdate}
                       className="w-full py-2.5 px-4 bg-neutral-900 hover:bg-brand-gold text-white font-bold rounded-lg text-xs transition-all shadow-xs disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer"
                     >
-                      <CheckCircle size={14} />
-                      {isUpdating ? 'Saving Status...' : 'Apply Status Update'}
+                      {isUpdating ? (
+                        <><RefreshCw size={14} className="animate-spin" /> Saving Status...</>
+                      ) : (
+                        <><CheckCircle size={14} /> Apply Status Update</>
+                      )}
                     </button>
                   </form>
                 </div>

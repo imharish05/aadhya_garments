@@ -15,6 +15,15 @@ const Banner = sequelize.define('Banner', {
   badgeText: { type: DataTypes.STRING(50) },  // e.g. "40% OFF"
   countdown: { type: DataTypes.DATE },         // for countdown banners
   isActive: { type: DataTypes.BOOLEAN, defaultValue: true },
+}, {
+  hooks: {
+    beforeCreate: async (banner) => {
+      if (!banner.id) {
+        const max = await Banner.max('id');
+        banner.id = (max || 0) + 1;
+      }
+    }
+  }
 });
 
 module.exports = Banner;

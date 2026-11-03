@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, X, Edit2, Trash2, MessageSquare, Sparkles } from 'lucide-react';
+import { Plus, X, Edit2, Trash2, MessageSquare, Sparkles, RefreshCw } from 'lucide-react';
 import {
   DndContext,
   closestCenter,
@@ -31,6 +31,7 @@ const SliderMessagesAdminPage = () => {
 
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [form, setForm] = useState({ message: '', position: 1, isActive: true });
@@ -99,6 +100,7 @@ const SliderMessagesAdminPage = () => {
       toast.error('Message text is required');
       return;
     }
+    setSaving(true);
     try {
       if (editingId) {
         await api.put(`/marketing-messages/${editingId}`, form);
@@ -111,6 +113,8 @@ const SliderMessagesAdminPage = () => {
       load();
     } catch (err) {
       toast.error(err.response?.data?.message || 'Failed to save slider message');
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -360,15 +364,24 @@ const SliderMessagesAdminPage = () => {
                   <button
                     type="button"
                     onClick={() => setModalOpen(false)}
-                    className="btn-outline flex-1 rounded-lg text-brand-text border-brand-text hover:bg-brand-light"
+                    disabled={saving}
+                    className="btn-outline flex-1 rounded-lg text-brand-text border-brand-text hover:bg-brand-light disabled:opacity-50"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
-                    className="btn-primary flex-1 rounded-lg"
+                    disabled={saving}
+                    className="btn-primary flex-1 rounded-lg flex items-center justify-center gap-2 disabled:opacity-50"
                   >
-                    Save Message
+                    {saving ? (
+                      <>
+                        <RefreshCw size={14} className="animate-spin" />
+                        {editingId ? 'Updating...' : 'Saving...'}
+                      </>
+                    ) : (
+                      editingId ? 'Update Message' : 'Save Message'
+                    )}
                   </button>
                 </div>
               </form>

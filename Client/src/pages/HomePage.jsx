@@ -10,6 +10,7 @@ import { fetchBanners } from '../redux/slices/bannersSlice';
 import api from '../services/api';
 import ProductCard from '../components/ProductCard';
 import HeroBanner from '../components/HeroBanner';
+import OfferCountdownCarousel from '../components/OfferCountdownCarousel';
 import CategoryGridExpand from '../components/CategoryGridExpand';
 import NewArrivalsSection from '../components/NewArrivalsSection';
 import SectionHeading from '../components/SectionHeading';
@@ -234,9 +235,6 @@ const HomePage = () => {
     });
   }, [categories, productCountMap]);
 
-  const countdownBanner = banners.find(b => b.type === 'COUNTDOWN' && b.isActive);
-  const countdown = useCountdown(countdownBanner?.countdown);
-  const isExpired = !countdownBanner || (countdown.d === 0 && countdown.h === 0 && countdown.m === 0 && countdown.s === 0) || (countdownBanner?.countdown ? (new Date(countdownBanner.countdown) - new Date() <= 0) : true);
   const promoBanner = banners.find(b => b.type === 'PROMO' && b.isActive);
 
   useEffect(() => {
@@ -253,15 +251,7 @@ const HomePage = () => {
     if (meta) meta.setAttribute('content', 'Discover luxury party wear, jewelry, perfumes and accessories at Twin A Apparels. Handcrafted, curated, and delivered with love across India.');
   }, [dispatch]);
 
-  const expiredRefetchedRef = useRef(false);
-  useEffect(() => {
-    if (!isExpired) {
-      expiredRefetchedRef.current = false;
-    } else if (countdownBanner && !expiredRefetchedRef.current) {
-      expiredRefetchedRef.current = true;
-      dispatch(fetchBanners());
-    }
-  }, [isExpired, countdownBanner, dispatch]);
+  
 
   const updateCarouselArrows = useCallback(() => {
     const el = carouselScrollRef.current;
@@ -341,8 +331,10 @@ const HomePage = () => {
       {/* ── SECTION 2: Category Grid Expand (3x2 Deck Animation on Desktop / Carousel on Mobile) ── */}
       <CategoryGridExpand categories={gridCategories} allHref="/products" />
 
+      {/* ── SECTION 3: Limited-Time Offers & Countdown Carousel (Placed Above New Arrivals) ─── */}
+      <OfferCountdownCarousel banners={banners} loading={bannersLoading} />
 
-      {/* ── SECTION 3: New Arrivals (ZARO Featured Collections Architecture) ── */}
+      {/* ── SECTION 4: New Arrivals (ZARO Featured Collections Architecture) ── */}
       <NewArrivalsSection />
 
       {/* ── SECTION 4: About Twin A Apparels ─────────────────────────────── */}
@@ -430,69 +422,6 @@ const HomePage = () => {
           </div>
         </section>
       )}
-
-      {/* ── SECTION 7: Countdown / Deal of the Month Banner ────────────── */}
-      {countdownBanner && !isExpired ? (
-        <section className="bg-gradient-to-r from-neutral-950 via-neutral-900 to-neutral-950 py-10 md:py-14 overflow-hidden border-y border-white/10" aria-label="Deal of the month countdown">
-          <div className="max-w-site mx-auto px-4 sm:px-6 md:px-8 grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-6 xl:gap-8 items-center justify-items-center">
-            {/* Text & Action */}
-            <div className="text-center lg:text-left flex flex-col items-center lg:items-start max-w-md">
-              {countdownBanner.badgeText && (
-                <span className="bg-brand-gold text-white text-[10px] sm:text-xs font-bold px-3.5 py-1 tracking-wider uppercase rounded-sm shadow-sm mb-3">
-                  {countdownBanner.badgeText}
-                </span>
-              )}
-              <SplitTextReveal as="h2" text={countdownBanner.title} className="font-playfair text-2xl sm:text-3xl lg:text-4xl font-semibold tracking-tight text-white leading-tight mb-2" />
-              {countdownBanner.subtitle && (
-                <StaggeredText as="p" text={countdownBanner.subtitle} segmentBy="words" blur={false} duration={0.4} startDelay={0.25} className="font-montserrat text-white/70 text-xs sm:text-sm lg:text-base max-w-sm mb-5 leading-relaxed">
-                  {countdownBanner.subtitle}
-                </StaggeredText>
-              )}
-              {isExpired ? (
-                <button
-                  className="px-8 py-3 bg-neutral-800 text-neutral-500 font-semibold uppercase tracking-wider cursor-not-allowed border border-neutral-700/80 rounded"
-                  disabled
-                  id="deal-cta"
-                >
-                  Deal Expired
-                </button>
-              ) : (
-                <Link to={countdownBanner.ctaLink || '/products'} className="btn-primary-hero inline-flex items-center gap-2" id="deal-cta">
-                  {countdownBanner.ctaText || 'Grab the Deal'}
-                </Link>
-              )}
-            </div>
-
-            {/* Product Preview (Visible on all devices including iPad Air/Mini & Mobile) */}
-            <div className="relative w-44 h-44 sm:w-52 sm:h-52 md:w-56 md:h-56 lg:w-56 lg:h-56 xl:w-64 xl:h-64 flex-shrink-0 rounded-lg overflow-hidden shadow-2xl border border-white/20 bg-neutral-900 group">
-              <img
-                src={getImageUrl(countdownBanner.image)}
-                alt={countdownBanner.title || 'Deal of the week'}
-                className="w-full h-full object-cover rounded-lg group-hover:scale-105 transition-transform duration-500"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-80" />
-            </div>
-
-            {/* Countdown */}
-            <div className="flex flex-col items-center gap-3 sm:gap-4 w-full">
-              <p className="text-brand-gold text-[11px] sm:text-xs font-bold tracking-[0.2em] uppercase flex items-center gap-2">
-                <Clock size={14} className="animate-pulse text-brand-gold" /> Offer Ends In
-              </p>
-              <div className="flex items-center gap-1.5 sm:gap-2.5 md:gap-2.5 xl:gap-3 justify-center">
-                <CountUnit value={countdown.d} label="Days" />
-                <span className="text-brand-gold text-lg sm:text-xl md:text-xl lg:text-2xl font-bold mb-4">:</span>
-                <CountUnit value={countdown.h} label="Hours" />
-                <span className="text-brand-gold text-lg sm:text-xl md:text-xl lg:text-2xl font-bold mb-4">:</span>
-                <CountUnit value={countdown.m} label="Min" />
-                <span className="text-brand-gold text-lg sm:text-xl md:text-xl lg:text-2xl font-bold mb-4">:</span>
-                <CountUnit value={countdown.s} label="Sec" />
-              </div>
-            </div>
-          </div>
-        </section>
-      ) : bannersLoading ? (
-        <CountdownBannerSkeleton />
-      ) : null}
 
       {/* ── SECTION 6: Curated Collection Editorial Banner (PROMO Carousel) ── */}
       {promoBanners.length > 0 ? (

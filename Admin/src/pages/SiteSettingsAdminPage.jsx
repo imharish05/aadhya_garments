@@ -86,6 +86,7 @@ const SiteSettingsAdminPage = () => {
   const [activeTab, setActiveTab] = useState('hero');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(null);
   const [settings, setSettings] = useState(DEFAULT_SETTINGS);
 
   // New item inputs
@@ -340,6 +341,7 @@ const SiteSettingsAdminPage = () => {
     if (!validateForm()) return;
 
     setSaving(true);
+    setUploadProgress(0);
     try {
       const fd = new FormData();
       fd.append('data', JSON.stringify(settings));
@@ -351,6 +353,11 @@ const SiteSettingsAdminPage = () => {
       const res = await api.post('/site-settings/about', fd, {
         headers: {
           'Content-Type': 'multipart/form-data',
+        },
+        onUploadProgress: (pe) => {
+          if (pe.total) {
+            setUploadProgress(Math.round((pe.loaded / pe.total) * 100));
+          }
         },
       });
 
@@ -371,6 +378,7 @@ const SiteSettingsAdminPage = () => {
       console.error(err);
     } finally {
       setSaving(false);
+      setUploadProgress(null);
     }
   };
 
@@ -1422,13 +1430,13 @@ const SiteSettingsAdminPage = () => {
             <button
               type="submit"
               disabled={saving}
-              className="btn-primary flex items-center gap-2 px-6 py-2.5 font-semibold text-sm shadow-md"
+              className="btn-primary flex items-center gap-2 px-6 py-2.5 font-semibold text-sm shadow-md disabled:opacity-50"
               id="site-settings-save-btn"
             >
               {saving ? (
                 <>
                   <RefreshCw className="animate-spin" size={16} />
-                  Saving Site Settings...
+                  {uploadProgress !== null && uploadProgress > 0 ? `Uploading ${uploadProgress}%` : 'Saving Site Settings...'}
                 </>
               ) : (
                 <>

@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef, useMemo } from 'react';
 import { useSelector } from 'react-redux';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, Edit2, Trash2, X, Upload, RefreshCw, AlertCircle, CheckCircle2, Info } from 'lucide-react';
+import { Plus, Clock, Edit2, Trash2, X, Upload, RefreshCw, AlertCircle, CheckCircle2, Info } from 'lucide-react';
 import AdminLayout from '../components/AdminLayout';
 import Switch from '../components/Switch';
 import api from '../services/api';
@@ -102,11 +102,12 @@ const validateBannerImageDimensions = (dims, bannerType, file = null) => {
 
   // Allow aspect ratio tolerance of ±0.08 (e.g. 1.70 to 1.85 for 16:9)
   const ratioDiff = Math.abs(actualRatio - targetRatio);
-  const isRatioValid = ratioDiff <= 0.08;
+  const allowedTolerance = bannerType === 'COUNTDOWN' ? 0.35 : 0.08;
+  const isRatioValid = ratioDiff <= allowedTolerance;
 
   // Verify minimum size (at least 40% of recommended dimensions)
-  const minWidth = Math.round(spec.width * 0.4);
-  const minHeight = Math.round(spec.height * 0.4);
+  const minWidth = bannerType === 'COUNTDOWN' ? 250 : Math.round(spec.width * 0.4);
+  const minHeight = bannerType === 'COUNTDOWN' ? 250 : Math.round(spec.height * 0.4);
   const isSizeValid = width >= minWidth && height >= minHeight;
 
   if (!isRatioValid || !isSizeValid) {
@@ -220,6 +221,7 @@ const BannersAdminPage = () => {
   useEffect(() => { load(); }, []);
 
   const openModal = (b = null) => {
+    let defaultType = (activeTab === 'Offers & Countdown' || activeTab === 'Countdown') ? 'COUNTDOWN' : 'HERO';
     setEditing(b);
     setUploadProgress(null);
     setUploadError(null);
@@ -239,7 +241,7 @@ const BannersAdminPage = () => {
           badgeText: b.badgeText || '',
           countdown: b.countdown ? formatDatetimeLocal(b.countdown) : ''
         }
-      : { title: '', subtitle: '', type: 'HERO', ctaText: '', ctaLink: '', position: 1, isActive: true, badgeText: '', countdown: '' }
+      : { title: '', subtitle: '', type: defaultType, ctaText: '', ctaLink: '', position: 1, isActive: true, badgeText: '', countdown: '' }
     );
     setModalOpen(true);
     if (fileInputRef.current) fileInputRef.current.value = '';
@@ -308,72 +310,36 @@ const BannersAdminPage = () => {
       }
     }
 
-/* Non-Hero banner validations commented out (Hero only)
     if (form.type === 'COUNTDOWN') {
       if (!form.title?.trim()) {
-        setUploadError('Title is required for Countdown banner.');
+        setUploadError('Title is required for Countdown / Offer banner.');
         setSaving(false); setUploadProgress(null); return;
       }
       if (!form.subtitle?.trim()) {
-        setUploadError('Subtitle is required for Countdown banner.');
+        setUploadError('Subtitle is required for Countdown / Offer banner.');
         setSaving(false); setUploadProgress(null); return;
       }
       if (!form.ctaText?.trim()) {
-        setUploadError('CTA Button Text is required for Countdown banner.');
+        setUploadError('CTA Button Text is required for Countdown / Offer banner.');
         setSaving(false); setUploadProgress(null); return;
       }
       if (!form.ctaLink?.trim()) {
-        setUploadError('CTA Link is required for Countdown banner.');
+        setUploadError('CTA Link is required for Countdown / Offer banner.');
         setSaving(false); setUploadProgress(null); return;
       }
       if (!form.badgeText?.trim()) {
-        setUploadError('Badge Text is required for Countdown banner.');
+        setUploadError('Badge Text is required for Countdown / Offer banner.');
         setSaving(false); setUploadProgress(null); return;
       }
       if (!form.countdown) {
-        setUploadError('Offer Ends At date & time is required for Countdown banner.');
+        setUploadError('Offer Ends At date & time is required for Countdown / Offer banner.');
+        setSaving(false); setUploadProgress(null); return;
+      }
+      if (new Date(form.countdown).getTime() <= Date.now()) {
+        setUploadError('Offer Ends At date & time must be in the future.');
         setSaving(false); setUploadProgress(null); return;
       }
     }
-
-    if (form.type === 'PROMO') {
-      if (!form.title?.trim()) {
-        setUploadError('Title is required for Promo banner.');
-        setSaving(false); setUploadProgress(null); return;
-      }
-      if (!form.subtitle?.trim()) {
-        setUploadError('Subtitle is required for Promo banner.');
-        setSaving(false); setUploadProgress(null); return;
-      }
-      if (!form.ctaLink?.trim()) {
-        setUploadError('CTA Link is required for Promo banner.');
-        setSaving(false); setUploadProgress(null); return;
-      }
-    }
-
-    if (form.type === 'EXCLUSIVE_DEAL') {
-      if (!form.title?.trim()) {
-        setUploadError('Title is required for Exclusive Deal.');
-        setSaving(false); setUploadProgress(null); return;
-      }
-      if (!form.subtitle?.trim()) {
-        setUploadError('Subtitle is required for Exclusive Deal.');
-        setSaving(false); setUploadProgress(null); return;
-      }
-      if (!form.ctaText?.trim()) {
-        setUploadError('CTA Button Text is required for Exclusive Deal.');
-        setSaving(false); setUploadProgress(null); return;
-      }
-      if (!form.ctaLink?.trim()) {
-        setUploadError('CTA Link is required for Exclusive Deal.');
-        setSaving(false); setUploadProgress(null); return;
-      }
-      if (!form.badgeText?.trim()) {
-        setUploadError('Badge Text is required for Exclusive Deal.');
-        setSaving(false); setUploadProgress(null); return;
-      }
-    }
-    */
 
     // Word and character limits validation
     if (form.title && countWords(form.title) > BANNER_LIMITS.title.maxWords) {
@@ -529,6 +495,7 @@ const BannersAdminPage = () => {
   const [aboutImageFile, setAboutImageFile] = useState(null);
   const [aboutImagePreview, setAboutImagePreview] = useState(null);
   const [aboutSaving, setAboutSaving] = useState(false);
+  const [aboutUploadProgress, setAboutUploadProgress] = useState(null);
   const aboutFileInputRef = useRef(null);
 
   useEffect(() => {
@@ -574,6 +541,7 @@ const BannersAdminPage = () => {
       return;
     }
     setAboutSaving(true);
+    setAboutUploadProgress(0);
     try {
       const fd = new FormData();
       fd.append('type', 'ABOUT');
@@ -598,16 +566,25 @@ const BannersAdminPage = () => {
         fd.append('image', aboutImageFile);
       }
 
+      const config = {
+        onUploadProgress: (pe) => {
+          if (pe.total) {
+            setAboutUploadProgress(Math.round((pe.loaded / pe.total) * 100));
+          }
+        },
+      };
+
       if (aboutBanner) {
-        await api.put(`/banners/${aboutBanner.id}`, fd);
+        await api.put(`/banners/${aboutBanner.id}`, fd, config);
         toast.success('About section updated successfully.');
       } else {
         if (!aboutImageFile) {
           toast.error('Please upload an image for the About section.');
           setAboutSaving(false);
+          setAboutUploadProgress(null);
           return;
         }
-        await api.post('/banners', fd);
+        await api.post('/banners', fd, config);
         toast.success('About section created successfully.');
       }
 
@@ -617,6 +594,7 @@ const BannersAdminPage = () => {
       toast.error(err.response?.data?.message || err.message || 'Failed to save About section.');
     } finally {
       setAboutSaving(false);
+      setAboutUploadProgress(null);
     }
   };
 
@@ -655,13 +633,17 @@ const BannersAdminPage = () => {
 
   // Tabs order matching homepage display sequence: Hero (1st) -> CountDown (2nd) -> Exclusive Deal (3rd) -> Promo (4th)
   // const TABS = ['All', 'Hero', 'CountDown', 'Exclusive Deal', 'Promo'];
-  const TABS = ['Hero', 'About Section'];
+  const TABS = ['Hero', 'Offers & Countdown', 'About Section'];
   const { admin } = useSelector((s) => s.auth);
   const canAddBanner = checkPermission(admin, 'add_banner');
   const canDeleteBanner = checkPermission(admin, 'delete_banner');
 
   // Only Hero banners are present in the table
-  const filteredBanners = banners.filter(b => b.type === 'HERO');
+  const filteredBanners = banners.filter(b => {
+    if (activeTab === 'Hero') return b.type === 'HERO';
+    if (activeTab === 'Offers & Countdown' || activeTab === 'Countdown') return b.type === 'COUNTDOWN';
+    return true;
+  });
 
   return (
     <AdminLayout title="Banners">
@@ -685,7 +667,7 @@ const BannersAdminPage = () => {
         ))}
       </div>
 
-      {activeTab === 'Hero' && (
+      {activeTab !== 'About Section' && (
         <>
           <div className="flex justify-between items-center mb-6">
             <p className="text-sm text-brand-grey">{filteredBanners.length} banner{filteredBanners.length !== 1 ? 's' : ''}</p>
@@ -721,13 +703,18 @@ const BannersAdminPage = () => {
                   )}
                   <div className="absolute top-2 left-2 flex gap-1.5 flex-wrap">
                     <span className="bg-brand-gold text-white text-[10px] font-bold px-2 py-0.5 rounded shadow-2xs">
-                      {banner.type === 'EXCLUSIVE_DEAL' ? 'EXCLUSIVE DEAL' : banner.type}
+                      {banner.type === 'EXCLUSIVE_DEAL' ? 'EXCLUSIVE DEAL' : banner.type === 'COUNTDOWN' ? 'OFFERS & COUNTDOWN' : banner.type}
                     </span>
-                    {banner.type !== 'COUNTDOWN' && (
-                      <span className="bg-white/90 text-brand-text text-[10px] font-bold px-2 py-0.5 rounded border border-brand-light">Pos: {banner.position}</span>
+                    <span className="bg-white/90 text-brand-text text-[10px] font-bold px-2 py-0.5 rounded border border-brand-light">Pos: {banner.position}</span>
+                    {banner.type === 'COUNTDOWN' && banner.countdown && (
+                      new Date(banner.countdown).getTime() <= Date.now() ? (
+                        <span className="bg-red-600 text-white text-[10px] font-bold px-2 py-0.5 rounded">Expired</span>
+                      ) : (
+                        <span className="bg-emerald-600 text-white text-[10px] font-bold px-2 py-0.5 rounded">Active Offer</span>
+                      )
                     )}
                     {!banner.isActive && (
-                      <span className="bg-red-500 text-white text-[10px] font-bold px-2 py-0.5 rounded">Inactive</span>
+                      <span className="bg-neutral-600 text-white text-[10px] font-bold px-2 py-0.5 rounded">Inactive</span>
                     )}
                   </div>
                 </div>
@@ -739,6 +726,12 @@ const BannersAdminPage = () => {
                     <span className="inline-block text-[10px] bg-amber-50 text-amber-700 font-semibold px-2 py-0.5 rounded mt-1">
                       Badge: {banner.badgeText}
                     </span>
+                  )}
+                  {banner.type === 'COUNTDOWN' && banner.countdown && (
+                    <div className="text-[11px] text-amber-700 bg-amber-50/80 px-2 py-1 rounded flex items-center gap-1.5 mt-1.5 font-medium border border-amber-200/50">
+                      <Clock size={12} className="flex-shrink-0" />
+                      <span>Ends: {new Date(banner.countdown).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' })}</span>
+                    </div>
                   )}
                 </div>
               </div>
@@ -785,11 +778,14 @@ const BannersAdminPage = () => {
                 type="button"
                 onClick={handleSaveAbout}
                 disabled={aboutSaving || !canAddBanner}
-                className="btn-primary flex items-center gap-2 text-xs py-2 px-5"
+                className="btn-primary flex items-center gap-2 text-xs py-2 px-5 disabled:opacity-50"
                 id="save-about-section-btn"
               >
-                {aboutSaving ? <RefreshCw size={14} className="animate-spin" /> : <CheckCircle2 size={14} />}
-                {aboutSaving ? 'Saving...' : 'Save Changes'}
+                {aboutSaving ? (
+                  <><RefreshCw size={14} className="animate-spin" /> {aboutUploadProgress !== null && aboutUploadProgress > 0 ? `${aboutUploadProgress}%` : 'Saving...'}</>
+                ) : (
+                  <><CheckCircle2 size={14} /> Save Changes</>
+                )}
               </button>
             </div>
           </div>
@@ -1076,10 +1072,13 @@ const BannersAdminPage = () => {
                   type="button"
                   onClick={handleSaveAbout}
                   disabled={aboutSaving || !canAddBanner}
-                  className="btn-primary w-full flex items-center justify-center gap-2 py-2.5 text-xs font-semibold rounded-lg"
+                  className="btn-primary w-full flex items-center justify-center gap-2 py-2.5 text-xs font-semibold rounded-lg disabled:opacity-50"
                 >
-                  {aboutSaving ? <RefreshCw size={14} className="animate-spin" /> : <CheckCircle2 size={14} />}
-                  {aboutSaving ? 'Saving Changes...' : 'Save About Section'}
+                  {aboutSaving ? (
+                    <><RefreshCw size={14} className="animate-spin" /> {aboutUploadProgress !== null && aboutUploadProgress > 0 ? `${aboutUploadProgress}%` : 'Saving Changes...'}</>
+                  ) : (
+                    <><CheckCircle2 size={14} /> Save About Section</>
+                  )}
                 </button>
               </div>
             </div>
@@ -1098,10 +1097,35 @@ const BannersAdminPage = () => {
               </div>
 
               <form onSubmit={handleSave} className="p-6 space-y-4">
-                {/* Position Order (Banner Section field removed - default is HERO) */}
-                <div>
-                  <label className="block text-xs font-semibold text-brand-grey mb-1.5" htmlFor="ban-pos">Position Order</label>
-                  <input id="ban-pos" type="number" min="1" value={form.position} onChange={e => setForm(p => ({ ...p, position: Number(e.target.value) }))} className="w-full border border-brand-light px-3 py-2 text-sm focus:outline-none focus:border-brand-gold rounded-sm" />
+                {/* Banner Type & Position Order */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-semibold text-brand-grey mb-1.5" htmlFor="ban-type">
+                      Banner Type *
+                    </label>
+                    <select
+                      id="ban-type"
+                      value={form.type}
+                      onChange={e => handleTypeChange(e.target.value)}
+                      className="w-full border border-brand-light px-3 py-2 text-sm focus:outline-none focus:border-brand-gold bg-white rounded-sm font-medium text-brand-text"
+                    >
+                      <option value="HERO">Hero Banner</option>
+                      <option value="COUNTDOWN">Offers & Countdown</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-brand-grey mb-1.5" htmlFor="ban-pos">
+                      Position Order
+                    </label>
+                    <input
+                      id="ban-pos"
+                      type="number"
+                      min="1"
+                      value={form.position}
+                      onChange={e => setForm(p => ({ ...p, position: Number(e.target.value) }))}
+                      className="w-full border border-brand-light px-3 py-2 text-sm focus:outline-none focus:border-brand-gold rounded-sm"
+                    />
+                  </div>
                 </div>
 
                 {/* Banner Image Upload & Live Dimension Inspector */}

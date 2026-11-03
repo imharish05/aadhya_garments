@@ -487,10 +487,13 @@ const AdminUsersAdminPage = () => {
                   <button
                     type="submit"
                     disabled={saving}
-                    className="px-5 py-2 text-xs font-semibold text-neutral-950 bg-brand-gold hover:bg-yellow-500 rounded-xl shadow flex items-center gap-2"
+                    className="px-5 py-2 text-xs font-semibold text-neutral-950 bg-brand-gold hover:bg-yellow-500 rounded-xl shadow flex items-center gap-2 disabled:opacity-50"
                   >
-                    {saving && <RefreshCw size={14} className="animate-spin" />}
-                    Create Admin User
+                    {saving ? (
+                      <><RefreshCw size={14} className="animate-spin" /> Saving...</>
+                    ) : (
+                      'Create Admin User'
+                    )}
                   </button>
                 </div>
               </form>
@@ -607,10 +610,13 @@ const AdminUsersAdminPage = () => {
                   <button
                     type="submit"
                     disabled={saving}
-                    className="px-5 py-2 text-xs font-semibold text-neutral-950 bg-brand-gold hover:bg-yellow-500 rounded-xl shadow flex items-center gap-2"
+                    className="px-5 py-2 text-xs font-semibold text-neutral-950 bg-brand-gold hover:bg-yellow-500 rounded-xl shadow flex items-center gap-2 disabled:opacity-50"
                   >
-                    {saving && <RefreshCw size={14} className="animate-spin" />}
-                    Save Changes
+                    {saving ? (
+                      <><RefreshCw size={14} className="animate-spin" /> Saving...</>
+                    ) : (
+                      'Save Changes'
+                    )}
                   </button>
                 </div>
               </form>

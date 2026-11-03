@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef, useMemo } from 'react';
 import { useSelector } from 'react-redux';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, Search, Edit2, Trash2, X, Upload, ChevronLeft, ChevronRight, Camera, Copy, Palette, Ruler, AlertTriangle } from 'lucide-react';
+import { Plus, Search, Edit2, Trash2, X, Upload, ChevronLeft, ChevronRight, Camera, Copy, Palette, Ruler, AlertTriangle, RefreshCw } from 'lucide-react';
 import AdminLayout from '../components/AdminLayout';
 import { PaginationTop, PaginationBottom } from '../components/Pagination';
 import currencyJs from 'currency.js';
@@ -210,7 +210,7 @@ const VariantAttributeChips = ({ label, value, onChange, colorHex, suggestions =
 };
 
 
-const VariantModal = ({ variant, variants = [], onClose, onSave, products }) => {
+const VariantModal = ({ variant, variants = [], onClose, onSave, products, saving = false, uploadProgress = null }) => {
   const isEdit = !!variant;
   const [selectedProductId, setSelectedProductId] = useState(variant?.productId || '');
   const [sku, setSku] = useState(variant?.sku || '');
@@ -466,7 +466,7 @@ const VariantModal = ({ variant, variants = [], onClose, onSave, products }) => 
               {variant?.sku ? `• ${variant.sku}` : ''}
             </p>
           </div>
-          <button onClick={onClose} className="p-2 text-neutral-400 hover:text-neutral-700 hover:bg-neutral-100 rounded-lg transition-colors" aria-label="Close">
+          <button onClick={() => !saving && onClose()} disabled={saving} className="p-2 text-neutral-400 hover:text-neutral-700 hover:bg-neutral-100 rounded-lg transition-colors disabled:opacity-40" aria-label="Close">
             <X size={18} />
           </button>
         </div>
@@ -799,8 +799,17 @@ const VariantModal = ({ variant, variants = [], onClose, onSave, products }) => 
           </div>
 
           <div className="flex gap-3 pt-6 border-t border-brand-light">
-            <button type="button" onClick={onClose} className="w-full border border-brand-light py-3 font-semibold text-xs tracking-wider uppercase text-neutral-800 hover:bg-neutral-50 transition-colors">Cancel</button>
-            <button type="submit" className="w-full bg-neutral-950 text-white hover:bg-neutral-800 py-3 font-semibold text-xs tracking-wider uppercase transition-colors">Save Variant</button>
+            <button type="button" onClick={onClose} disabled={saving} className="w-full border border-brand-light py-3 font-semibold text-xs tracking-wider uppercase text-neutral-800 hover:bg-neutral-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">Cancel</button>
+            <button type="submit" disabled={saving} className="w-full bg-neutral-950 text-white hover:bg-neutral-800 py-3 font-semibold text-xs tracking-wider uppercase transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2">
+              {saving ? (
+                <>
+                  <RefreshCw size={14} className="animate-spin" />
+                  {uploadProgress !== null && uploadProgress > 0 ? `${uploadProgress}%` : (isEdit ? 'Updating...' : 'Saving...')}
+                </>
+              ) : (
+                isEdit ? 'Update Variant' : 'Save Variant'
+              )}
+            </button>
           </div>
         </form>
       </motion.div>
@@ -818,6 +827,8 @@ const VariantsAdminPage = () => {
   const [editing, setEditing] = useState(null);
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
+  const [saving, setSaving] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(null);
 
   const fetchInitialData = async () => {
     setLoading(true);
@@ -841,12 +852,21 @@ const VariantsAdminPage = () => {
   }, []);
 
   const handleSave = async (formData) => {
+    setSaving(true);
+    setUploadProgress(0);
     try {
+      const config = {
+        onUploadProgress: (pe) => {
+          if (pe.total) {
+            setUploadProgress(Math.round((pe.loaded / pe.total) * 100));
+          }
+        },
+      };
       if (editing) {
-        await api.put(`/variants/update/${editing.id}`, formData);
+        await api.put(`/variants/update/${editing.id}`, formData, config);
         toast.success('Variant updated successfully');
       } else {
-        await api.post('/variants/add', formData);
+        await api.post('/variants/add', formData, config);
         toast.success('Variant created successfully');
       }
       setModalOpen(false);
@@ -854,6 +874,9 @@ const VariantsAdminPage = () => {
       fetchInitialData();
     } catch (err) {
       toast.error(err.response?.data?.message || 'Failed to save variant');
+    } finally {
+      setSaving(false);
+      setUploadProgress(null);
     }
   };
 
@@ -1128,8 +1151,10 @@ const VariantsAdminPage = () => {
             variant={editing} 
             variants={variants}
             products={products} 
-            onClose={() => { setModalOpen(false); setEditing(null); }} 
+            onClose={() => { if (!saving) { setModalOpen(false); setEditing(null); } }} 
             onSave={handleSave} 
+            saving={saving}
+            uploadProgress={uploadProgress}
           />
         )}
       </AnimatePresence>

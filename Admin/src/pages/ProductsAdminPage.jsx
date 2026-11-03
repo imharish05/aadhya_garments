@@ -2,7 +2,7 @@ import { getImageUrl } from '../utils/imageUrl';
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, Search, Edit2, Trash2, X, Upload, ChevronLeft, ChevronRight, ChevronDown, Check, Eye, Play, Pause, RotateCw, Sparkles, Box, ShieldCheck, Tag, Camera, Palette, Ruler, Lightbulb } from 'lucide-react';
+import { Plus, Search, Edit2, Trash2, X, Upload, ChevronLeft, ChevronRight, ChevronDown, Check, Eye, Play, Pause, RotateCw, RefreshCw, Sparkles, Box, ShieldCheck, Tag, Camera, Palette, Ruler, Lightbulb } from 'lucide-react';
 import AdminLayout from '../components/AdminLayout';
 import Switch from '../components/Switch';
 import { PaginationTop, PaginationBottom } from '../components/Pagination';
@@ -359,7 +359,7 @@ const parseBool = (val, defaultVal = false) => {
   return val === true || val === 1 || val === '1' || val === 'true';
 };
 
-const ProductModal = ({ product, onClose, onSave }) => {
+const ProductModal = ({ product, onClose, onSave, saving = false, uploadProgress = null }) => {
   const [form, setForm] = useState(product ? {
     name: product.name || '',
     sku: product.sku || '',
@@ -1068,7 +1068,7 @@ const ProductModal = ({ product, onClose, onSave }) => {
   };
 
   return (
-    <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4" {...safeBackdropProps(onClose)}>
+    <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4" {...safeBackdropProps(onClose, !saving)}>
       <motion.div
         initial={{ opacity: 0, scale: 0.96 }}
         animate={{ opacity: 1, scale: 1 }}
@@ -1090,7 +1090,7 @@ const ProductModal = ({ product, onClose, onSave }) => {
             >
               <Eye size={14} /> Live Preview
             </button> */}
-            <button onClick={onClose} className="p-1.5 text-neutral-400 hover:text-white transition-colors" aria-label="Close">
+            <button onClick={() => !saving && onClose()} disabled={saving} className="p-1.5 text-neutral-400 hover:text-white transition-colors disabled:opacity-40" aria-label="Close">
               <X size={20} />
             </button>
           </div>
@@ -1749,15 +1749,24 @@ const ProductModal = ({ product, onClose, onSave }) => {
               <button
                 type="button"
                 onClick={onClose}
-                className="px-5 py-2 text-xs font-semibold text-neutral-600 hover:text-neutral-900 border border-neutral-300 rounded-sm transition-colors uppercase tracking-wider"
+                disabled={saving}
+                className="px-5 py-2 text-xs font-semibold text-neutral-600 hover:text-neutral-900 border border-neutral-300 rounded-sm transition-colors uppercase tracking-wider disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Cancel
               </button>
               <button
                 type="submit"
-                className="px-6 py-2 text-xs font-bold text-white bg-brand-gold hover:bg-brand-gold/90 rounded-sm transition-colors uppercase tracking-wider shadow-md"
+                disabled={saving}
+                className="px-6 py-2 text-xs font-bold text-white bg-brand-gold hover:bg-brand-gold/90 rounded-sm transition-colors uppercase tracking-wider shadow-md disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
-                {product ? 'Update Product' : 'Add Product'}
+                {saving ? (
+                  <>
+                    <RefreshCw size={14} className="animate-spin" />
+                    {uploadProgress !== null && uploadProgress > 0 ? `${uploadProgress}%` : (product ? 'Updating...' : 'Saving...')}
+                  </>
+                ) : (
+                  product ? 'Update Product' : 'Add Product'
+                )}
               </button>
             </div>
           </div>
@@ -1787,18 +1796,29 @@ const ProductsAdminPage = () => {
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState(null);
   const [previewProduct, setPreviewProduct] = useState(null);
+  const [saving, setSaving] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(null);
 
   useEffect(() => {
     dispatch(fetchAdminProducts({ search: search || undefined, page, limit }));
   }, [search, page, limit, dispatch]);
 
   const handleSave = async (form) => {
+    setSaving(true);
+    setUploadProgress(0);
     try {
+      const onUploadProgress = (pe) => {
+        if (pe.total) {
+          const pct = Math.round((pe.loaded / pe.total) * 100);
+          setUploadProgress(pct);
+        }
+      };
+
       if (editing) {
-        await dispatch(updateProduct({ id: editing.id, data: form })).unwrap();
+        await dispatch(updateProduct({ id: editing.id, data: form, onUploadProgress })).unwrap();
         toast.success('Product updated successfully');
       } else {
-        await dispatch(createProduct(form)).unwrap();
+        await dispatch(createProduct({ data: form, onUploadProgress })).unwrap();
         toast.success('Product created successfully');
       }
       setModalOpen(false);
@@ -1807,6 +1827,9 @@ const ProductsAdminPage = () => {
     } catch (err) {
       const errMsg = typeof err === 'string' ? err : (err?.message || err?.error || 'Failed to save product');
       toast.error(errMsg);
+    } finally {
+      setSaving(false);
+      setUploadProgress(null);
     }
   };
 
@@ -1962,7 +1985,15 @@ const ProductsAdminPage = () => {
       </div>
 
       <AnimatePresence>
-        {modalOpen && <ProductModal product={editing} onClose={() => { setModalOpen(false); setEditing(null); }} onSave={handleSave} />}
+        {modalOpen && (
+          <ProductModal
+            product={editing}
+            onClose={() => { if (!saving) { setModalOpen(false); setEditing(null); } }}
+            onSave={handleSave}
+            saving={saving}
+            uploadProgress={uploadProgress}
+          />
+        )}
         {previewProduct && <ProductLivePreviewModal product={previewProduct} onClose={() => setPreviewProduct(null)} />}
       </AnimatePresence>
     </AdminLayout>

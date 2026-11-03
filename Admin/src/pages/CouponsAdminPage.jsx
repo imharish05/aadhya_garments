@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, X, Copy, Edit, Trash2 } from 'lucide-react';
+import { Plus, X, Copy, Edit, Trash2, RefreshCw } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import AdminLayout from '../components/AdminLayout';
 import Switch from '../components/Switch';
@@ -30,6 +30,7 @@ const CouponsAdminPage = () => {
 
   const [coupons, setCoupons] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
@@ -138,6 +139,7 @@ const CouponsAdminPage = () => {
 
   const handleSave = async (e) => {
     e.preventDefault();
+    setSaving(true);
     try {
       if (!editingId && form.validFrom && form.validFrom < todayStr) {
         toast.error('Valid From date cannot be in the past');
@@ -171,6 +173,8 @@ const CouponsAdminPage = () => {
     } catch (err) {
       console.error(err);
       toast.error(err.response?.data?.message || 'Failed to save coupon');
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -380,8 +384,17 @@ const CouponsAdminPage = () => {
                     </div>
                   </div>
                   <div className="flex gap-3 pt-2 border-t border-brand-light">
-                    <button type="button" onClick={()=>setModalOpen(false)} className="btn-outline flex-1" id="coup-cancel">Cancel</button>
-                    <button type="submit" className="btn-primary flex-1" id="coup-save">Save Coupon</button>
+                    <button type="button" onClick={()=>setModalOpen(false)} disabled={saving} className="btn-outline flex-1" id="coup-cancel">Cancel</button>
+                    <button type="submit" disabled={saving} className="btn-primary flex-1 flex items-center justify-center gap-2" id="coup-save">
+                      {saving ? (
+                        <>
+                          <RefreshCw size={14} className="animate-spin" />
+                          {editingId ? 'Updating...' : 'Saving...'}
+                        </>
+                      ) : (
+                        editingId ? 'Update Coupon' : 'Save Coupon'
+                      )}
+                    </button>
                   </div>
                 </form>
 

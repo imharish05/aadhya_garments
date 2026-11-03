@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { useSelector } from 'react-redux';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, Edit2, Trash2, X, Upload } from 'lucide-react';
+import { Plus, Edit2, Trash2, X, Upload, RefreshCw } from 'lucide-react';
 import {
   DndContext,
   closestCenter,
@@ -50,6 +50,7 @@ const SubCategoriesAdminPage = () => {
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef(null);
   const [saving, setSaving] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(null);
   const [uploadError, setUploadError] = useState(null);
 
   const sensors = useSensors(
@@ -202,6 +203,7 @@ const SubCategoriesAdminPage = () => {
     if (!form.name.trim()) { setUploadError('Sub-category name is required'); return; }
     if (!form.slug.trim()) { setUploadError('Slug is required'); return; }
     setSaving(true);
+    setUploadProgress(0);
     setUploadError(null);
 
     try {
@@ -218,16 +220,25 @@ const SubCategoriesAdminPage = () => {
           setUploadError(msg);
           toast.error(msg);
           setSaving(false);
+          setUploadProgress(null);
           return;
         }
         fd.append('image', file);
       }
 
+      const config = {
+        onUploadProgress: (pe) => {
+          if (pe.total) {
+            setUploadProgress(Math.round((pe.loaded / pe.total) * 100));
+          }
+        },
+      };
+
       if (editing) {
-        await api.put(`/subcategories/${editing.id}`, fd);
+        await api.put(`/subcategories/${editing.id}`, fd, config);
         toast.success('Sub-Category updated successfully.');
       } else {
-        await api.post('/subcategories', fd);
+        await api.post('/subcategories', fd, config);
         toast.success('Sub-Category created successfully.');
       }
 
@@ -237,6 +248,7 @@ const SubCategoriesAdminPage = () => {
       setUploadError(err.response?.data?.message || err.message || 'Failed to save sub-category');
     } finally {
       setSaving(false);
+      setUploadProgress(null);
     }
   };
 
@@ -511,8 +523,15 @@ const SubCategoriesAdminPage = () => {
 
                 <div className="flex gap-3 pt-3 border-t border-brand-light">
                   <button type="button" onClick={() => setModalOpen(false)} disabled={saving} className="btn-outline flex-1" id="sub-cancel">Cancel</button>
-                  <button type="submit" disabled={saving} className="btn-primary flex-1" id="sub-save">
-                    {saving ? 'Saving...' : 'Save'}
+                  <button type="submit" disabled={saving} className="btn-primary flex-1 flex items-center justify-center gap-2" id="sub-save">
+                    {saving ? (
+                      <>
+                        <RefreshCw size={14} className="animate-spin" />
+                        {uploadProgress !== null && uploadProgress > 0 ? `${uploadProgress}%` : (editing ? 'Updating...' : 'Saving...')}
+                      </>
+                    ) : (
+                      editing ? 'Update Sub-Category' : 'Save Sub-Category'
+                    )}
                   </button>
                 </div>
               </form>
