@@ -96,8 +96,10 @@ app.use('/api/admin-users',       require('./routes/adminUserRoutes'));
 // ── Warm up exchange rate cache on startup (non-blocking) ────────────────────
 require('./services/currencyRateService').warmUp().catch(() => {});
 
-// ── Health Check ──────────────────────────────────────────────────────────────
-app.get('/api/health', (req, res) => res.json({ status: 'ok', timestamp: new Date().toISOString() }));
+// ── Health Check & Root Route ────────────────────────────────────────────────
+app.get('/', (req, res) => res.status(200).json({ status: 'ok', service: 'Aadhya Garments API', uptime: process.uptime() }));
+app.get('/api/health', (req, res) => res.status(200).json({ status: 'ok', timestamp: new Date().toISOString() }));
+app.get('/health', (req, res) => res.status(200).json({ status: 'ok', timestamp: new Date().toISOString() }));
 
 // ── 404 Handler ───────────────────────────────────────────────────────────────
 app.use((req, res) => res.status(404).json({ success: false, message: 'Route not found' }));
