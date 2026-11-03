@@ -210,9 +210,9 @@ const getFullImageUrl = getImageUrl;
 
 // ── Storefront Product Live Preview Modal ────────────────────────────────────
 const ProductLivePreviewModal = ({ product, onClose }) => {
-  const [activeImg, setActiveImg] = useState(product.defaultProductImage || product.images?.[0] || 'https://images.unsplash.com/photo-1469334031218-e382a71b716b?w=600');
+  const [activeImg, setActiveImg] = useState(product?.defaultProductImage || product?.images?.[0] || 'https://images.unsplash.com/photo-1469334031218-e382a71b716b?w=600');
 
-  const images = product.images && product.images.length > 0 ? product.images : [activeImg];
+  const images = product?.images && product.images.length > 0 ? product.images : [activeImg];
   const discountPct = product.comparePrice && product.comparePrice > product.price
     ? Math.round(((product.comparePrice - product.price) / product.comparePrice) * 100)
     : 0;
@@ -426,7 +426,7 @@ const ProductModal = ({ product, onClose, onSave }) => {
     if (product && Array.isArray(product.variants) && product.variants.length > 0) {
       const primaryVar = product.variants[0];
       const rawAttrs = typeof primaryVar.attributes === 'string' ? (JSON.parse(primaryVar.attributes) || {}) : (primaryVar.attributes || {});
-      const rawImgs = typeof primaryVar.images === 'string' ? (JSON.parse(primaryVar.images) || []) : (Array.isArray(primaryVar.images) ? primaryVar.images : []);
+      const rawImgs = typeof primaryVar?.images === 'string' ? (JSON.parse(primaryVar.images) || []) : (Array.isArray(primaryVar?.images) ? primaryVar.images : []);
       const mainImg = primaryVar.image || null;
       const gallery = rawImgs.filter(img => img && img !== mainImg).slice(0, 5);
 
@@ -629,7 +629,7 @@ const ProductModal = ({ product, onClose, onSave }) => {
   const [isDraggingDefault, setIsDraggingDefault] = useState(false);
 
   // Variant Gallery Images
-  const [existingVariantImages, setExistingVariantImages] = useState(product ? [...(product.images || [])] : []);
+  const [existingVariantImages, setExistingVariantImages] = useState(product ? [...(product?.images || [])] : []);
   const [newVariantImageFiles, setNewVariantImageFiles] = useState([]);
 
   useEffect(() => {

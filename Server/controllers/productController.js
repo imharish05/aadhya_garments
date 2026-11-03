@@ -227,7 +227,7 @@ const getOne = async (req, res) => {
 
 const create = async (req, res) => {
   try {
-    const { data } = processProductData(req);
+    const { data } = await processProductData(req);
     const product = await Product.create(data);
 
     // Handle single default variant sync if req.body.variants is not supplied
@@ -326,12 +326,12 @@ const update = async (req, res) => {
     const product = await Product.findByPk(req.params.id);
     if (!product) return res.status(404).json({ success: false, message: 'Product not found' });
 
-    const { data } = processProductData(req);
+    const { data } = await processProductData(req);
 
     // Identify and delete removed files safely
     const oldImages = product.images || [];
     const activeImages = new Set([
-      ...(data.images || []),
+      ...(data?.images || []),
       ...(data.defaultProductImage ? [data.defaultProductImage] : []),
       ...(product.defaultProductImage ? [product.defaultProductImage] : [])
     ]);

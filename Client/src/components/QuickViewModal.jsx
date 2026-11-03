@@ -195,7 +195,7 @@ const QuickViewModal = () => {
 
   const galleryImages = useMemo(() => {
     if (selectedVariant) {
-      let vImgs = selectedVariant.images;
+      let vImgs = selectedVariant?.images;
       if (typeof vImgs === 'string') {
         try { vImgs = JSON.parse(vImgs); } catch (e) { vImgs = []; }
       }

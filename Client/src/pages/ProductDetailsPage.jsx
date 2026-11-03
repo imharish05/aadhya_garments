@@ -230,6 +230,7 @@ const ProductDetailsPage = () => {
   const parsedVariants = useMemo(() => {
     if (!product || !product.variants) return [];
     return product.variants.map(v => {
+      if (!v) return null;
       let attrs = v.attributes;
       if (typeof attrs === 'string') {
         try {
@@ -238,7 +239,7 @@ const ProductDetailsPage = () => {
           attrs = {};
         }
       }
-      let vImgs = v.images;
+      let vImgs = v?.images;
       if (typeof vImgs === 'string') {
         try {
           vImgs = JSON.parse(vImgs);
@@ -480,7 +481,7 @@ const ProductDetailsPage = () => {
     if (!product) return [];
 
     if (selectedVariant) {
-      let vImgs = selectedVariant.images;
+      let vImgs = selectedVariant?.images;
       if (typeof vImgs === 'string') {
         try { vImgs = JSON.parse(vImgs); } catch (e) { vImgs = []; }
       }
@@ -508,8 +509,9 @@ const ProductDetailsPage = () => {
     const list = [...images];
     if (Array.isArray(product.variants)) {
       product.variants.forEach(v => {
+        if (!v) return;
         if (v.image && !list.includes(v.image)) list.push(v.image);
-        if (Array.isArray(v.images)) {
+        if (Array.isArray(v?.images)) {
           v.images.forEach(img => {
             if (img && !list.includes(img)) list.push(img);
           });
