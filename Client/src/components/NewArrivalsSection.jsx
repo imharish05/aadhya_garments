@@ -7,17 +7,18 @@ import ProductCard from './ProductCard';
 import { ArrivalsBackdrop } from './Motifs';
 import SectionHeading from './SectionHeading';
 import { ButtonReveal, StaggeredText } from './animations';
+import { NewArrivalsSkeleton } from './skeletons';
 
 const arrowBtn = (enabled) =>
   `w-9 h-9 rounded-full flex items-center justify-center border transition-all duration-200 ${
     enabled
-      ? 'border-neutral-300 text-neutral-800 hover:bg-neutral-900 hover:text-white hover:border-neutral-900 cursor-pointer active:scale-95'
+      ? 'border-neutral-300 text-neutral-800 hover:bg-brand-gold hover:text-black hover:border-brand-gold cursor-pointer active:scale-95'
       : 'border-neutral-200 text-neutral-300 cursor-not-allowed opacity-40'
   }`;
 
 export const NewArrivalsSection = () => {
   const prefersReducedMotion = useReducedMotion();
-  const { items: products, newArrivals } = useSelector((s) => s.products);
+  const { items: products, newArrivals, loading, newArrivalsLoaded } = useSelector((s) => s.products);
 
   const newArrivalsList = useMemo(() => {
     if (newArrivals && newArrivals.length > 0) return newArrivals;
@@ -54,6 +55,10 @@ export const NewArrivalsSection = () => {
     const step = el.children[0].offsetWidth + 16; // card width + gap-4
     el.scrollBy({ left: direction === 'left' ? -step : step, behavior: 'smooth' });
   };
+
+  if (loading || (!newArrivalsLoaded && newArrivalsList.length === 0)) {
+    return <NewArrivalsSkeleton />;
+  }
 
   if (newArrivalsList.length === 0) return null;
 
@@ -93,11 +98,11 @@ export const NewArrivalsSection = () => {
             <ButtonReveal delay={0.3}>
               <Link
                 to="/products?newArrival=true"
-                className="group inline-flex items-center gap-3 rounded-full bg-neutral-950 pl-7 pr-2 py-2 font-montserrat text-sm font-semibold uppercase tracking-[0.16em] text-white transition-colors duration-300 hover:bg-neutral-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-neutral-950"
+                className="group inline-flex items-center gap-3 rounded-full bg-neutral-950 pl-7 pr-2 py-2 font-montserrat text-sm font-semibold uppercase tracking-[0.16em] text-white transition-all duration-300 hover:bg-brand-gold hover:text-black focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-gold shadow-sm"
                 id="zaro-shop-new-arrivals-btn"
               >
-                <span>SHOP NEW ARRIVALS</span>
-                <span className="flex h-9 w-9 items-center justify-center rounded-full bg-white/15 text-white transition-transform duration-300 group-hover:translate-x-1">
+                <span className="transition-colors group-hover:text-black">SHOP NEW ARRIVALS</span>
+                <span className="flex h-9 w-9 items-center justify-center rounded-full bg-white/15 text-white transition-all duration-300 group-hover:bg-black/10 group-hover:text-black group-hover:translate-x-1">
                   <ArrowRight size={16} />
                 </span>
               </Link>

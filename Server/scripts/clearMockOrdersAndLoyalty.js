@@ -1,20 +1,15 @@
-const { sequelize, Order, OrderItem, LoyaltyLedger, Customer } = require('../models');
+const { sequelize, Order, OrderItem, Customer } = require('../models');
 
 async function clearMockData() {
   try {
-    console.log('🧹 Clearing mock Orders and Loyalty Ledger...');
+    console.log('🧹 Clearing mock Orders...');
     await sequelize.authenticate();
     
-    // Delete all OrderItems & LoyaltyLedgers first due to foreign key constraints
+    // Delete all OrderItems first due to foreign key constraints
     await OrderItem.destroy({ where: {}, truncate: false });
-    await LoyaltyLedger.destroy({ where: {}, truncate: false });
     await Order.destroy({ where: {}, truncate: false });
     
-    // Reset loyalty points for all customers
-    await Customer.update({ loyaltyPoints: 0 }, { where: {} });
-    
-    console.log('✅ Successfully cleared all mock Orders, Order Items, and Loyalty Ledgers!');
-    console.log('✅ Reset all Customer loyalty points to 0.');
+    console.log('✅ Successfully cleared all mock Orders and Order Items!');
     process.exit(0);
   } catch (err) {
     console.error('❌ Error clearing mock data:', err);

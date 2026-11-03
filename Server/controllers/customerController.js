@@ -181,17 +181,6 @@ const syncWishlist = async (req, res) => {
   } catch (err) { res.status(500).json({ success: false, message: err.message }); }
 };
 
-const getLoyalty = async (req, res) => {
-  try {
-    const ledger = await LoyaltyLedger.findAll({
-      where: { customerId: req.customer.id },
-      include: [{ model: Order, as: 'order', attributes: ['id', 'orderNumber', 'totalAmount'] }],
-      order: [['createdAt', 'DESC']],
-    });
-    res.json({ success: true, ledger, balance: req.customer.loyaltyPoints });
-  } catch (err) { res.status(500).json({ success: false, message: err.message }); }
-};
-
 const getTickets = async (req, res) => {
   try {
     const tickets = await SupportTicket.findAll({ where: { customerId: req.customer.id }, order: [['createdAt', 'DESC']] });
@@ -207,5 +196,5 @@ const createTicket = async (req, res) => {
   } catch (err) { res.status(500).json({ success: false, message: err.message }); }
 };
 
-module.exports = { getAll, getOne, getWishlist, toggleWishlist, syncWishlist, getLoyalty, getTickets, createTicket };
+module.exports = { getAll, getOne, getWishlist, toggleWishlist, syncWishlist, getTickets, createTicket };
 

@@ -51,14 +51,6 @@ const playNewOrderChime = () => {
 
 const ORDER_SUB_ITEMS = [
   {
-    to: '/abandoned-carts',
-    label: 'Abandoned Carts',
-    icon: ShoppingBag,
-    badgeKey: 'ABANDONED',
-    badgeClass: 'bg-amber-100 text-amber-900 font-semibold px-2 py-0.5 rounded-full text-[11px]',
-    match: (pathname) => pathname === '/abandoned-carts'
-  },
-  {
     to: '/orders?status=PENDING',
     status: 'PENDING',
     label: 'New Orders',
@@ -382,7 +374,7 @@ const AdminLayout = ({ children, title = '' }) => {
   });
   const [orderCounts, setOrderCounts] = useState({});
   const [ordersOpen, setOrdersOpen] = useState(() => {
-    return location.pathname === '/orders' || location.pathname === '/abandoned-carts' || location.pathname === '/returns';
+    return location.pathname === '/orders' || location.pathname === '/returns';
   });
 
   const currentStatusParam = searchParams.get('status');
@@ -506,7 +498,7 @@ const AdminLayout = ({ children, title = '' }) => {
 
   useEffect(() => {
     loadOrderCounts();
-    if (location.pathname === '/orders' || location.pathname === '/abandoned-carts') {
+    if (location.pathname === '/orders') {
       setOrdersOpen(true);
     }
   }, [location.pathname, location.search, loadOrderCounts]);
@@ -560,7 +552,7 @@ const AdminLayout = ({ children, title = '' }) => {
 
   const handleLogout = () => { dispatch(logout()); navigate('/login'); };
 
-  const isOrdersSectionActive = location.pathname === '/orders' || location.pathname === '/abandoned-carts';
+  const isOrdersSectionActive = location.pathname === '/orders' || location.pathname === '/returns';
 
   const sidebarProps = {
     admin,

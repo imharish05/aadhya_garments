@@ -89,15 +89,13 @@ const hasPermission = (permissionKey) => (req, res, next) => {
     delete_review: ['delete_product', 'reviews.delete', 'products.delete'],
     view_stock_alerts: ['view_products', 'manage_operations', 'stock_alerts.read', 'products.read'],
 
-    // Orders & Carts
+    // Orders
     view_orders: ['orders.read', 'orders.update'],
     update_orders: ['view_orders', 'orders.update'],
     cancel_orders: ['update_orders', 'orders.delete'],
-    view_abandoned_carts: ['view_orders', 'orders.read', 'abandoned_carts.read'],
-    delete_abandoned_cart: ['cancel_orders', 'orders.delete', 'abandoned_carts.delete'],
 
     // Marketing & Promotions
-    view_marketing: ['view_coupons', 'view_banners', 'view_slider_messages', 'view_gift_services', 'manage_affiliates', 'manage_loyalty'],
+    view_marketing: ['view_coupons', 'view_banners', 'view_slider_messages', 'view_gift_services', 'manage_affiliates'],
     manage_marketing: ['view_marketing', 'add_coupon', 'edit_coupon', 'delete_coupon', 'add_banner', 'delete_banner', 'add_slider_message', 'delete_slider_message'],
     view_coupons: ['view_marketing', 'coupons.read', 'coupons.create', 'coupons.update'],
     add_coupon: ['manage_marketing', 'coupons.create'],
@@ -111,8 +109,6 @@ const hasPermission = (permissionKey) => (req, res, next) => {
     delete_slider_message: ['manage_marketing', 'slider_messages.delete', 'banners.delete'],
     view_gift_services: ['view_marketing', 'manage_marketing', 'gift_services.read', 'marketing.read'],
     manage_affiliates: ['view_marketing', 'manage_marketing', 'affiliates.manage'],
-    manage_loyalty: ['view_marketing', 'manage_marketing', 'loyalty.manage', 'marketing.update'],
-    view_loyalty: ['view_marketing', 'loyalty.manage', 'marketing.read'],
 
     // Operations & Logistics
     view_operations: ['view_vendors', 'view_warehouses', 'view_delivery_zones'],
@@ -137,8 +133,6 @@ const hasPermission = (permissionKey) => (req, res, next) => {
     delete_customer: ['manage_customers', 'customers.delete'],
     view_contact_enquiries: ['view_customers', 'manage_customers', 'enquiries.read', 'customers.read'],
     delete_contact_enquiry: ['manage_customers', 'enquiries.delete', 'customers.delete'],
-    view_personal_shopper: ['view_customers', 'manage_customers', 'personal_shopper.read', 'customers.read'],
-    delete_personal_shopper: ['manage_customers', 'personal_shopper.delete', 'customers.delete'],
 
     // Finance & Analytics
     view_finance: ['view_payments', 'view_reports'],

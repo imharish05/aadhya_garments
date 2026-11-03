@@ -60,22 +60,6 @@ const defaultOtpSettings = {
   codOnly: true,
 };
 
-const defaultLoyaltySettings = {
-  earnRate: 20,
-  redeemRate: 0.2,
-  maxRedeemAmount: 500,
-  expiryMonths: 2,
-  signupPointsEnabled: true,
-  signupPoints: 50,
-  reviewPointsEnabled: true,
-  reviewPoints: 20,
-  earnRules: [
-    { id: '1', action: 'Every ₹100 spent', points: '+5 points' },
-    { id: '2', action: 'New Account Registration', points: '+50 points' },
-    { id: '3', action: 'Write a product review', points: '+20 points' }
-  ]
-};
-
 const defaultInventorySettings = {
   globalLowStockThreshold: 10,
 };
@@ -232,9 +216,6 @@ const getSetting = async (req, res) => {
       if (key === 'otp_threshold' || key === 'security') {
         return res.json({ success: true, key, data: defaultOtpSettings });
       }
-      if (key === 'loyalty') {
-        return res.json({ success: true, key, data: defaultLoyaltySettings });
-      }
       if (key === 'inventory') {
         return res.json({ success: true, key, data: defaultInventorySettings });
       }
@@ -269,9 +250,6 @@ const getSetting = async (req, res) => {
 
     if (key === 'otp_threshold' || key === 'security') {
       return res.json({ success: true, key, data: { ...defaultOtpSettings, ...parsed } });
-    }
-    if (key === 'loyalty') {
-      return res.json({ success: true, key, data: { ...defaultLoyaltySettings, ...parsed } });
     }
     if (key === 'tax' || key === 'gst') {
       return res.json({ success: true, key, data: { ...defaultTaxSettings, ...parsed } });
@@ -345,7 +323,7 @@ const updateSetting = async (req, res) => {
 };
 
 const subscribeNewsletter = async (req, res) => {
-  return res.json({ success: true, message: 'Thank you!', pointsAwarded: 0 });
+  return res.json({ success: true, message: 'Thank you!' });
 };
 
 module.exports = { getSetting, updateSetting, subscribeNewsletter };

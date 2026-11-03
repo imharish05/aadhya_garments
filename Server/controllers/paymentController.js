@@ -200,10 +200,12 @@ const processConfirmedPayment = async ({ orderQuery, gatewayPaymentId, signature
       return res.status(404).json({ success: false, message: 'Order associated with payment not found' });
     }
 
-    // 3. Webhook Idempotency Check
+    // 3. Webhook / Client Idempotency Check
     if (order.status === 'PAID' && order.paymentStatus === 'PAID') {
-      await transaction.rollback();
-      return res.json({ success: true, message: 'Payment webhook already processed previously (no-op)' });
+      if (transaction && !transaction.finished) {
+        await transaction.rollback();
+      }
+      return res.json({ success: true, status: 'PAID', message: 'Payment already processed previously (no-op)' });
     }
 
     // Verify duplicate payment ID check at order level (excluding current order)
@@ -321,27 +323,42 @@ const processConfirmedPayment = async ({ orderQuery, gatewayPaymentId, signature
         }
       }
 
-// Loyalty points removed
-            await transaction.commit();
+      // Loyalty points removed
+      await transaction.commit();
 
-      // Post-commit async hooks
-      for (const item of sortedItems) {
-        syncStorefrontStock(item.productId, item.variantId || null).catch(console.error);
+      // Post-commit async hooks (safely wrapped so no post-commit error crashes payment confirmation)
+      try {
+        const { syncStorefrontStock } = require('./warehouseController');
+        if (typeof syncStorefrontStock === 'function') {
+          for (const item of sortedItems) {
+            syncStorefrontStock(item.productId, item.variantId || null).catch(console.error);
+          }
+        }
+      } catch (stockErr) {
+        console.error('[paymentController] Error syncing storefront stock:', stockErr.message);
       }
 
-      checkAndNotifyLowStock(sortedItems).catch(console.error);
+      try {
+        checkAndNotifyLowStock(sortedItems).catch(console.error);
+      } catch (lowStockErr) {
+        console.error('[paymentController] Error checking low stock:', lowStockErr.message);
+      }
 
       // Send confirmed order & payment receipt notification email to customer
-      Order.findByPk(order.id, {
-        include: [
-          { model: OrderItem, as: 'items' },
-          { model: Customer, as: 'customer', attributes: ['id', 'name', 'email'] }
-        ]
-      }).then(fullOrder => {
-        if (fullOrder) {
-          sendOrderStatusNotification(fullOrder, 'PAID').catch(err => console.error('[paymentController] Error sending order paid email:', err.message));
-        }
-      }).catch(err => console.error('[paymentController] Error fetching full order for email notification:', err.message));
+      try {
+        Order.findByPk(order.id, {
+          include: [
+            { model: OrderItem, as: 'items' },
+            { model: Customer, as: 'customer', attributes: ['id', 'name', 'email'] }
+          ]
+        }).then(fullOrder => {
+          if (fullOrder) {
+            sendOrderStatusNotification(fullOrder, 'PAID').catch(err => console.error('[paymentController] Error sending order paid email:', err.message));
+          }
+        }).catch(err => console.error('[paymentController] Error fetching full order for email notification:', err.message));
+      } catch (emailErr) {
+        console.error('[paymentController] Error initiating email notification:', emailErr.message);
+      }
 
       return res.json({ success: true, status: 'PAID' });
     } else {
@@ -366,7 +383,17 @@ const processConfirmedPayment = async ({ orderQuery, gatewayPaymentId, signature
       });
     }
   } catch (err) {
-    await transaction.rollback();
+    if (transaction && !transaction.finished) {
+      try {
+        await transaction.rollback();
+      } catch (rbErr) {
+        console.error('[processConfirmedPayment] Rollback error:', rbErr.message);
+      }
+    }
+    console.error('[processConfirmedPayment] Error:', err);
+    if (transaction && transaction.finished === 'commit') {
+      return res.json({ success: true, status: 'PAID' });
+    }
     res.status(500).json({ success: false, message: err.message });
   }
 };

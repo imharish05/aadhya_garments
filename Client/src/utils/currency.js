@@ -1,4 +1,4 @@
-import currencyJs from 'currency.js';
+﻿import currencyJs from 'currency.js';
 
 export const DEFAULT_AED_RATE = 26.06; // 1 AED = 26.06 INR (updated Jul 2026)
 

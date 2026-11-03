@@ -161,22 +161,19 @@ runTest('User with view_finance can view_payments and view_reports', () => {
   assert.strictEqual(reportViewed, true, 'Should allow view_reports');
 });
 
-// 9. Customer support manager can view & delete personal shopper and contact enquiries
-runTest('User with manage_customers can delete_contact_enquiry and delete_personal_shopper', () => {
+// 9. Customer support manager can view & delete contact enquiries
+runTest('User with manage_customers can delete_contact_enquiry', () => {
   const req = {
     admin: {
       role: { name: 'Support Lead', permissions: { manage_customers: true } }
     }
   };
   let enquiryDeleted = false;
-  let shopperDeleted = false;
   const res = createMockRes();
 
   hasPermission('delete_contact_enquiry')(req, res, () => { enquiryDeleted = true; });
-  hasPermission('delete_personal_shopper')(req, res, () => { shopperDeleted = true; });
 
   assert.strictEqual(enquiryDeleted, true, 'Should allow delete_contact_enquiry');
-  assert.strictEqual(shopperDeleted, true, 'Should allow delete_personal_shopper');
 });
 
 // 10. Settings manager group permission maps to manage_roles and manage_admin_users

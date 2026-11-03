@@ -8,6 +8,7 @@ import { formatPrice, formatOrderAmount } from '../../utils/currency';
 import { getImageUrl } from '../../utils/imageUrl';
 import { getPlaceholderSvg } from '../../utils/placeholder';
 import { StaggeredText } from '../../components/animations';
+import { OrdersListSkeleton } from '../../components/skeletons';
 
 const STATUS_COLORS = {
   PENDING_PAYMENT: 'bg-yellow-50 text-yellow-700 border border-yellow-200',
@@ -61,10 +62,7 @@ const OrdersPage = () => {
       </div>
 
       {loading && sortedOrders.length === 0 ? (
-        <div className="bg-white shadow-sm rounded-lg p-12 text-center">
-          <div className="h-8 w-8 border-2 border-brand-gold border-t-transparent rounded-full animate-spin mx-auto mb-3" />
-          <p className="text-brand-grey text-sm">Fetching your orders from server...</p>
-        </div>
+        <OrdersListSkeleton count={3} />
       ) : error && sortedOrders.length === 0 ? (
         <div className="bg-white shadow-sm rounded-lg p-8 text-center border border-red-100">
           <p className="text-red-600 text-sm mb-3">{error}</p>
@@ -97,7 +95,7 @@ const OrdersPage = () => {
                     <div className="flex items-center gap-2">
                       <p className="font-semibold text-neutral-900 text-base">Order {order.orderNumber}</p>
                       {order.currency && (
-                        <span className="text-[10px] uppercase bg-neutral-100 text-neutral-600 px-1.5 py-0.5 rounded font-mono">
+                        <span className="text-[10px] uppercase bg-neutral-100 text-neutral-600 px-1.5 py-0.5 rounded font-sans font-medium">
                           {order.currency}
                         </span>
                       )}

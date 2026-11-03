@@ -44,87 +44,11 @@ const resolveColor = (name = '') => {
 const PRESET_OPTION_NAMES = [
   'Size',
   'Color',
-  'Storage',
-  'RAM',
-  'Processor',
-  'Connectivity',
-  'Resolution',
-  'Refresh Rate',
-  'Capacity',
-  'Type',
-  'Wattage',
-  'Band Color',
-  'Band Material',
-  'Case Size',
-  'Fit',
-  'Material',
-  'Metal Type',
-  'Width',
-  'Age / Size',
-  'Age Range',
-  'Finish',
-  'Style',
-  'Skin Type',
-  'SPF',
-  'Shade',
-  'Hair Type',
-  'Concentration',
-  'Scent',
-  'Weight',
-  'Resistance Level',
-  'Temp Rating',
-  'Frame Size',
-  'Wheel Size',
-  'Helmet Size',
-  'Piece Count',
-  'Player Count',
-  'Platform',
-  'Edition',
-  'Format',
-  'Language',
 ];
 
 const PRESET_VALUES_BY_OPTION = {
   Size: ['XS', 'S', 'M', 'L', 'XL', 'XXL', '3XL', 'FREE SIZE'],
   Color: ['Black', 'White', 'Red', 'Blue', 'Green', 'Gray', 'Navy', 'Pink', 'Gold', 'Brown'],
-  'Band Color': ['Black', 'White', 'Pink', 'Green', 'Blue'],
-  Storage: ['128GB', '256GB', '512GB', '1TB', '2TB'],
-  RAM: ['4GB', '6GB', '8GB', '12GB', '16GB', '32GB', '64GB'],
-  Processor: ['i5', 'i7', 'i9', 'Ryzen 5', 'Ryzen 7', 'M2', 'M3'],
-  Connectivity: ['Wired', 'Bluetooth', 'Wi-Fi', 'Zigbee', 'Matter'],
-  Resolution: ['1080p', '1440p', '4K'],
-  'Refresh Rate': ['60Hz', '120Hz', '144Hz', '240Hz'],
-  Capacity: ['8GB', '16GB', '256GB', '512GB', '1TB', '10000mAh', '20000mAh'],
-  Type: ['DDR4', 'DDR5', 'SATA', 'NVMe', 'Indoor', 'Outdoor'],
-  Wattage: ['20W', '30W', '65W', '100W', '1800W'],
-  'Band Material': ['Silicone', 'Leather', 'Metal', 'Nylon'],
-  'Case Size': ['40mm', '42mm', '44mm', '45mm'],
-  Fit: ['Slim', 'Regular', 'Relaxed', 'Oversized'],
-  Material: ['Cotton', 'Polyester', 'Denim', 'Leather', 'Wood', 'Stainless Steel'],
-  'Metal Type': ['Gold', 'Silver', 'Rose Gold', 'Stainless Steel'],
-  Width: ['Regular', 'Wide'],
-  'Age / Size': ['0-3M', '3-6M', '6-12M', '2T', '3T', '4T', '5-6Y', '7-8Y'],
-  'Age Range': ['0-2Y', '3-5Y', '6-8Y', '9+'],
-  Finish: ['Matte', 'Dewy', 'Glossy', 'Oak', 'Walnut'],
-  Style: ['Modern', 'Boho', 'Minimalist', 'Casual', 'Formal'],
-  'Skin Type': ['Oily', 'Dry', 'Combination', 'Sensitive'],
-  SPF: ['SPF 15', 'SPF 30', 'SPF 50'],
-  Shade: ['Fair', 'Light', 'Medium', 'Tan', 'Deep'],
-  'Hair Type': ['Curly', 'Straight', 'Color-treated', 'Oily'],
-  Concentration: ['EDT', 'EDP', 'Parfum'],
-  Scent: ['Fresh', 'Unscented', 'Citrus', 'Musk'],
-  Weight: ['5lb', '10lb', '20lb', '50lb'],
-  'Resistance Level': ['Light', 'Medium', 'Heavy'],
-  'Temp Rating': ['20°F', '0°F', '32°F'],
-  'Frame Size': ['S', 'M', 'L', 'XL'],
-  'Wheel Size': ['26"', '27.5"', '29"'],
-  'Helmet Size': ['S', 'M', 'L'],
-  'Piece Count': ['100pc', '500pc', '1000pc'],
-  'Player Count': ['1-2', '2-4', '4-6'],
-  Platform: ['PS5', 'Xbox Series X', 'Switch', 'PC'],
-  Edition: ['Standard', 'Deluxe', "Collector's"],
-  Format: ['Hardcover', 'Paperback', 'E-book', 'Audiobook'],
-  Language: ['English', 'Spanish', 'French', 'Hindi'],
 };
 
 const resolvePresetValues = (optName = '') => {
@@ -702,6 +626,7 @@ const ProductModal = ({ product, onClose, onSave }) => {
   // Image Upload States
   const [defaultProductImageFile, setDefaultProductImageFile] = useState(null);
   const [defaultProductImagePreview, setDefaultProductImagePreview] = useState(form.defaultProductImage);
+  const [isDraggingDefault, setIsDraggingDefault] = useState(false);
 
   // Variant Gallery Images
   const [existingVariantImages, setExistingVariantImages] = useState(product ? [...(product.images || [])] : []);
@@ -847,7 +772,7 @@ const ProductModal = ({ product, onClose, onSave }) => {
 
   // Option Row Handlers
   const addOptionRow = () => {
-    if (optionRows.length >= PRESET_OPTION_NAMES.length + 5) {
+    if (optionRows.length >= 10) {
       toast.error('Maximum variant options reached');
       return;
     }
@@ -873,25 +798,82 @@ const ProductModal = ({ product, onClose, onSave }) => {
     setOptionRows(prev => prev.map(r => r.id === id ? { ...r, [key]: value } : r));
   };
 
-  // Image Selection Handlers
-  const handleDefaultImageSelect = async (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    const val = await validateImageDimensionsAndSize(file, { maxSizeMB: 3, minWidth: 400, minHeight: 400, requireSquare: true });
+  // Image Selection & Drag-and-Drop Handlers
+  const processDefaultImageFile = async (file) => {
+    if (!file) return false;
+    const val = await validateImageDimensionsAndSize(file, { maxSizeMB: 5, minWidth: 200, minHeight: 200, requireSquare: false });
     if (!val.isValid) {
       toast.error(val.error);
-      e.target.value = '';
-      return;
+      return false;
     }
     setDefaultProductImageFile(file);
     setDefaultProductImagePreview(URL.createObjectURL(file));
+    return true;
+  };
+
+  const handleDefaultImageSelect = async (e) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      await processDefaultImageFile(file);
+    }
+    e.target.value = '';
+  };
+
+  const handleDefaultImageDrop = async (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDraggingDefault(false);
+    const file = e.dataTransfer?.files?.[0];
+    if (file) {
+      await processDefaultImageFile(file);
+    }
+  };
+
+  const processVariantMainImage = async (variantId, file) => {
+    if (!file) return false;
+    const val = await validateImageDimensionsAndSize(file, { maxSizeMB: 5, minWidth: 200, minHeight: 200, requireSquare: false });
+    if (!val.isValid) {
+      toast.error(val.error);
+      return false;
+    }
+    updateVariantRow(variantId, 'mainImageFile', file);
+    updateVariantRow(variantId, 'mainImagePreview', URL.createObjectURL(file));
+    return true;
+  };
+
+  const processVariantGalleryFiles = async (variantId, rawFiles) => {
+    const validFiles = [];
+    for (const file of rawFiles) {
+      const val = await validateImageDimensionsAndSize(file, { maxSizeMB: 5, minWidth: 200, minHeight: 200, requireSquare: false });
+      if (!val.isValid) {
+        toast.error(val.error);
+      } else {
+        validFiles.push(file);
+      }
+    }
+    if (validFiles.length === 0) return;
+
+    setProductVariants(prev => prev.map(v => {
+      if (v.id !== variantId) return v;
+      const galleryCount = (v.existingImages?.length || 0) + (v.newFiles?.length || 0);
+      const remaining = 5 - galleryCount;
+      if (remaining <= 0) {
+        toast.error('Maximum 5 gallery images allowed');
+        return v;
+      }
+      const selected = validFiles.slice(0, remaining).map(file => {
+        file.preview = URL.createObjectURL(file);
+        return file;
+      });
+      return { ...v, newFiles: [...(v.newFiles || []), ...selected] };
+    }));
   };
 
   const handleVariantImagesSelect = async (e) => {
     const rawFiles = Array.from(e.target.files || []);
     const validFiles = [];
     for (const file of rawFiles) {
-      const val = await validateImageDimensionsAndSize(file, { maxSizeMB: 3, minWidth: 400, minHeight: 400, requireSquare: true });
+      const val = await validateImageDimensionsAndSize(file, { maxSizeMB: 5, minWidth: 200, minHeight: 200, requireSquare: false });
       if (!val.isValid) {
         toast.error(val.error);
       } else {
@@ -1303,11 +1285,18 @@ const ProductModal = ({ product, onClose, onSave }) => {
                   </button>
                 </div>
               ) : (
-                <label className="border-2 border-dashed border-neutral-300 hover:border-brand-gold bg-white hover:bg-neutral-50/50 rounded-xl p-6 flex flex-col items-center justify-center cursor-pointer transition-all group">
+                <label
+                  onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); setIsDraggingDefault(true); }}
+                  onDragEnter={(e) => { e.preventDefault(); e.stopPropagation(); setIsDraggingDefault(true); }}
+                  onDragLeave={(e) => { e.preventDefault(); e.stopPropagation(); setIsDraggingDefault(false); }}
+                  onDrop={handleDefaultImageDrop}
+                  className={`border-2 border-dashed ${isDraggingDefault ? 'border-brand-gold bg-amber-50/60 ring-2 ring-brand-gold/30' : 'border-neutral-300 hover:border-brand-gold bg-white hover:bg-neutral-50/50'} rounded-xl p-6 flex flex-col items-center justify-center cursor-pointer transition-all group`}
+                >
                   <div className="flex items-center gap-1.5 text-xs text-neutral-500 font-medium group-hover:text-neutral-800">
-                    <Camera size={16} className="text-neutral-400 group-hover:text-brand-gold" />
+                    <Camera size={16} className={`text-neutral-400 group-hover:text-brand-gold transition-transform ${isDraggingDefault ? 'text-brand-gold scale-125' : ''}`} />
                     <span>Click to <strong>browse</strong> or <strong>drag & drop</strong></span>
                   </div>
+                  <span className="text-[10px] text-neutral-400 mt-1">Supports JPG, PNG, WebP up to 5MB</span>
                   <input type="file" accept="image/jpeg,image/png,image/webp" onChange={handleDefaultImageSelect} className="hidden" />
                 </label>
               )}
@@ -1614,10 +1603,22 @@ const ProductModal = ({ product, onClose, onSave }) => {
                             </button>
                           </div>
                         ) : (
-                          <label className="border-2 border-dashed border-neutral-300 hover:border-brand-gold bg-white hover:bg-neutral-50/50 rounded-xl p-4 flex flex-col items-center justify-center cursor-pointer transition-all group">
+                          <label
+                            onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                            onDragEnter={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                            onDrop={async (e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              const file = e.dataTransfer?.files?.[0];
+                              if (file) {
+                                await processVariantMainImage(v.id, file);
+                              }
+                            }}
+                            className="border-2 border-dashed border-neutral-300 hover:border-brand-gold bg-white hover:bg-neutral-50/50 rounded-xl p-4 flex flex-col items-center justify-center cursor-pointer transition-all group"
+                          >
                             <div className="flex items-center gap-1.5 text-xs text-neutral-500 font-medium group-hover:text-neutral-800">
                               <Camera size={16} className="text-neutral-400 group-hover:text-brand-gold" />
-                              <span>Click to <strong>browse</strong> main image</span>
+                              <span>Click to <strong>browse</strong> or <strong>drag & drop</strong> main image</span>
                             </div>
                             <input
                               type="file"
@@ -1625,15 +1626,9 @@ const ProductModal = ({ product, onClose, onSave }) => {
                               onChange={async e => {
                                 const file = e.target.files?.[0];
                                 if (file) {
-                                  const val = await validateImageDimensionsAndSize(file, { maxSizeMB: 3, minWidth: 400, minHeight: 400, requireSquare: true });
-                                  if (!val.isValid) {
-                                    toast.error(val.error);
-                                    e.target.value = '';
-                                    return;
-                                  }
-                                  updateVariantRow(v.id, 'mainImageFile', file);
-                                  updateVariantRow(v.id, 'mainImagePreview', URL.createObjectURL(file));
+                                  await processVariantMainImage(v.id, file);
                                 }
+                                e.target.value = '';
                               }}
                               className="hidden"
                             />
@@ -1680,7 +1675,20 @@ const ProductModal = ({ product, onClose, onSave }) => {
                             );
                           })}
                           {galleryCount < 5 && (
-                            <label className="w-14 h-14 border-2 border-dashed border-neutral-300 hover:border-brand-gold flex flex-col items-center justify-center text-neutral-400 hover:text-brand-gold cursor-pointer rounded-lg bg-neutral-50 transition-colors">
+                            <label
+                              onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                              onDragEnter={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                              onDrop={async (e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                const files = Array.from(e.dataTransfer?.files || []);
+                                if (files.length > 0) {
+                                  await processVariantGalleryFiles(v.id, files);
+                                }
+                              }}
+                              className="w-14 h-14 border-2 border-dashed border-neutral-300 hover:border-brand-gold flex flex-col items-center justify-center text-neutral-400 hover:text-brand-gold cursor-pointer rounded-lg bg-neutral-50 transition-colors"
+                              title="Click to browse or drop images here"
+                            >
                               <Plus size={16} />
                               <span className="text-[9px] font-semibold">Image</span>
                               <input

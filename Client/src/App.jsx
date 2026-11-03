@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+﻿import { useState, useEffect, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Routes, Route, useLocation, Navigate } from 'react-router-dom';
 import { AnimatePresence } from 'framer-motion';
@@ -22,8 +22,6 @@ import OrdersPage from './pages/account/OrdersPage';
 import OrderDetailPage from './pages/account/OrderDetailPage';
 import ReturnDetailPage from './pages/account/ReturnDetailPage';
 import WishlistPage from './pages/account/WishlistPage';
-import LoyaltyPage from './pages/account/LoyaltyPage';
-import PersonalShopperPage from './pages/account/PersonalShopperPage';
 import SupportPage from './pages/account/SupportPage';
 import MyReviewsPage from './pages/account/MyReviewsPage';
 import ReturnsRefundsPage from './pages/account/ReturnsRefundsPage';
@@ -76,7 +74,7 @@ const App = () => {
       )}
       <ScrollToTop />
       <Navbar />
-      {/* <CartDrawer /> */}
+      <CartDrawer />
       <QuickViewModal />
       <RegisterPopup />
       <Toaster
@@ -122,8 +120,8 @@ const App = () => {
             <Route path="returns/:id" element={<ReturnDetailPage />} />
             <Route path="returns" element={<Navigate to="/account/orders" replace />} />
             <Route path="wishlist" element={<WishlistPage />} />
-            <Route path="loyalty" element={<LoyaltyPage />} />
-            <Route path="personal-shopper" element={<PersonalShopperPage />} />
+            <Route path="loyalty" element={<Navigate to="/account" replace />} />
+            <Route path="personal-shopper" element={<Navigate to="/account" replace />} />
             <Route path="support" element={<SupportPage />} />
             <Route path="reviews" element={<MyReviewsPage />} />
           </Route>

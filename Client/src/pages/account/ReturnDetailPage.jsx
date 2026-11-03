@@ -25,6 +25,7 @@ import { fetchReturnById, clearCurrentReturn } from '../../redux/slices/returnsS
 import { formatOrderAmount } from '../../utils/currency';
 import { getImageUrl } from '../../utils/imageUrl';
 import { getPlaceholderSvg } from '../../utils/placeholder';
+import { ReturnDetailSkeleton } from '../../components/skeletons';
 
 const STATUS_COLORS = {
   REQUESTED: 'bg-amber-50 text-amber-800 border border-amber-200',
@@ -72,12 +73,7 @@ const ReturnDetailPage = () => {
   }, [id, dispatch]);
 
   if (loading && !returnItem) {
-    return (
-      <div className="bg-white shadow-sm p-12 text-center my-6 border border-neutral-100 rounded-lg">
-        <RefreshCw size={28} className="animate-spin text-brand-gold mx-auto mb-3" />
-        <p className="text-brand-grey text-sm">Loading return tracking details...</p>
-      </div>
-    );
+    return <ReturnDetailSkeleton />;
   }
 
   if (error || !returnItem) {
@@ -382,7 +378,7 @@ const ReturnDetailPage = () => {
                     {step.desc}
                   </p>
                   {stepDate && (
-                    <p className="text-[10px] text-neutral-400 font-mono mt-1">
+                    <p className="text-[10px] text-neutral-400 font-sans mt-1">
                       {new Date(stepDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}
                     </p>
                   )}
@@ -434,7 +430,7 @@ const ReturnDetailPage = () => {
                     </div>
                     <p className="text-xs text-neutral-500 mt-1">{step.desc}</p>
                     {stepDate && (
-                      <p className="text-[10px] text-neutral-400 font-mono mt-1">
+                      <p className="text-[10px] text-neutral-400 font-sans mt-1">
                         {new Date(stepDate).toLocaleDateString('en-IN', {
                           day: 'numeric',
                           month: 'short',
@@ -507,7 +503,7 @@ const ReturnDetailPage = () => {
               </div>
               <div className="text-right">
                 <span className="text-[10px] text-neutral-500 uppercase tracking-wider block font-semibold">Refund Value</span>
-                <span className="text-base font-bold text-brand-gold font-mono">
+                <span className="text-base font-bold text-brand-gold font-sans tabular-nums">
                   {formatOrderAmount(returnItem.refundAmount, returnItem.currency || currency)}
                 </span>
               </div>

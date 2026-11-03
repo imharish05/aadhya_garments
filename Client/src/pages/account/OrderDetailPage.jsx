@@ -12,6 +12,7 @@ import { printInvoice } from '../../utils/invoiceGenerator';
 import { getImageUrl } from '../../utils/imageUrl';
 import { getPlaceholderSvg } from '../../utils/placeholder';
 import toast from 'react-hot-toast';
+import { OrderDetailSkeleton } from '../../components/skeletons';
 
 const STATUS_COLORS = {
   PENDING_PAYMENT: 'bg-yellow-50 text-yellow-700 border border-yellow-200',
@@ -324,12 +325,7 @@ const OrderDetailPage = () => {
   };
 
   if (loading && !order) {
-    return (
-      <div className="bg-white shadow-sm p-12 text-center my-6">
-        <RefreshCw size={28} className="animate-spin text-brand-gold mx-auto mb-3" />
-        <p className="text-brand-grey text-sm">Loading order details...</p>
-      </div>
-    );
+    return <OrderDetailSkeleton />;
   }
 
   if (error || !order || String(order.id) !== String(id)) {
@@ -508,18 +504,7 @@ const OrderDetailPage = () => {
   const shippingAmount = parseFloat(order.shippingAmount || 0);
   const totalDiscount = parseFloat(order.discountAmount || 0);
   const explicitCouponDisc = parseFloat(order.couponDiscount || 0);
-  const explicitLoyaltyDisc = parseFloat(order.loyaltyDiscount || 0);
-
-  let resolvedCouponDiscount = explicitCouponDisc;
-  let resolvedLoyaltyDiscount = explicitLoyaltyDisc;
-
-  if (resolvedCouponDiscount === 0 && resolvedLoyaltyDiscount === 0 && totalDiscount > 0) {
-    if (order.couponId || order.coupon) {
-      resolvedCouponDiscount = totalDiscount;
-    } else {
-      resolvedLoyaltyDiscount = totalDiscount;
-    }
-  }
+  const resolvedCouponDiscount = explicitCouponDisc > 0 ? explicitCouponDisc : totalDiscount;
 
   const explicitGw = parseFloat(order.giftWrapFee || order.giftWrapPrice || 0);
   const calculatedGwDiff = Math.round(parseFloat(order.totalAmount || 0) - (subtotal + shippingAmount - totalDiscount));
@@ -809,7 +794,7 @@ const OrderDetailPage = () => {
             <div>
               <span className="text-xs text-neutral-500 font-medium block">Refund Reference ID</span>
               <div className="mt-1">
-                <span className="font-mono text-xs font-bold text-emerald-800 bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-md select-all tracking-tight inline-block">
+                <span className="font-sans text-xs font-bold text-emerald-800 bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-md select-all tracking-tight inline-block">
                   {order.statusTimeline.refundGatewayRef}
                 </span>
               </div>
@@ -923,12 +908,6 @@ const OrderDetailPage = () => {
             <div className="flex justify-between text-green-600">
               <span>Coupon Discount{order.coupon?.code ? ` (${order.coupon.code})` : ''}</span>
               <span>-{formatOrderAmount(resolvedCouponDiscount, currency)}</span>
-            </div>
-          )}
-          {resolvedLoyaltyDiscount > 0 && (
-            <div className="flex justify-between text-green-600">
-              <span>Loyalty Points Redeemed{order.redeemedPoints ? ` (${order.redeemedPoints} pts)` : ''}</span>
-              <span>-{formatOrderAmount(resolvedLoyaltyDiscount, currency)}</span>
             </div>
           )}
           <div className="flex justify-between">
@@ -1248,7 +1227,7 @@ const OrderDetailPage = () => {
                           <p className="text-xs font-bold text-neutral-900 truncate max-w-[140px] sm:max-w-[260px]">
                             {returnVideoFile.name}
                           </p>
-                          <p className="text-[10px] text-neutral-500 font-mono">
+                          <p className="text-[10px] text-neutral-500 font-sans">
                             {(returnVideoFile.size / (1024 * 1024)).toFixed(2)} MB
                           </p>
                         </div>

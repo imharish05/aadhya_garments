@@ -2,8 +2,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Gift } from 'lucide-react';
-import api from '../services/api';
+import { X, Sparkles } from 'lucide-react';
 
 const POPUP_DISMISSED_KEY = 'bb_reg_popup_dismissed';
 
@@ -12,8 +11,6 @@ const RegisterPopup = () => {
   const navigate = useNavigate();
 
   const [visible, setVisible] = useState(false);
-  const [signupPoints, setSignupPoints] = useState(50);
-  const [pointsLoaded, setPointsLoaded] = useState(false);
 
   const dismiss = useCallback(() => {
     setVisible(false);
@@ -29,38 +26,12 @@ const RegisterPopup = () => {
     if (isAuthenticated) return;
     if (localStorage.getItem(POPUP_DISMISSED_KEY)) return;
 
-    const fetchPoints = async () => {
-      try {
-        const res = await api.get('/site-settings/loyalty');
-        if (res.data?.success && res.data?.data) {
-          const pts = Number(res.data.data.signupPoints);
-          const enabled = res.data.data.signupPointsEnabled !== false;
-          if (enabled && pts > 0) {
-            setSignupPoints(pts);
-          } else if (!enabled) {
-            return;
-          }
-        }
-      } catch {
-        // fallback to default 50 points
-      }
-      setPointsLoaded(true);
-    };
-
-    fetchPoints();
-  }, [isAuthenticated]);
-
-  useEffect(() => {
-    if (!pointsLoaded) return;
-    if (isAuthenticated) return;
-    if (localStorage.getItem(POPUP_DISMISSED_KEY)) return;
-
     const timer = setTimeout(() => {
       setVisible(true);
     }, 4000);
 
     return () => clearTimeout(timer);
-  }, [pointsLoaded, isAuthenticated]);
+  }, [isAuthenticated]);
 
   return (
     <AnimatePresence>
@@ -109,13 +80,13 @@ const RegisterPopup = () => {
                   className="w-[72px] h-[72px] rounded-full flex items-center justify-center mb-5"
                   style={{ border: '1.5px solid #e0d0b0', background: '#fdfaf4' }}
                 >
-                  <Gift size={32} strokeWidth={1.4} style={{ color: '#8B1A1A' }} />
+                  <Sparkles size={30} strokeWidth={1.5} style={{ color: '#8B1A1A' }} />
                 </div>
                 <p
                   className="text-[10px] font-semibold uppercase tracking-[0.2em] mb-1"
                   style={{ color: '#C58837' }}
                 >
-                  Exclusive Welcome Gift
+                  Welcome Experience
                 </p>
                 <div
                   className="w-12 mb-4"
@@ -126,17 +97,10 @@ const RegisterPopup = () => {
                   className="font-playfair text-[22px] font-semibold leading-snug mb-1"
                   style={{ color: '#111111' }}
                 >
-                  Register now and get
+                  Join Aadhaya Garments
                 </h2>
-                <p
-                  className="font-playfair text-[22px] font-semibold leading-snug mb-4"
-                  style={{ color: '#111111' }}
-                >
-                  <span style={{ color: '#8B1A1A' }}>{signupPoints} Loyalty Points</span>
-                  {' '}on us!
-                </p>
-                <p className="text-[12px] text-neutral-500 mb-6 leading-relaxed">
-                  Join free. Points are added instantly to your account upon signup.
+                <p className="text-[12px] text-neutral-500 mb-6 leading-relaxed mt-2">
+                  Create an account to track your orders, save pieces to your wishlist, and enjoy seamless express checkout.
                 </p>
                 <button
                   onClick={handleRegister}
@@ -144,7 +108,7 @@ const RegisterPopup = () => {
                   className="w-full py-3.5 text-[11px] font-bold uppercase tracking-[0.18em] text-white transition-all duration-200 hover:opacity-90 active:scale-[0.98] rounded-lg mb-3"
                   style={{ background: '#8B1A1A' }}
                 >
-                  Register Now
+                  Create Account
                 </button>
                 <button
                   onClick={dismiss}

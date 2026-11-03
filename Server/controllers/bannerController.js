@@ -36,6 +36,7 @@ const countWords = (text) => {
 };
 
 const validateBannerWordings = (data) => {
+  if (data.type === 'ABOUT') return null;
   if (data.title) {
     if (data.title.length > BANNER_LIMITS.title.maxChars) {
       return `Title exceeds maximum length of ${BANNER_LIMITS.title.maxChars} characters.`;

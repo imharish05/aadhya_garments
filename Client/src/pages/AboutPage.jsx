@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+﻿import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, useReducedMotion } from 'framer-motion';
 import { ArrowUpRight } from 'lucide-react';
@@ -11,6 +11,7 @@ import twoWayLycraImg from '../assets/fabrics/2-way Lycra.png';
 import loopknitImg from '../assets/fabrics/Loopknit.png';
 import nsFabricImg from '../assets/fabrics/NS Fabric.png';
 import pureCottonImg from '../assets/fabrics/Pure Cotton.png';
+import muslinImg from '../assets/fabrics/Muslin.png';
 
 /* ────────────────────────────────────────────────────────────────────────────
    Twin A Apparels — About page
@@ -75,7 +76,7 @@ const FABRIC_IMAGES = {
   'NS Fabric': nsFabricImg,
   Loopknit: loopknitImg,
   'Pure Cotton': pureCottonImg,
-  Muslin: null,
+  Muslin: muslinImg,
 };
 
 /* ── Hero hang tags ──────────────────────────────────────────────────────── */

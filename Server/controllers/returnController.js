@@ -5,8 +5,6 @@ const { toAbsoluteUrl } = require('../utils/imageUrl');
 const RazorpayService = require('../services/RazorpayService');
 const { sendReturnStatusNotification } = require('../services/emailService');
 
-const processReturnLoyaltyAdjustment = async () => {};
-
 const formatReturn = (ret, req) => {
   if (!ret) return ret;
   const json = typeof ret.toJSON === 'function' ? ret.toJSON() : { ...ret };
@@ -461,9 +459,6 @@ const updateStatusAdmin = async (req, res) => {
         reason: `Return Restock for return ${returnRequest.returnNumber} (Ref: ${returnRequest.refundTransactionRef || 'N/A'})`,
       }, { transaction });
 
-      // Loyalty points adjustment on return refund (Negative balance approach)
-      await processReturnLoyaltyAdjustment(returnRequest, transaction);
-
       // Sync Order payment status & refund timeline
       if (returnRequest.orderId) {
         const orderInstance = await Order.findByPk(returnRequest.orderId, {
@@ -658,9 +653,6 @@ const initiateRefundAdmin = async (req, res) => {
         type: 'RETURN_RESTOCK',
         reason: `Automated Razorpay product refund for return ${returnRequest.returnNumber} (Ref: ${returnRequest.refundTransactionRef})`,
       }, { transaction });
-
-      // Loyalty points adjustment on return refund (Negative balance approach)
-      await processReturnLoyaltyAdjustment(returnRequest, transaction);
 
       // Sync Order payment status & refund timeline
       if (returnRequest.orderId) {

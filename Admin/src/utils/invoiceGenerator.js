@@ -339,18 +339,7 @@ export const generateInvoiceHTML = (order) => {
   const subtotal = Number(order.subtotal || totalTaxableValue);
   const discountAmount = Number(order.discountAmount || 0);
   const couponDiscount = Number(order.couponDiscount || 0);
-  const loyaltyDiscount = Number(order.loyaltyDiscount || 0);
-
-  let resolvedCoupon = couponDiscount;
-  let resolvedLoyalty = loyaltyDiscount;
-
-  if (resolvedCoupon === 0 && resolvedLoyalty === 0 && discountAmount > 0) {
-    if (order.couponId || order.coupon) {
-      resolvedCoupon = discountAmount;
-    } else {
-      resolvedLoyalty = discountAmount;
-    }
-  }
+  const resolvedCoupon = couponDiscount > 0 ? couponDiscount : discountAmount;
 
   const shippingAmount = Number(order.shippingAmount || 0);
   const explicitGw = Number(order.giftWrapFee || order.giftWrapPrice || 0);

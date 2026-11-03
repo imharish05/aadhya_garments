@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Parses and checks expiration of JWT tokens.
  */
 

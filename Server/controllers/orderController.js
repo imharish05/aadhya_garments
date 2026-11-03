@@ -370,7 +370,9 @@ const cancelMyOrder = async (req, res) => {
 
     res.json({ success: true, message: 'Order cancelled successfully', order: formatOrder(order, req) });
   } catch (err) {
-    await transaction.rollback();
+    if (transaction && !transaction.finished) {
+      try { await transaction.rollback(); } catch (rbErr) {}
+    }
     res.status(500).json({ success: false, message: err.message });
   }
 };
@@ -771,7 +773,9 @@ const placeOrder = async (req, res) => {
       }
     });
   } catch (err) {
-    await transaction.rollback();
+    if (transaction && !transaction.finished) {
+      try { await transaction.rollback(); } catch (rbErr) {}
+    }
     res.status(500).json({ success: false, message: err.message });
   }
 };
@@ -937,7 +941,9 @@ const updateStatus = async (req, res) => {
 
     res.json({ success: true, order });
   } catch (err) {
-    await transaction.rollback();
+    if (transaction && !transaction.finished) {
+      try { await transaction.rollback(); } catch (rbErr) {}
+    }
     res.status(500).json({ success: false, message: err.message });
   }
 };
@@ -1010,7 +1016,6 @@ const getStatusCounts = async (req, res) => {
 
     const counts = {
       ALL: 0,
-      ABANDONED: 0,
       PENDING: 0,
       CONFIRMED: 0,
       PROCESSING: 0,
@@ -1037,14 +1042,7 @@ const getStatusCounts = async (req, res) => {
 
     counts.ALL = totalValidOrders;
 
-    try {
-      const abandonedCount = await Cart.count({
-        include: [{ model: CartItem, as: 'items', required: true }]
-      });
-      counts.ABANDONED = abandonedCount;
-    } catch {
-      counts.ABANDONED = 0;
-    }
+    
 
     try {
       const activeReturnsCount = await ReturnRequest.count({

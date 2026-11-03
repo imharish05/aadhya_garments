@@ -146,7 +146,6 @@ const ReportsAdminPage = () => {
           phone: c.phone || '—',
           ordersCount: count,
           totalSpent: totalSpentVal,
-          loyaltyPoints: c.loyaltyPoints || 0,
           joinedDate: c.createdAt ? new Date(c.createdAt).toISOString().split('T')[0] : '—',
           status: 'Active'
         };
@@ -293,13 +292,13 @@ const ReportsAdminPage = () => {
       const totalCust = dashboardStats?.totalCustomers !== undefined ? dashboardStats.totalCustomers : rawReportData.length;
       const totalSpent = rawReportData.reduce((sum, r) => sum + (r.totalSpent || 0), 0);
       const avgSpent = totalCust > 0 ? Math.round(totalSpent / totalCust) : 0;
-      const totalLoyalty = rawReportData.reduce((sum, r) => sum + (r.loyaltyPoints || 0), 0);
+      const activeCount = rawReportData.filter(r => r.status === 'Active').length;
 
       return [
         { label: 'Total Customers', value: totalCust.toLocaleString('en-IN'), icon: Users },
         { label: 'Customer Lifetime Spend', value: fmtINR(totalSpent), icon: TrendingUp },
         { label: 'Avg Spend per Customer', value: fmtINR(avgSpent), icon: CreditCard },
-        { label: 'Total Loyalty Points', value: totalLoyalty.toLocaleString('en-IN'), icon: CheckCircle2 },
+        { label: 'Active Accounts', value: activeCount.toLocaleString('en-IN'), icon: CheckCircle2 },
       ];
     }
 
@@ -351,7 +350,6 @@ const ReportsAdminPage = () => {
           'Phone': r.phone,
           'Total Orders Placed': r.ordersCount,
           'Total Spent (INR)': r.totalSpent,
-          'Loyalty Points': r.loyaltyPoints,
           'Joined Date': r.joinedDate,
           'Account Status': r.status
         }));
@@ -674,7 +672,6 @@ const ReportsAdminPage = () => {
                       <th className="px-5 py-3 text-[11px] font-bold uppercase tracking-wider text-brand-grey">Phone</th>
                       <th className="px-5 py-3 text-[11px] font-bold uppercase tracking-wider text-brand-grey">Total Orders</th>
                       <th className="px-5 py-3 text-[11px] font-bold uppercase tracking-wider text-brand-grey">Total Spent (LTV)</th>
-                      <th className="px-5 py-3 text-[11px] font-bold uppercase tracking-wider text-brand-grey">Loyalty Points</th>
                       <th className="px-5 py-3 text-[11px] font-bold uppercase tracking-wider text-brand-grey text-right">Status</th>
                     </>
                   )}
@@ -761,7 +758,6 @@ const ReportsAdminPage = () => {
                           <td className="px-5 py-3.5 text-neutral-600">{row.phone}</td>
                           <td className="px-5 py-3.5 font-semibold text-neutral-800">{row.ordersCount} orders</td>
                           <td className="px-5 py-3.5 font-bold text-emerald-700">{fmtINR(row.totalSpent)}</td>
-                          <td className="px-5 py-3.5 font-bold text-brand-gold">{row.loyaltyPoints} pts</td>
                           <td className="px-5 py-3.5 text-right">
                             <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800">
                               {row.status}

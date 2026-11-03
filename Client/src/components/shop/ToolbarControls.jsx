@@ -13,7 +13,7 @@ const PILL =
 
 const Label = ({ label, value }) => (
   // phone: hidden (icon only)  ·  tablet/desktop: always visible
-  <span className="hidden whitespace-nowrap font-inter text-[12px] sm:ml-2.5 sm:mr-2 sm:inline">
+  <span className="hidden whitespace-nowrap font-sans text-[12px] sm:ml-2.5 sm:mr-2 sm:inline">
     <span className="font-semibold uppercase tracking-[0.14em] text-black/50">{label}</span>
     {value ? <span className="ml-1.5 font-semibold">{value}</span> : null}
   </span>
@@ -79,7 +79,7 @@ export const ToolbarMenu = ({ id, icon: Icon, label, options, value, onChange, a
                     role="option"
                     aria-selected={selected}
                     onClick={() => { onChange(o.value); setOpen(false); }}
-                    className={`flex w-full items-center justify-between gap-6 rounded-xl px-3.5 py-3 text-left font-inter text-[13px] transition-colors ${
+                    className={`flex w-full items-center justify-between gap-6 rounded-xl px-3.5 py-3 text-left font-sans text-[13px] transition-colors ${
                       selected ? 'bg-black font-semibold text-[#DFC481]' : 'text-black hover:bg-black/5'
                     }`}
                   >

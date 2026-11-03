@@ -113,8 +113,9 @@ const start = async () => {
 
     // Run manual database alters for Banners table
     try {
-      await sequelize.query("ALTER TABLE Banners MODIFY COLUMN type ENUM('HERO', 'PROMO', 'DEAL', 'EXCLUSIVE_DEAL', 'BRAND', 'COUNTDOWN') DEFAULT 'PROMO'");
+      await sequelize.query("ALTER TABLE Banners MODIFY COLUMN type ENUM('HERO', 'PROMO', 'DEAL', 'EXCLUSIVE_DEAL', 'BRAND', 'COUNTDOWN', 'ABOUT') DEFAULT 'PROMO'");
       await sequelize.query("ALTER TABLE Banners MODIFY COLUMN title VARCHAR(200) NULL");
+      await sequelize.query("ALTER TABLE Banners ADD COLUMN description TEXT NULL");
     } catch (alterErr) {}
 
     // Run manual database alters for Orders table status definitions

@@ -3,6 +3,7 @@ import { useSelector } from 'react-redux';
 import { MapPin, Plus, Pencil, Trash2, Check } from 'lucide-react';
 import api from '../../services/api';
 import PhoneInput from '../../components/PhoneInput';
+import { SavedAddressSkeleton } from '../../components/skeletons';
 
 const blank = { label: 'Home', name: '', phone: '', email: '', address: '', addressLine2: '', landmark: '', city: '', state: '', pincode: '', country: 'India', isDefault: false };
 const fields = [
@@ -64,7 +65,7 @@ export default function SavedAddressesPage() {
         <div className="flex gap-3 sm:col-span-2"><button type="submit" className="btn-primary px-5 py-2.5 text-xs">{busy ? 'Saving...' : 'Save address'}</button><button type="button" onClick={() => setForm(null)} className="btn-outline px-5 py-2.5 text-xs">Cancel</button></div>
       </fieldset>
     </form>}
-    {loading ? <p role="status" className="py-8 text-center text-sm text-brand-grey">Loading saved addresses...</p> : addresses.length === 0 ? <div className="rounded-lg border border-dashed border-neutral-200 px-5 py-12 text-center"><MapPin className="mx-auto mb-3 text-brand-gold" size={32} strokeWidth={1.5} /><h2 className="font-playfair text-lg">Your addresses, all in one place</h2><p className="mt-2 text-sm text-brand-grey">Add a Home or Work address to select it at checkout.</p></div> : <div className="grid gap-4 lg:grid-cols-2">
+    {loading ? <SavedAddressSkeleton count={2} /> : addresses.length === 0 ? <div className="rounded-lg border border-dashed border-neutral-200 px-5 py-12 text-center"><MapPin className="mx-auto mb-3 text-brand-gold" size={32} strokeWidth={1.5} /><h2 className="font-playfair text-lg">Your addresses, all in one place</h2><p className="mt-2 text-sm text-brand-grey">Add a Home or Work address to select it at checkout.</p></div> : <div className="grid gap-4 lg:grid-cols-2">
       {addresses.map(row => <article key={row.id} className={`rounded-lg border p-4 ${row.isDefault ? 'border-brand-gold bg-brand-light/20' : 'border-neutral-200'}`}>
         <div className="mb-2 flex items-center justify-between gap-2"><h2 className="flex items-center gap-2 text-sm font-semibold"><MapPin size={15} className="text-brand-gold" />{row.label}</h2>{row.isDefault && <span className="rounded bg-brand-gold/10 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-brand-gold">Default</span>}</div>
         <p className="text-sm font-medium">{row.name}</p><p className="mt-1 break-words text-sm leading-6 text-brand-grey">{[row.address, row.addressLine2, row.landmark, row.city, row.state, row.pincode, row.country].filter(Boolean).join(', ')}</p><p className="mt-2 text-xs text-brand-grey">{row.phone}</p>

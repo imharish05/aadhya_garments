@@ -523,18 +523,7 @@ const sendOrderStatusNotification = async (order, statusTypeOverride = null) => 
     const tax = parseFloat(order.taxAmount || 0);
     const totalDiscount = parseFloat(order.discountAmount || 0);
     const explicitCouponDisc = parseFloat(order.couponDiscount || 0);
-    const explicitLoyaltyDisc = parseFloat(order.loyaltyDiscount || 0);
-
-    let couponAmount = explicitCouponDisc;
-    let loyaltyAmount = explicitLoyaltyDisc;
-
-    if (couponAmount === 0 && loyaltyAmount === 0 && totalDiscount > 0) {
-      if (order.couponId || order.coupon) {
-        couponAmount = totalDiscount;
-      } else {
-        loyaltyAmount = totalDiscount;
-      }
-    }
+    const couponAmount = explicitCouponDisc > 0 ? explicitCouponDisc : totalDiscount;
 
     const explicitGw = parseFloat(order.giftWrapFee || order.giftWrapPrice || 0);
     const calculatedGwDiff = Math.round(parseFloat(order.totalAmount || 0) - (subtotal + shipping - totalDiscount));
@@ -629,11 +618,6 @@ const sendOrderStatusNotification = async (order, statusTypeOverride = null) => 
                       <tr>
                         <td style="padding:4px 0;font-size:13px;color:#8A6714;">Coupon Discount${order.coupon?.code ? ` (${order.coupon.code})` : ''}</td>
                         <td style="padding:4px 0;font-size:13px;color:#8A6714;text-align:right;">-${currencySymbol}${couponAmount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
-                      </tr>` : ''}
-                      ${loyaltyAmount > 0 ? `
-                      <tr>
-                        <td style="padding:4px 0;font-size:13px;color:#8A6714;">Loyalty Points Redeemed${order.redeemedPoints ? ` (${order.redeemedPoints} pts)` : ''}</td>
-                        <td style="padding:4px 0;font-size:13px;color:#8A6714;text-align:right;">-${currencySymbol}${loyaltyAmount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
                       </tr>` : ''}
                       <tr>
                         <td style="padding:4px 0;font-size:13px;color:#6B7280;">Shipping Charges</td>
@@ -1987,9 +1971,9 @@ const sendReturnStatusNotification = async (returnRequest, customer, order) => {
 };
 
 /**
- * Sends a Welcome Registration Email with signup loyalty points.
+ * Sends a Welcome Registration Email to newly registered customers.
  */
-const sendWelcomeEmail = async (toEmail, name, bonusPoints = 0) => {
+const sendWelcomeEmail = async (toEmail, name) => {
   try {
     const transporter = createTransporter();
     const clientUrl = (process.env.CLIENT_URL || 'http://localhost:5173').replace(/\/$/, '');
@@ -2028,20 +2012,6 @@ const sendWelcomeEmail = async (toEmail, name, bonusPoints = 0) => {
                       <p style="margin:0 auto 24px;font-size:14px;color:#4B5563;line-height:1.7;max-width:440px;">
                         We are thrilled to welcome you to India's premier luxury fashion destination. Discover exclusive couture, fine jewelry, signature fragrances, and bespoke accessories.
                       </p>
-
-                      ${bonusPoints > 0 ? `
-                      <div style="background:#FFFDF8;border:2px dashed #C9A24B;border-radius:10px;padding:18px 24px;margin-bottom:24px;display:inline-block;">
-                        <p style="margin:0 0 4px;font-size:11px;font-weight:700;color:#8A6714;text-transform:uppercase;letter-spacing:0.08em;">
-                          Welcome Loyalty Gift
-                        </p>
-                        <p style="margin:0;font-size:26px;font-weight:900;color:#111827;">
-                          +${bonusPoints} Loyalty Points Credited
-                        </p>
-                        <p style="margin:4px 0 0;font-size:12px;color:#6B7280;">
-                          Redeemable toward your purchases at checkout!
-                        </p>
-                      </div>
-                      ` : ''}
 
                       <div style="margin:8px 0 24px;">
                         <a href="${clientUrl}/products" target="_blank" style="background-color:#161616;color:#C9A24B;padding:14px 36px;text-decoration:none;font-weight:800;font-size:13px;border-radius:6px;display:inline-block;letter-spacing:0.08em;text-transform:uppercase;box-shadow:0 4px 12px rgba(0,0,0,0.15);">
@@ -2148,173 +2118,6 @@ const sendPasswordChangedEmail = async (toEmail, name) => {
   }
 };
 
-/**
- * Sends notification for Personal Shopper / Styling Consultation Requests.
- * Dispatches alert to Admin and acknowledgment receipt to Customer.
- */
-const sendPersonalShopperNotification = async (shopperData) => {
-  try {
-    const data = shopperData && typeof shopperData.get === 'function'
-      ? shopperData.get({ plain: true })
-      : (shopperData || {});
-
-    const { name, email, phone, occasion, budget, style, notes, id } = data;
-    const adminEmail = (process.env.ADMIN_EMAIL || 'harish05082004@gmail.com').trim();
-    const transporter = createTransporter();
-
-    const attachments = [];
-    const logoAtt = getBrandLogoAttachment();
-    if (logoAtt) attachments.push(logoAtt);
-
-    // 1. Admin / Stylist Alert Email
-    const adminMailOptions = {
-      from: `"Twin A Apparels Concierge" <${process.env.EMAIL_USER}>`,
-      to: adminEmail,
-      ...(email && email.trim().toLowerCase() !== adminEmail.toLowerCase() ? { replyTo: email.trim() } : {}),
-      subject: `New Personal Shopper Request #${id || ''} - ${name} (${occasion})`,
-      text: `New Personal Shopper Consultation Request\n\nClient Name: ${name}\nEmail: ${email}\nPhone: ${phone || 'Not provided'}\nOccasion: ${occasion}\nBudget: ₹${budget}\nStyle: ${style || 'Not specified'}\nNotes: ${notes || 'None'}\n\nTwin A Apparels Styling Desk`,
-      attachments,
-      html: `
-        <!DOCTYPE html>
-        <html lang="en">
-        <head>
-          <meta charset="UTF-8"/>
-          <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-          <title>Stylist Consultation Request</title>
-        </head>
-        <body style="margin:0;padding:0;background-color:#FAF9F6;font-family:${SANS_SERIF_FONT};">
-          <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#FAF9F6;padding:40px 0;">
-            <tr>
-              <td align="center">
-                <table width="600" cellpadding="0" cellspacing="0" style="background-color:#ffffff;border:1px solid #EAEAEA;border-radius:12px;overflow:hidden;box-shadow:0 8px 30px rgba(0,0,0,0.06);">
-                  ${getBrandHeaderHtml('Styling Concierge Alert')}
-                  <tr>
-                    <td style="padding:36px 40px;">
-                      <h2 style="margin:0 0 16px;font-size:18px;font-weight:700;color:#111111;">
-                        New Personal Shopper Consultation Request
-                      </h2>
-                      <table width="100%" cellpadding="8" cellspacing="0" style="border-collapse:collapse;font-size:14px;margin-bottom:20px;">
-                        <tr style="border-bottom:1px solid #F3F4F6;">
-                          <td width="35%" style="color:#6B7280;font-weight:600;">Client Name:</td>
-                          <td style="color:#111111;font-weight:700;">${name}</td>
-                        </tr>
-                        <tr style="border-bottom:1px solid #F3F4F6;">
-                          <td style="color:#6B7280;font-weight:600;">Email:</td>
-                          <td><a href="mailto:${email}" style="color:#C9A24B;text-decoration:none;font-weight:600;">${email}</a></td>
-                        </tr>
-                        <tr style="border-bottom:1px solid #F3F4F6;">
-                          <td style="color:#6B7280;font-weight:600;">Phone:</td>
-                          <td style="color:#111111;">${phone || 'Not provided'}</td>
-                        </tr>
-                        <tr style="border-bottom:1px solid #F3F4F6;">
-                          <td style="color:#6B7280;font-weight:600;">Occasion:</td>
-                          <td style="color:#111111;font-weight:600;">${occasion}</td>
-                        </tr>
-                        <tr style="border-bottom:1px solid #F3F4F6;">
-                          <td style="color:#6B7280;font-weight:600;">Budget:</td>
-                          <td style="color:#8A6714;font-weight:700;">₹${budget}</td>
-                        </tr>
-                        ${style ? `
-                        <tr style="border-bottom:1px solid #F3F4F6;">
-                          <td style="color:#6B7280;font-weight:600;">Style Preference:</td>
-                          <td style="color:#111111;">${style}</td>
-                        </tr>` : ''}
-                      </table>
-
-                      ${notes ? `
-                      <p style="margin:16px 0 8px;font-size:13px;font-weight:700;color:#111111;">Client Notes & Preferences:</p>
-                      <div style="background-color:#F9FAFB;border-left:4px solid #C9A24B;padding:16px;border-radius:0 8px 8px 0;font-size:13px;color:#374151;line-height:1.6;">
-                        ${notes}
-                      </div>
-                      ` : ''}
-
-                      <div style="margin-top:28px;text-align:center;">
-                        <a href="mailto:${email}?subject=Personal Styling Consultation - Twin A Apparels" style="background-color:#161616;color:#C9A24B;padding:12px 30px;text-decoration:none;font-weight:700;font-size:13px;border-radius:6px;display:inline-block;letter-spacing:0.05em;text-transform:uppercase;">
-                          Contact Client
-                        </a>
-                      </div>
-                    </td>
-                  </tr>
-                  <tr>
-                    <td style="background-color:#FAF9F6;padding:20px 40px;text-align:center;color:#888888;font-size:11px;border-top:1px solid #EAEAEA;">
-                      <p style="margin:0 0 4px;color:#C9A24B;font-weight:700;font-size:12px;">Twin A Apparels STYLING DESK</p>
-                      <p style="margin:0;color:#9CA3AF;">© ${new Date().getFullYear()} Twin A Apparels. All rights reserved.</p>
-                    </td>
-                  </tr>
-                </table>
-              </td>
-            </tr>
-          </table>
-        </body>
-        </html>
-      `
-    };
-
-    // 2. Customer Acknowledgment Email
-    const custMailOptions = {
-      from: `"Twin A Apparels Stylist Concierge" <${process.env.EMAIL_USER}>`,
-      to: email,
-      subject: `We've Received Your Styling Request — Twin A Apparels`,
-      text: `Dear ${name},\n\nThank you for requesting a Personal Shopper consultation at Twin A Apparels.\n\nOur stylists are reviewing your request for "${occasion}" (Budget: ₹${budget}) and will reach out to you within 24 business hours.\n\nWarm regards,\nTwin A Apparels Styling Desk`,
-      attachments,
-      html: `
-        <!DOCTYPE html>
-        <html lang="en">
-        <head>
-          <meta charset="UTF-8"/>
-          <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-          <title>Styling Request Received</title>
-        </head>
-        <body style="margin:0;padding:0;background-color:#FAF9F6;font-family:${SANS_SERIF_FONT};">
-          <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#FAF9F6;padding:40px 0;">
-            <tr>
-              <td align="center">
-                <table width="600" cellpadding="0" cellspacing="0" style="background-color:#ffffff;border:1px solid #EAEAEA;border-radius:12px;overflow:hidden;box-shadow:0 8px 30px rgba(0,0,0,0.06);">
-                  ${getBrandHeaderHtml('Personal Shopping Concierge')}
-                  <tr>
-                    <td style="padding:40px;">
-                      <h1 style="margin:0 0 16px;font-size:20px;font-weight:700;color:#111111;">
-                        Thank You, ${name}.
-                      </h1>
-                      <p style="margin:0 0 20px;font-size:14px;color:#4B5563;line-height:1.7;">
-                        We have received your personal shopping & styling request for <strong>${occasion}</strong>. Our lead personal stylist is reviewing your preferences and curated budget (₹${budget}) to hand-select luxury pieces suited for your celebration.
-                      </p>
-                      <p style="margin:0 0 24px;font-size:14px;color:#4B5563;line-height:1.7;">
-                        A personal stylist will reach out directly to you via email or phone within <strong>24 business hours</strong>.
-                      </p>
-                    </td>
-                  </tr>
-                  <tr>
-                    <td style="background-color:#FAF9F6;padding:20px 40px;text-align:center;color:#888888;font-size:11px;border-top:1px solid #EAEAEA;">
-                      <p style="margin:0 0 4px;color:#C9A24B;font-weight:700;letter-spacing:0.1em;font-size:12px;">Twin A Apparels</p>
-                      <p style="margin:0;color:#9CA3AF;">© ${new Date().getFullYear()} Twin A Apparels. All rights reserved.</p>
-                    </td>
-                  </tr>
-                </table>
-              </td>
-            </tr>
-          </table>
-        </body>
-        </html>
-      `
-    };
-
-    const results = await Promise.allSettled([
-      transporter.sendMail(adminMailOptions),
-      transporter.sendMail(custMailOptions),
-    ]);
-
-    console.log(`Personal shopper emails dispatched for request #${id || 'N/A'}`);
-    return results;
-  } catch (err) {
-    console.error(`Failed to send personal shopper email:`, err.message);
-    return null;
-  }
-};
-
-/**
- * Sends Daily Low Stock Summary to Admin
- */
 const sendLowStockAdminAlert = async (lowStockItems = []) => {
   try {
     if (!Array.isArray(lowStockItems) || lowStockItems.length === 0) return null;
@@ -2417,7 +2220,6 @@ module.exports = {
   sendMarketingAutomationReport,
   sendWelcomeEmail,
   sendPasswordChangedEmail,
-  sendPersonalShopperNotification,
   sendLowStockAdminAlert,
 };
 

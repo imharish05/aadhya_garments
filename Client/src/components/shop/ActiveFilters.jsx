@@ -13,7 +13,7 @@ const ActiveFilters = ({ chips = [], onClearAll }) => {
           <button
             type="button"
             onClick={c.onRemove}
-            className="group flex items-center gap-2 rounded-full bg-black py-1.5 pl-3.5 pr-2 font-inter text-[11px] font-semibold tracking-[0.04em] text-[#DFC481] transition-colors hover:bg-[#2A2014]"
+            className="group flex items-center gap-2 rounded-full bg-black py-1.5 pl-3.5 pr-2 font-sans text-[11px] font-semibold tracking-[0.04em] text-[#DFC481] transition-colors hover:bg-[#2A2014]"
             aria-label={`Remove filter ${c.label}`}
           >
             {c.label}
@@ -27,7 +27,7 @@ const ActiveFilters = ({ chips = [], onClearAll }) => {
         <button
           type="button"
           onClick={onClearAll}
-          className="px-2 font-inter text-[11px] font-semibold uppercase tracking-[0.16em] text-[#7A5F28] underline underline-offset-4 hover:text-black"
+          className="px-2 font-sans text-[11px] font-semibold uppercase tracking-[0.16em] text-[#7A5F28] underline underline-offset-4 hover:text-black"
         >
           Clear all
         </button>

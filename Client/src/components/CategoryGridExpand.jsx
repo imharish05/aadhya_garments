@@ -190,7 +190,7 @@ export default function CategoryGridExpand({ categories = [], allHref = "/produc
   const showArrows = categories.length > 3;
 
   const arrowBtn =
-    "hidden md:grid absolute top-1/2 -translate-y-1/2 z-20 h-9 w-9 place-items-center rounded-full border border-neutral-300 bg-white text-neutral-900 shadow-sm hover:bg-neutral-900 hover:text-white transition-colors active:scale-95";
+    "hidden md:grid absolute top-1/2 -translate-y-1/2 z-20 h-9 w-9 place-items-center rounded-full border border-neutral-300 bg-white text-neutral-900 shadow-sm hover:bg-brand-gold hover:text-black hover:border-brand-gold transition-colors active:scale-95";
 
   return (
     <div className="relative bg-white">
@@ -270,7 +270,7 @@ export default function CategoryGridExpand({ categories = [], allHref = "/produc
                       {cat.count}
                     </small>
                   </span>
-                  <span className="grid h-6 w-6 place-items-center rounded-full bg-neutral-900 text-white transition-transform duration-300 group-hover:rotate-45">
+                  <span className="grid h-6 w-6 place-items-center rounded-full bg-neutral-900 text-white transition-all duration-300 group-hover:bg-brand-gold group-hover:text-black group-hover:rotate-45">
                     <Arrow />
                   </span>
                 </div>

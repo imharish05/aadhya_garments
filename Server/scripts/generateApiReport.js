@@ -139,9 +139,8 @@ async function run() {
           id: realCustomer.id,
           name: realCustomer.name,
           email: realCustomer.email,
-          phone: realCustomer.phone,
-          loyaltyPoints: realCustomer.loyaltyPoints
-        } : { id: 1, name: 'Priya Nair', email: 'priya@gmail.com', phone: '9876543200', loyaltyPoints: 0 }
+          phone: realCustomer.phone
+        } : { id: 1, name: 'Priya Nair', email: 'priya@gmail.com', phone: '9876543200'}
       }),
       purpose: 'Used in the customer signup/registration page to create new accounts.'
     },
@@ -190,7 +189,7 @@ async function run() {
       request: 'Headers:\nAuthorization: Bearer <token>',
       response: cleanJSON({
         success: true,
-        customer: realCustomer || { id: 1, name: 'Priya Nair', email: 'priya@gmail.com', phone: '9876543200', loyaltyPoints: 1450 }
+        customer: realCustomer || { id: 1, name: 'Priya Nair', email: 'priya@gmail.com', phone: '9876543200'}
       }),
       purpose: 'Used in customer dashboards, navigation header (profile greeting), and profile settings page.'
     },
@@ -628,7 +627,7 @@ async function run() {
       purpose: 'Used in admin settings table to remove homepage slideshow records.'
     },
 
-    // ─── Customers & Loyalty ───
+    // ─── Customers ───
     {
       name: 'List Customers',
       method: 'GET',
@@ -675,18 +674,6 @@ async function run() {
         message: 'Product added to wishlist'
       }),
       purpose: 'Used in storefront product card heart outline/filled icon interactions.'
-    },
-    {
-      name: 'Get Loyalty Points Ledger',
-      method: 'GET',
-      endpoint: '/api/customers/loyalty',
-      request: 'Headers:\nAuthorization: Bearer <token>',
-      response: cleanJSON({
-        success: true,
-        loyaltyPoints: realCustomer ? realCustomer.loyaltyPoints : 1450,
-        history: []
-      }),
-      purpose: 'Used in customer panel under "Loyalty points ledger" history records.'
     },
     {
       name: 'Get Support Tickets',

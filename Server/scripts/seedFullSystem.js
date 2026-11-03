@@ -108,7 +108,7 @@ async function seedFullSystem() {
       '📦 Guaranteed 100% Authentic & Certified Luxury Products with Easy Returns.',
       '🚚 Same-Day Dispatch available for orders placed before 2:00 PM in metro cities.',
       '🎉 New Season Fashion Collection 2026 is Live now – Explore Apparel & Accessories!',
-      '🌟 Earn Reward Points on every order and redeem instantly at checkout.',
+      '✨ Discover the latest handcrafted ethnic collections and exclusive styles.',
       '🏡 Modern Home & Living Essentials now starting at just ₹799.',
       '📞 24/7 Dedicated Customer Support & Instant WhatsApp Assistance.'
     ];

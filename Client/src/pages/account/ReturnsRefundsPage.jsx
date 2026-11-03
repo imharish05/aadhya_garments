@@ -23,6 +23,7 @@ import { fetchMyReturns } from '../../redux/slices/returnsSlice';
 import { formatPrice, formatOrderAmount } from '../../utils/currency';
 import { getImageUrl } from '../../utils/imageUrl';
 import { getPlaceholderSvg } from '../../utils/placeholder';
+import { ReturnsListSkeleton } from '../../components/skeletons';
 
 const EXCLUDE_VARIANT_KEYS = new Set([
   'id', 'sku', 'variantId', 'productId', 'stock', 'price', 'mrp',
@@ -250,10 +251,7 @@ const ReturnsRefundsPage = () => {
 
       {/* Content List */}
       {loading && returns.length === 0 ? (
-        <div className="bg-white rounded-lg border border-neutral-200/80 p-12 text-center shadow-xs">
-          <RefreshCw size={28} className="animate-spin text-brand-gold mx-auto mb-3" />
-          <p className="text-neutral-500 text-sm">Loading your return records...</p>
-        </div>
+        <ReturnsListSkeleton count={2} />
       ) : error ? (
         <div className="bg-white rounded-lg border border-red-200 p-8 text-center shadow-xs">
           <AlertCircle size={32} className="text-red-500 mx-auto mb-2" />
@@ -329,7 +327,7 @@ const ReturnsRefundsPage = () => {
                 {/* Card Top Header */}
                 <div className="bg-neutral-50/70 border-b border-neutral-100 p-4 flex flex-wrap items-center justify-between gap-3 text-xs">
                   <div className="flex items-center gap-3 flex-wrap">
-                    <span className="font-mono font-bold text-neutral-900 px-2 py-0.5 bg-white border border-neutral-200 rounded-lg">
+                    <span className="font-sans font-bold text-neutral-900 px-2 py-0.5 bg-white border border-neutral-200 rounded-lg">
                       {item.returnNumber}
                     </span>
                     {item.order && (

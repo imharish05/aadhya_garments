@@ -245,22 +245,22 @@ const PhoneInput = ({
       )}
 
       <div
-        className={`relative flex items-center w-full rounded-lg border bg-white transition-all ${
+        className={`relative flex items-center w-full h-11 rounded-lg border bg-white transition-all ${
           hasError
             ? 'border-red-500 ring-1 ring-red-200'
             : 'border-neutral-300 hover:border-neutral-400 focus-within:border-brand-gold focus-within:ring-1 focus-within:ring-brand-gold/30'
         } ${disabled ? 'bg-neutral-100 opacity-70 cursor-not-allowed' : ''}`}
       >
         {/* Country Code Dropdown Container */}
-        <div className="relative shrink-0 border-r border-neutral-200" ref={dropdownRef}>
+        <div className="relative shrink-0 border-r border-neutral-200 h-full flex items-center" ref={dropdownRef}>
           <button
             type="button"
             id={`${id}-country-btn`}
             disabled={disabled || filteredCountries.length <= 1}
-            onClick={() => setDropdownOpen((prev) => !prev)}
+            onClick={() => filteredCountries.length > 1 && setDropdownOpen((prev) => !prev)}
             aria-haspopup="listbox"
             aria-expanded={dropdownOpen}
-            className={`flex items-center gap-1.5 px-3 py-2.5 text-xs sm:text-sm font-medium text-neutral-800 bg-neutral-50/70 hover:bg-neutral-100 rounded-l-lg transition-colors select-none ${
+            className={`h-full flex items-center gap-1.5 px-3 text-xs sm:text-sm font-medium text-neutral-800 bg-neutral-50/70 hover:bg-neutral-100 rounded-l-lg transition-colors select-none ${
               disabled || filteredCountries.length <= 1 ? 'cursor-default' : 'cursor-pointer'
             }`}
           >
@@ -308,7 +308,7 @@ const PhoneInput = ({
                       </span>
                       <span className="truncate">{c.name}</span>
                     </div>
-                    <span className="font-mono text-neutral-500 text-xs shrink-0 ml-2">
+                    <span className="font-sans font-medium text-neutral-500 text-xs shrink-0 ml-2">
                       {c.dialCode}
                     </span>
                   </button>
@@ -335,7 +335,7 @@ const PhoneInput = ({
           maxLength={activeCountryObj.maxLength}
           disabled={disabled}
           placeholder={activeCountryObj.placeholder}
-          className={`w-full px-3 py-2.5 text-xs sm:text-sm font-medium text-neutral-900 bg-transparent placeholder:text-neutral-400 focus:outline-none rounded-r ${inputClassName}`}
+          className={`w-full h-full px-3 text-sm font-medium text-neutral-900 bg-transparent placeholder:text-neutral-400 focus:outline-none rounded-r ${inputClassName}`}
         />
       </div>
 

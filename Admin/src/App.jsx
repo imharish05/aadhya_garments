@@ -10,7 +10,6 @@ import SubCategoriesAdminPage from './pages/SubCategoriesAdminPage';
 import OrdersAdminPage from './pages/OrdersAdminPage';
 import ReturnsAdminPage from './pages/ReturnsAdminPage';
 import CustomersAdminPage from './pages/CustomersAdminPage';
-import AbandonedCartsAdminPage from './pages/AbandonedCartsAdminPage';
 import BannersAdminPage from './pages/BannersAdminPage';
 import CouponsAdminPage from './pages/CouponsAdminPage';
 import PaymentsAdminPage from './pages/PaymentsAdminPage';
@@ -94,7 +93,6 @@ const App = () => {
         <Route path="/customers"   element={<Protected><CustomersAdminPage /></Protected>} />
         <Route path="/contact-enquiries" element={<Protected><ContactEnquiriesAdminPage /></Protected>} />
         <Route path="/contact_enquiries" element={<Navigate to="/contact-enquiries" replace />} />
-        <Route path="/abandoned-carts" element={<Protected><AbandonedCartsAdminPage /></Protected>} />
         <Route path="/slider-messages" element={<Protected><SliderMessagesAdminPage /></Protected>} />
         <Route path="/banners"     element={<Protected><BannersAdminPage /></Protected>} />
         <Route path="/coupons"     element={<Protected><CouponsAdminPage /></Protected>} />

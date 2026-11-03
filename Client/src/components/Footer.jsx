@@ -49,11 +49,11 @@ const Footer = () => {
             blur={false}
             duration={0.4}
             startDelay={0.1}
-            className="text-white/60 text-sm leading-relaxed mb-6"
+            className="text-white text-sm leading-relaxed mb-6"
           />
           <div className="flex gap-3">
             {[Instagram, Facebook, Youtube, Twitter].map((Icon, i) => (
-              <a key={i} href="#" className="w-9 h-9 border border-white/20 rounded-lg flex items-center justify-center hover:border-brand-gold hover:text-brand-gold transition-all duration-200 focus-visible:outline-white" aria-label={`Social link ${i+1}`}>
+              <a key={i} href="#" className="w-9 h-9 border border-white/40 text-white rounded-lg flex items-center justify-center hover:border-brand-gold hover:text-brand-gold transition-all duration-200 focus-visible:outline-white" aria-label={`Social link ${i+1}`}>
                 <Icon size={16} />
               </a>
             ))}
@@ -72,7 +72,7 @@ const Footer = () => {
           <ul className="space-y-3">
             {displayCategories.map(cat => (
               <li key={cat.name}>
-                <Link to={cat.to} className="text-white/60 text-sm hover:text-brand-gold transition-colors focus-visible:outline-brand-gold">
+                <Link to={cat.to} className="text-white text-sm hover:text-brand-gold transition-colors focus-visible:outline-brand-gold">
                   {cat.name}
                 </Link>
               </li>
@@ -100,7 +100,7 @@ const Footer = () => {
               { label: 'Contact Us', to: '/contact' }
             ].map(link => (
               <li key={link.label}>
-                <Link to={link.to} className="text-white/60 text-sm hover:text-brand-gold transition-colors focus-visible:outline-brand-gold">
+                <Link to={link.to} className="text-white text-sm hover:text-brand-gold transition-colors focus-visible:outline-brand-gold">
                   {link.label}
                 </Link>
               </li>
@@ -118,11 +118,11 @@ const Footer = () => {
             className="font-playfair text-lg font-semibold text-white mb-5"
           />
           <ul className="space-y-3">
-            <li className="flex gap-2.5 text-white/60 text-sm">
+            <li className="flex gap-2.5 text-white text-sm">
               <Phone size={15} className="text-brand-gold mt-0.5 flex-shrink-0" />
               <a href="tel:+919999999999" className="hover:text-brand-gold transition-colors">+91 99999 99999</a>
             </li>
-            <li className="flex gap-2.5 text-white/60 text-sm">
+            <li className="flex gap-2.5 text-white text-sm">
               <Mail size={15} className="text-brand-gold mt-0.5 flex-shrink-0" />
               <a href="mailto:hello@twinapparels.com" className="hover:text-brand-gold transition-colors">hello@twinapparels.com</a>
             </li>
@@ -132,7 +132,7 @@ const Footer = () => {
 
       {/* Bottom Bar */}
       <div className="border-t border-white/10">
-        <div className="max-w-site mx-auto px-4 sm:px-6 md:px-8 py-5 flex flex-col sm:flex-row items-center justify-between gap-3 text-white/40 text-xs text-center sm:text-left">
+        <div className="max-w-site mx-auto px-4 sm:px-6 md:px-8 py-5 flex flex-col sm:flex-row items-center justify-between gap-3 text-white/90 text-xs text-center sm:text-left">
           <p>© {new Date().getFullYear()} Twin A Apparels. All rights reserved.</p>
           <p>
             Developed by{' '}
@@ -140,7 +140,7 @@ const Footer = () => {
               href="https://saitechnosolutions.com/"
               target="_blank"
               rel="noopener noreferrer"
-              className="text-white/60 hover:text-brand-gold transition-colors underline underline-offset-2"
+              className="text-white hover:text-brand-gold transition-colors underline underline-offset-2"
             >
               Sai Techno Solutions
             </a>

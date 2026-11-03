@@ -43,44 +43,6 @@ const resolveColor = (name = '') => {
 const VARIANT_PRESET_VALUES = {
   Size: ['XS', 'S', 'M', 'L', 'XL', 'XXL', '3XL', 'FREE SIZE'],
   Color: ['Black', 'White', 'Red', 'Blue', 'Green', 'Gray', 'Navy', 'Pink', 'Gold', 'Brown'],
-  'Band Color': ['Black', 'White', 'Pink', 'Green', 'Blue'],
-  Storage: ['128GB', '256GB', '512GB', '1TB', '2TB'],
-  RAM: ['4GB', '6GB', '8GB', '12GB', '16GB', '32GB', '64GB'],
-  Processor: ['i5', 'i7', 'i9', 'Ryzen 5', 'Ryzen 7', 'M2', 'M3'],
-  Connectivity: ['Wired', 'Bluetooth', 'Wi-Fi', 'Zigbee', 'Matter'],
-  Resolution: ['1080p', '1440p', '4K'],
-  'Refresh Rate': ['60Hz', '120Hz', '144Hz', '240Hz'],
-  Capacity: ['8GB', '16GB', '256GB', '512GB', '1TB', '10000mAh', '20000mAh'],
-  Type: ['DDR4', 'DDR5', 'SATA', 'NVMe', 'Indoor', 'Outdoor'],
-  Wattage: ['20W', '30W', '65W', '100W', '1800W'],
-  'Band Material': ['Silicone', 'Leather', 'Metal', 'Nylon'],
-  'Case Size': ['40mm', '42mm', '44mm', '45mm'],
-  Fit: ['Slim', 'Regular', 'Relaxed', 'Oversized'],
-  Material: ['Cotton', 'Polyester', 'Denim', 'Leather', 'Wood', 'Stainless Steel'],
-  'Metal Type': ['Gold', 'Silver', 'Rose Gold', 'Stainless Steel'],
-  Width: ['Regular', 'Wide'],
-  'Age / Size': ['0-3M', '3-6M', '6-12M', '2T', '3T', '4T', '5-6Y', '7-8Y'],
-  'Age Range': ['0-2Y', '3-5Y', '6-8Y', '9+'],
-  Finish: ['Matte', 'Dewy', 'Glossy', 'Oak', 'Walnut'],
-  Style: ['Modern', 'Boho', 'Minimalist', 'Casual', 'Formal'],
-  'Skin Type': ['Oily', 'Dry', 'Combination', 'Sensitive'],
-  SPF: ['SPF 15', 'SPF 30', 'SPF 50'],
-  Shade: ['Fair', 'Light', 'Medium', 'Tan', 'Deep'],
-  'Hair Type': ['Curly', 'Straight', 'Color-treated', 'Oily'],
-  Concentration: ['EDT', 'EDP', 'Parfum'],
-  Scent: ['Fresh', 'Unscented', 'Citrus', 'Musk'],
-  Weight: ['5lb', '10lb', '20lb', '50lb'],
-  'Resistance Level': ['Light', 'Medium', 'Heavy'],
-  'Temp Rating': ['20°F', '0°F', '32°F'],
-  'Frame Size': ['S', 'M', 'L', 'XL'],
-  'Wheel Size': ['26"', '27.5"', '29"'],
-  'Helmet Size': ['S', 'M', 'L'],
-  'Piece Count': ['100pc', '500pc', '1000pc'],
-  'Player Count': ['1-2', '2-4', '4-6'],
-  Platform: ['PS5', 'Xbox Series X', 'Switch', 'PC'],
-  Edition: ['Standard', 'Deluxe', "Collector's"],
-  Format: ['Hardcover', 'Paperback', 'E-book', 'Audiobook'],
-  Language: ['English', 'Spanish', 'French', 'Hindi'],
 };
 
 /**
@@ -262,6 +224,7 @@ const VariantModal = ({ variant, variants = [], onClose, onSave, products }) => 
 
   const [mainImageFile, setMainImageFile] = useState(null);
   const [mainImagePreview, setMainImagePreview] = useState(variant?.image || '');
+  const [isDraggingMain, setIsDraggingMain] = useState(false);
 
 
 
@@ -355,25 +318,40 @@ const VariantModal = ({ variant, variants = [], onClose, onSave, products }) => 
     }));
   };
 
+  const processMainImageFile = async (file) => {
+    if (!file) return false;
+    const val = await validateImageDimensionsAndSize(file, { maxSizeMB: 5, minWidth: 200, minHeight: 200, requireSquare: false });
+    if (!val.isValid) {
+      toast.error(val.error);
+      return false;
+    }
+    setMainImageFile(file);
+    setMainImagePreview(URL.createObjectURL(file));
+    return true;
+  };
+
   const handleMainImageChange = async (e) => {
     const file = e.target.files?.[0];
     if (file) {
-      const val = await validateImageDimensionsAndSize(file, { maxSizeMB: 3, minWidth: 400, minHeight: 400, requireSquare: true });
-      if (!val.isValid) {
-        toast.error(val.error);
-        e.target.value = '';
-        return;
-      }
-      setMainImageFile(file);
-      setMainImagePreview(URL.createObjectURL(file));
+      await processMainImageFile(file);
+    }
+    e.target.value = '';
+  };
+
+  const handleMainImageDrop = async (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDraggingMain(false);
+    const file = e.dataTransfer?.files?.[0];
+    if (file) {
+      await processMainImageFile(file);
     }
   };
 
-  const handleMultipleFilesSelect = async (e) => {
-    const rawFiles = Array.from(e.target.files || []);
+  const processMultipleFiles = async (rawFiles) => {
     const validFiles = [];
     for (const file of rawFiles) {
-      const val = await validateImageDimensionsAndSize(file, { maxSizeMB: 3, minWidth: 400, minHeight: 400, requireSquare: true });
+      const val = await validateImageDimensionsAndSize(file, { maxSizeMB: 5, minWidth: 200, minHeight: 200, requireSquare: false });
       if (!val.isValid) {
         toast.error(val.error);
       } else {
@@ -393,6 +371,14 @@ const VariantModal = ({ variant, variants = [], onClose, onSave, products }) => 
       return file;
     });
     setNewImageFiles(prev => [...prev, ...selected]);
+  };
+
+  const handleMultipleFilesSelect = async (e) => {
+    const rawFiles = Array.from(e.target.files || []);
+    if (rawFiles.length > 0) {
+      await processMultipleFiles(rawFiles);
+    }
+    e.target.value = '';
   };
 
   const removeExistingImage = (idx) => {
@@ -720,11 +706,18 @@ const VariantModal = ({ variant, variants = [], onClose, onSave, products }) => 
                   </button>
                 </div>
               ) : (
-                <label className="border-2 border-dashed border-neutral-300 hover:border-brand-gold bg-white hover:bg-neutral-50/50 rounded-xl p-6 flex flex-col items-center justify-center cursor-pointer transition-all group">
+                <label
+                  onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); setIsDraggingMain(true); }}
+                  onDragEnter={(e) => { e.preventDefault(); e.stopPropagation(); setIsDraggingMain(true); }}
+                  onDragLeave={(e) => { e.preventDefault(); e.stopPropagation(); setIsDraggingMain(false); }}
+                  onDrop={handleMainImageDrop}
+                  className={`border-2 border-dashed ${isDraggingMain ? 'border-brand-gold bg-amber-50/60 ring-2 ring-brand-gold/30' : 'border-neutral-300 hover:border-brand-gold bg-white hover:bg-neutral-50/50'} rounded-xl p-6 flex flex-col items-center justify-center cursor-pointer transition-all group`}
+                >
                   <div className="flex items-center gap-1.5 text-xs text-neutral-500 font-medium group-hover:text-neutral-800">
-                    <Camera size={16} className="text-neutral-400 group-hover:text-brand-gold" />
+                    <Camera size={16} className={`text-neutral-400 group-hover:text-brand-gold transition-transform ${isDraggingMain ? 'text-brand-gold scale-125' : ''}`} />
                     <span>Click to <strong>browse</strong> or <strong>drag & drop</strong></span>
                   </div>
+                  <span className="text-[10px] text-neutral-400 mt-1">Supports JPG, PNG, WebP up to 5MB</span>
                   <input type="file" accept="image/jpeg,image/png,image/webp" onChange={handleMainImageChange} className="hidden" />
                 </label>
               )}
@@ -776,7 +769,20 @@ const VariantModal = ({ variant, variants = [], onClose, onSave, products }) => 
                 })}
 
                 {existingImages.length + newImageFiles.length < 5 && (
-                  <label className="aspect-square border-2 border-dashed border-neutral-300 hover:border-brand-gold flex flex-col items-center justify-center text-neutral-400 hover:text-brand-gold cursor-pointer rounded-md bg-neutral-50 transition-colors">
+                  <label
+                    onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                    onDragEnter={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                    onDrop={async (e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      const files = Array.from(e.dataTransfer?.files || []);
+                      if (files.length > 0) {
+                        await processMultipleFiles(files);
+                      }
+                    }}
+                    className="aspect-square border-2 border-dashed border-neutral-300 hover:border-brand-gold flex flex-col items-center justify-center text-neutral-400 hover:text-brand-gold cursor-pointer rounded-md bg-neutral-50 transition-colors"
+                    title="Click to browse or drop images here"
+                  >
                     <Plus size={20} />
                     <span className="text-[10px] font-semibold mt-1">Add Photo</span>
                     <input

@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Secure token storage utility.
  * Obfuscates keys and values in localStorage using a XOR + Base64 encoding.
  * This prevents plain-text JWT tokens from being directly readable in browser dev tools.

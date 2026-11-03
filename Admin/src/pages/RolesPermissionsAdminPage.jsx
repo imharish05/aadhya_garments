@@ -33,11 +33,11 @@ const PERMISSION_GROUPS = [
   },
   {
     id: 'orders_carts',
-    title: 'Orders & Carts',
+    title: 'Orders',
     items: [
-      { key: 'view_orders', label: 'View Orders & Abandoned Carts' },
+      { key: 'view_orders', label: 'View Orders' },
       { key: 'update_orders', label: 'Update Orders & Process Status' },
-      { key: 'cancel_orders', label: 'Cancel Orders & Clear Carts' },
+      { key: 'cancel_orders', label: 'Cancel Orders' },
     ]
   },
   {

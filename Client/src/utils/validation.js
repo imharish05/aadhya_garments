@@ -1,4 +1,4 @@
-export const validateEmail = (email) => {
+﻿export const validateEmail = (email) => {
   if (!email) return { isValid: false, message: 'Email address is required.' };
   const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
   if (!emailRegex.test(email.trim())) {

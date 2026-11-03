@@ -1,4 +1,4 @@
-import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
+﻿import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import api from '../../services/api';
 import { getAccessToken } from '../../utils/tokenStorage';
 import { areVariantsEqual } from '../../utils/variantFormatter';

@@ -1,4 +1,4 @@
-import { Camera, Mesh, Plane, Program, Renderer, Texture, Transform } from 'ogl';
+﻿import { Camera, Mesh, Plane, Program, Renderer, Texture, Transform } from 'ogl';
 import { forwardRef, useEffect, useImperativeHandle, useRef } from 'react';
 
 import './CircularGallery.css';

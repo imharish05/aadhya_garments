@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect, memo } from 'react';
+﻿import { useState, useCallback, useEffect, memo } from 'react';
 
 /**
  * Smooth dual-handle price range slider.

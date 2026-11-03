@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useMemo } from 'react';
 import { useSelector } from 'react-redux';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Plus, Edit2, Trash2, X, Upload, RefreshCw, AlertCircle, CheckCircle2, Info } from 'lucide-react';
@@ -73,6 +73,14 @@ const BANNER_SPECS = {
     height: 800,
     aspectRatio: 3 / 2,
     aspectLabel: '3:2 Landscape - Promo offer banner',
+  },
+  ABOUT: {
+    label: 'ABOUT',
+    recommended: '1200 × 1400 px',
+    width: 1200,
+    height: 1400,
+    aspectRatio: 6 / 7,
+    aspectLabel: 'Portrait / Editorial - Our Story section',
   },
 };
 
@@ -499,6 +507,119 @@ const BannersAdminPage = () => {
     });
   };
 
+  // ── About Section (Our Story) State & Handlers ──
+  const aboutBanner = useMemo(() => {
+    return banners.find(b => b.type === 'ABOUT') || null;
+  }, [banners]);
+
+  const [aboutForm, setAboutForm] = useState({
+    title: 'Twin A',
+    subtitle: 'Our Story',
+    badgeText: '15',
+    description: 'Twin A Apparels is a Coimbatore-rooted fashion label dedicated to crafting authentic, contemporary garments for the whole family. Every stitch reflects our commitment to intentional silhouettes, breathable fabrics, and effortless elegance.\n\nFrom everyday modern essentials to festive occasion wear, our collections harmonize South India’s rich textile heritage with clean contemporary design.',
+    ctaText: 'Discover Our Heritage',
+    ctaLink: '/about',
+    isActive: true,
+    metrics: [
+      { label: 'Premium Fabric Quality', percentage: 95 },
+      { label: 'Artisanal Finishing & Fit', percentage: 90 },
+      { label: 'Customer Loyalty & Trust', percentage: 98 },
+    ],
+  });
+  const [aboutImageFile, setAboutImageFile] = useState(null);
+  const [aboutImagePreview, setAboutImagePreview] = useState(null);
+  const [aboutSaving, setAboutSaving] = useState(false);
+  const aboutFileInputRef = useRef(null);
+
+  useEffect(() => {
+    if (aboutBanner) {
+      let descText = aboutBanner.description || '';
+      let metricsArr = [
+        { label: 'Premium Fabric Quality', percentage: 95 },
+        { label: 'Artisanal Finishing & Fit', percentage: 90 },
+        { label: 'Customer Loyalty & Trust', percentage: 98 },
+      ];
+
+      if (aboutBanner.description) {
+        try {
+          const parsed = JSON.parse(aboutBanner.description);
+          if (parsed && typeof parsed === 'object') {
+            if (parsed.text !== undefined) descText = parsed.text;
+            if (Array.isArray(parsed.metrics) && parsed.metrics.length > 0) {
+              metricsArr = parsed.metrics;
+            }
+          }
+        } catch (e) {}
+      }
+
+      setAboutForm({
+        title: aboutBanner.title || 'Twin A',
+        subtitle: aboutBanner.subtitle || 'Our Story',
+        badgeText: aboutBanner.badgeText || '15',
+        description: descText || 'Twin A Apparels is a Coimbatore-rooted fashion label dedicated to crafting authentic, contemporary garments for the whole family. Every stitch reflects our commitment to intentional silhouettes, breathable fabrics, and effortless elegance.\n\nFrom everyday modern essentials to festive occasion wear, our collections harmonize South India’s rich textile heritage with clean contemporary design.',
+        ctaText: aboutBanner.ctaText || 'Discover Our Heritage',
+        ctaLink: aboutBanner.ctaLink || '/about',
+        isActive: aboutBanner.isActive !== false,
+        metrics: metricsArr,
+      });
+      setAboutImagePreview(aboutBanner.image ? getImageUrl(aboutBanner.image) : null);
+      setAboutImageFile(null);
+    }
+  }, [aboutBanner]);
+
+  const handleSaveAbout = async (e) => {
+    if (e && e.preventDefault) e.preventDefault();
+    if (!canAddBanner) {
+      toast.error('You do not have permission to manage banners.');
+      return;
+    }
+    setAboutSaving(true);
+    try {
+      const fd = new FormData();
+      fd.append('type', 'ABOUT');
+      fd.append('title', aboutForm.title || 'Twin A');
+      fd.append('subtitle', aboutForm.subtitle || 'Our Story');
+      fd.append('badgeText', aboutForm.badgeText || '15');
+      const payloadDesc = JSON.stringify({
+        text: aboutForm.description || '',
+        metrics: aboutForm.metrics || [
+          { label: 'Premium Fabric Quality', percentage: 95 },
+          { label: 'Artisanal Finishing & Fit', percentage: 90 },
+          { label: 'Customer Loyalty & Trust', percentage: 98 },
+        ],
+      });
+      fd.append('description', payloadDesc);
+      fd.append('ctaText', aboutForm.ctaText || 'Discover Our Heritage');
+      fd.append('ctaLink', aboutForm.ctaLink || '/about');
+      fd.append('isActive', 'true');
+      fd.append('position', '0');
+
+      if (aboutImageFile) {
+        fd.append('image', aboutImageFile);
+      }
+
+      if (aboutBanner) {
+        await api.put(`/banners/${aboutBanner.id}`, fd);
+        toast.success('About section updated successfully.');
+      } else {
+        if (!aboutImageFile) {
+          toast.error('Please upload an image for the About section.');
+          setAboutSaving(false);
+          return;
+        }
+        await api.post('/banners', fd);
+        toast.success('About section created successfully.');
+      }
+
+      await load();
+    } catch (err) {
+      console.error(err);
+      toast.error(err.response?.data?.message || err.message || 'Failed to save About section.');
+    } finally {
+      setAboutSaving(false);
+    }
+  };
+
   const handleToggle = async (b) => {
     const previousState = b.isActive;
     const nextState = !previousState;
@@ -534,7 +655,7 @@ const BannersAdminPage = () => {
 
   // Tabs order matching homepage display sequence: Hero (1st) -> CountDown (2nd) -> Exclusive Deal (3rd) -> Promo (4th)
   // const TABS = ['All', 'Hero', 'CountDown', 'Exclusive Deal', 'Promo'];
-  const TABS = ['Hero'];
+  const TABS = ['Hero', 'About Section'];
   const { admin } = useSelector((s) => s.auth);
   const canAddBanner = checkPermission(admin, 'add_banner');
   const canDeleteBanner = checkPermission(admin, 'delete_banner');
@@ -564,14 +685,16 @@ const BannersAdminPage = () => {
         ))}
       </div>
 
-      <div className="flex justify-between items-center mb-6">
-        <p className="text-sm text-brand-grey">{filteredBanners.length} banner{filteredBanners.length !== 1 ? 's' : ''}</p>
-        {canAddBanner && (
-          <button onClick={() => openModal()} className="btn-primary flex items-center gap-2" id="add-banner-btn">
-            <Plus size={16} /> Add Banner
-          </button>
-        )}
-      </div>
+      {activeTab === 'Hero' && (
+        <>
+          <div className="flex justify-between items-center mb-6">
+            <p className="text-sm text-brand-grey">{filteredBanners.length} banner{filteredBanners.length !== 1 ? 's' : ''}</p>
+            {canAddBanner && (
+              <button onClick={() => openModal()} className="btn-primary flex items-center gap-2" id="add-banner-btn">
+                <Plus size={16} /> Add Banner
+              </button>
+            )}
+          </div>
 
       {loading ? (
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -643,6 +766,324 @@ const BannersAdminPage = () => {
               </div>
             </div>
           ))}
+        </div>
+      )}
+
+        </>
+      )}
+
+      {/* ── ABOUT SECTION TAB ── */}
+      {activeTab === 'About Section' && (
+        <div className="bg-white rounded-xl border border-brand-light p-6 shadow-xs">
+          <div className="flex flex-col md:flex-row md:items-center justify-between pb-6 mb-6 border-b border-brand-light gap-4">
+            <div>
+              <h3 className="font-playfair text-xl font-semibold text-brand-text">Homepage "Our Story" / About Section</h3>
+              <p className="text-xs text-brand-grey mt-1">Manage the craftsmanship image, story headings, experience counter, and description copy for the homepage.</p>
+            </div>
+            <div className="flex items-center gap-4">
+              <button
+                type="button"
+                onClick={handleSaveAbout}
+                disabled={aboutSaving || !canAddBanner}
+                className="btn-primary flex items-center gap-2 text-xs py-2 px-5"
+                id="save-about-section-btn"
+              >
+                {aboutSaving ? <RefreshCw size={14} className="animate-spin" /> : <CheckCircle2 size={14} />}
+                {aboutSaving ? 'Saving...' : 'Save Changes'}
+              </button>
+            </div>
+          </div>
+
+          <form onSubmit={handleSaveAbout} className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+            {/* Left: Form Controls */}
+            <div className="lg:col-span-7 space-y-5">
+              {/* Image Upload Area */}
+              <div>
+                <label className="block text-xs font-semibold text-brand-grey mb-1.5">
+                  Craftsmanship / Story Image {!aboutBanner && '*'}
+                </label>
+                <div
+                  onClick={() => aboutFileInputRef.current?.click()}
+                  className="border-2 border-dashed border-brand-light hover:border-brand-gold rounded-xl p-5 text-center cursor-pointer transition-colors bg-neutral-50/50"
+                >
+                  {aboutImagePreview ? (
+                    <div className="relative inline-block">
+                      <img
+                        src={aboutImagePreview}
+                        alt="Story Preview"
+                        className="max-h-64 rounded-lg object-cover shadow-sm mx-auto"
+                      />
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setAboutImagePreview(null);
+                          setAboutImageFile(null);
+                          if (aboutFileInputRef.current) aboutFileInputRef.current.value = '';
+                        }}
+                        className="absolute top-2 right-2 bg-white/95 p-1.5 rounded-full shadow text-neutral-800 hover:text-red-600 transition-colors"
+                        title="Remove image"
+                      >
+                        <X size={14} />
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="py-6">
+                      <Upload size={32} className="mx-auto text-brand-grey mb-2 opacity-70" />
+                      <p className="text-sm font-medium text-brand-text">Click to upload story image</p>
+                      <p className="text-xs text-brand-grey mt-1">Recommended: 1200 × 1400 px or portrait ratio (PNG, JPG, WebP — max 5MB)</p>
+                    </div>
+                  )}
+                  <input
+                    ref={aboutFileInputRef}
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (!file) return;
+                      if (file.size > 5 * 1024 * 1024) {
+                        toast.error(`File size exceeds 5MB limit (${(file.size / (1024 * 1024)).toFixed(1)}MB).`);
+                        return;
+                      }
+                      setAboutImageFile(file);
+                      const reader = new FileReader();
+                      reader.onloadend = () => setAboutImagePreview(reader.result);
+                      reader.readAsDataURL(file);
+                    }}
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-semibold text-brand-grey mb-1.5" htmlFor="about-title">
+                    Brand / Main Heading
+                  </label>
+                  <input
+                    id="about-title"
+                    type="text"
+                    value={aboutForm.title}
+                    onChange={(e) => setAboutForm(p => ({ ...p, title: e.target.value }))}
+                    placeholder="e.g. Twin A"
+                    className="w-full border border-brand-light px-3.5 py-2.5 text-sm rounded-lg focus:outline-none focus:border-brand-gold"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-brand-grey mb-1.5" htmlFor="about-subtitle">
+                    Subtitle
+                  </label>
+                  <input
+                    id="about-subtitle"
+                    type="text"
+                    value={aboutForm.subtitle}
+                    onChange={(e) => setAboutForm(p => ({ ...p, subtitle: e.target.value }))}
+                    placeholder="e.g. Our Story"
+                    className="w-full border border-brand-light px-3.5 py-2.5 text-sm rounded-lg focus:outline-none focus:border-brand-gold"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-brand-grey mb-1.5" htmlFor="about-badge">
+                  Years of Experience Counter
+                </label>
+                <input
+                  id="about-badge"
+                  type="text"
+                  value={aboutForm.badgeText}
+                  onChange={(e) => setAboutForm(p => ({ ...p, badgeText: e.target.value }))}
+                  placeholder="e.g. 15"
+                  className="w-full border border-brand-light px-3.5 py-2.5 text-sm rounded-lg focus:outline-none focus:border-brand-gold"
+                />
+                <p className="text-[11px] text-brand-grey mt-1">Displays as "+{aboutForm.badgeText || '15'} Years of Craftsmanship" on the curved badge.</p>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-brand-grey mb-1.5" htmlFor="about-desc">
+                  Story Description Paragraphs
+                </label>
+                <textarea
+                  id="about-desc"
+                  rows={5}
+                  value={aboutForm.description}
+                  onChange={(e) => setAboutForm(p => ({ ...p, description: e.target.value }))}
+                  placeholder="Enter story paragraphs. Separate multiple paragraphs with an empty line."
+                  className="w-full border border-brand-light px-3.5 py-2.5 text-sm rounded-lg focus:outline-none focus:border-brand-gold resize-y leading-relaxed"
+                />
+                <p className="text-[11px] text-brand-grey mt-1">Tip: Use a blank line between paragraphs to separate them cleanly on the homepage.</p>
+              </div>
+
+              {/* ── Animated Quality Progress Bars (Editable) ── */}
+              <div className="bg-neutral-50/80 border border-brand-light rounded-xl p-4.5 space-y-3.5">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <label className="block text-xs font-bold uppercase tracking-wider text-brand-text">
+                      Animated Quality Progress Bars
+                    </label>
+                    <p className="text-[11px] text-brand-grey mt-0.5">Edit the 3 luxury craftsmanship percentage bars displayed on the homepage.</p>
+                  </div>
+                  <span className="text-[10px] bg-brand-gold/15 text-brand-gold font-bold px-2 py-0.5 rounded">3 Bars</span>
+                </div>
+
+                <div className="space-y-3">
+                  {(aboutForm.metrics || []).map((metric, idx) => (
+                    <div key={idx} className="bg-white p-3.5 rounded-lg border border-brand-light shadow-2xs space-y-2">
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="font-bold text-brand-gold uppercase tracking-wider text-[10px]">Quality Metric {idx + 1}</span>
+                        <span className="font-bold text-neutral-900 tabular-nums">{metric.percentage}%</span>
+                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 items-center">
+                        <div className="sm:col-span-8">
+                          <input
+                            type="text"
+                            value={metric.label}
+                            onChange={(e) => {
+                              const val = e.target.value;
+                              setAboutForm(p => {
+                                const nextM = [...(p.metrics || [])];
+                                nextM[idx] = { ...nextM[idx], label: val };
+                                return { ...p, metrics: nextM };
+                              });
+                            }}
+                            placeholder="e.g. Premium Fabric Quality"
+                            className="w-full border border-brand-light px-3 py-1.5 text-xs rounded-md focus:outline-none focus:border-brand-gold font-medium"
+                          />
+                        </div>
+                        <div className="sm:col-span-4 flex items-center gap-1.5">
+                          <input
+                            type="number"
+                            min="0"
+                            max="100"
+                            value={metric.percentage}
+                            onChange={(e) => {
+                              const val = Math.min(100, Math.max(0, Number(e.target.value) || 0));
+                              setAboutForm(p => {
+                                const nextM = [...(p.metrics || [])];
+                                nextM[idx] = { ...nextM[idx], percentage: val };
+                                return { ...p, metrics: nextM };
+                              });
+                            }}
+                            className="w-20 border border-brand-light px-2.5 py-1.5 text-xs rounded-md focus:outline-none focus:border-brand-gold text-center font-bold text-brand-gold"
+                          />
+                          <span className="text-xs font-bold text-brand-grey">%</span>
+                        </div>
+                      </div>
+                      <div className="w-full h-1.5 bg-neutral-100 rounded-full overflow-hidden">
+                        <div
+                          className="h-full bg-gradient-to-r from-neutral-900 to-[#BEA266] rounded-full transition-all duration-300"
+                          style={{ width: `${metric.percentage}%` }}
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-semibold text-brand-grey mb-1.5" htmlFor="about-cta-text">
+                    CTA Button Text
+                  </label>
+                  <input
+                    id="about-cta-text"
+                    type="text"
+                    value={aboutForm.ctaText}
+                    onChange={(e) => setAboutForm(p => ({ ...p, ctaText: e.target.value }))}
+                    placeholder="e.g. Discover Our Heritage"
+                    className="w-full border border-brand-light px-3.5 py-2.5 text-sm rounded-lg focus:outline-none focus:border-brand-gold"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-brand-grey mb-1.5" htmlFor="about-cta-link">
+                    CTA Button Link
+                  </label>
+                  <input
+                    id="about-cta-link"
+                    type="text"
+                    value={aboutForm.ctaLink}
+                    onChange={(e) => setAboutForm(p => ({ ...p, ctaLink: e.target.value }))}
+                    placeholder="e.g. /about"
+                    className="w-full border border-brand-light px-3.5 py-2.5 text-sm rounded-lg focus:outline-none focus:border-brand-gold"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Right: Live Interactive Card Preview */}
+            <div className="lg:col-span-5 bg-neutral-50 rounded-xl p-5 border border-brand-light/80 flex flex-col justify-between">
+              <div>
+                <div className="flex items-center justify-between pb-3 mb-4 border-b border-brand-light">
+                  <span className="text-xs font-bold uppercase tracking-wider text-brand-grey">Live Preview</span>
+                  <span className="text-[10px] bg-brand-gold/15 text-brand-gold font-semibold px-2 py-0.5 rounded-full">Homepage Card</span>
+                </div>
+
+                <div className="relative w-full h-80 rounded-[24px] overflow-hidden bg-neutral-900 shadow-sm">
+                  {aboutImagePreview ? (
+                    <img
+                      src={aboutImagePreview}
+                      alt="Story Preview"
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex flex-col items-center justify-center text-neutral-400 p-4 text-center">
+                      <Upload size={28} className="mb-2 opacity-50" />
+                      <p className="text-xs">Upload an image to preview</p>
+                    </div>
+                  )}
+
+                  {/* Top-left badge */}
+                  <div className="absolute top-0 left-0 bg-white pt-2.5 pb-2 px-4 rounded-br-[18px] text-[10px] font-bold uppercase tracking-wider text-neutral-950 shadow-xs">
+                    Explore Story →
+                  </div>
+
+                  {/* Bottom-right badge */}
+                  <div className="absolute bottom-0 right-0 bg-white pt-2.5 pb-2 px-4 rounded-tl-[18px] text-right shadow-xs">
+                    <span className="font-playfair text-xl font-light text-neutral-950">+{aboutForm.badgeText || '15'}</span>
+                    <span className="block text-[8px] font-bold uppercase tracking-wider text-neutral-700">Years of Craftsmanship</span>
+                  </div>
+                </div>
+
+                <div className="mt-5 space-y-2">
+                  <h4 className="font-playfair text-2xl font-bold text-neutral-950">{aboutForm.title || 'Twin A'}</h4>
+                  <h5 className="font-playfair text-base text-neutral-700">{aboutForm.subtitle || 'Our Story'}</h5>
+                  <p className="text-xs text-neutral-600 line-clamp-3 leading-relaxed">
+                    {aboutForm.description || 'Twin A Apparels is a Coimbatore-rooted fashion label dedicated to crafting authentic, contemporary garments...'}
+                  </p>
+
+                  {/* Live Progress Bars Preview */}
+                  <div className="space-y-2 pt-2 border-t border-brand-light/60">
+                    {(aboutForm.metrics || []).map((m, idx) => (
+                      <div key={idx} className="space-y-1">
+                        <div className="flex justify-between text-[10px] font-semibold tracking-wider uppercase text-neutral-800">
+                          <span className="truncate pr-2">{m.label || `Metric ${idx + 1}`}</span>
+                          <span className="text-[#BEA266] font-bold">{m.percentage}%</span>
+                        </div>
+                        <div className="w-full h-1.5 bg-neutral-200 rounded-full overflow-hidden">
+                          <div
+                            className="h-full bg-gradient-to-r from-neutral-900 to-[#BEA266] rounded-full transition-all duration-300"
+                            style={{ width: `${m.percentage}%` }}
+                          />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              <div className="pt-4 border-t border-brand-light mt-4">
+                <button
+                  type="button"
+                  onClick={handleSaveAbout}
+                  disabled={aboutSaving || !canAddBanner}
+                  className="btn-primary w-full flex items-center justify-center gap-2 py-2.5 text-xs font-semibold rounded-lg"
+                >
+                  {aboutSaving ? <RefreshCw size={14} className="animate-spin" /> : <CheckCircle2 size={14} />}
+                  {aboutSaving ? 'Saving Changes...' : 'Save About Section'}
+                </button>
+              </div>
+            </div>
+          </form>
         </div>
       )}
 

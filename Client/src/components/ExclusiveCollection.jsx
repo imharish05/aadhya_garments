@@ -5,6 +5,7 @@ import { motion } from 'framer-motion';
 import { ChevronLeft, ChevronRight, ArrowRight } from 'lucide-react';
 import { formatPrice } from '../utils/currency';
 import { getImageUrl } from '../utils/imageUrl';
+import { Skeleton, ProductGridSkeleton } from './skeletons';
 
 const SCROLL_AMOUNT = 320;
 
@@ -42,10 +43,11 @@ const ExclusiveCollection = () => {
     return (
       <section className="py-16 md:py-15 bg-white" aria-label="Exclusive collection loading">
         <div className="max-w-site mx-auto px-6 md:px-8">
-          <div className="skeleton h-8 w-64 mb-8" />
-          <div className="flex gap-4">
-            {[...Array(4)].map((_, i) => <div key={i} className="skeleton h-72 w-52 flex-shrink-0" />)}
+          <div className="mb-8 space-y-2">
+            <Skeleton gold className="h-4 w-32 rounded-full" />
+            <Skeleton className="h-8 w-64 rounded-md" />
           </div>
+          <ProductGridSkeleton count={4} layout="carousel" />
         </div>
       </section>
     );

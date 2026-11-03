@@ -7,6 +7,7 @@ import { fetchMyDeliveredItems, createReview, updateReview, deleteReview } from 
 import { getImageUrl } from '../../utils/imageUrl';
 import { getPlaceholderSvg } from '../../utils/placeholder';
 import toast from 'react-hot-toast';
+import { ReviewsListSkeleton } from '../../components/skeletons';
 
 const StarPicker = ({ value, onChange }) => (
   <div className="flex gap-1">
@@ -222,10 +223,7 @@ const MyReviewsPage = () => {
 
       {/* Content */}
       {loading ? (
-        <div className="flex flex-col items-center justify-center py-16 gap-3">
-          <Loader2 size={28} className="animate-spin text-amber-400" />
-          <p className="text-sm text-neutral-500">Loading your purchases...</p>
-        </div>
+        <ReviewsListSkeleton count={3} />
       ) : filtered.length === 0 ? (
         <div className="bg-white border border-neutral-200/80 rounded-lg p-8 sm:p-12 text-center shadow-sm">
           <MessageSquare size={40} className="text-neutral-300 mx-auto mb-3" strokeWidth={1.5} />

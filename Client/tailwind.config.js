@@ -27,6 +27,7 @@ export default {
         sans:       ['Montserrat', 'sans-serif'],
         inter:      ['Montserrat', 'sans-serif'],
         jakarta:    ['Montserrat', 'sans-serif'],
+        mono:       ['Montserrat', 'sans-serif'],
       },
       fontSize: {
         'hero-title':      ['clamp(36px, 5vw, 56px)', { lineHeight: '1.15', fontWeight: '700' }],

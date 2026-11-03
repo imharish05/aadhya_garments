@@ -16,6 +16,7 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import { toggleMobileMenu, closeMobileMenu } from '../redux/slices/uiSlice';
 import { logout } from '../redux/slices/authSlice';
+import { openCart } from '../redux/slices/cartSlice';
 import { setCurrency } from '../redux/slices/currencySlice';
 import {
   fetchAutocomplete,
@@ -375,8 +376,7 @@ const Navbar = () => {
 
   const searchPhrases = [...displayCategories.map(c => c.name), 'your next outfit'];
 
-  const iconBtn = 'group/ic relative flex h-10 w-10 shrink-0 flex-col items-center justify-center gap-1 rounded-full text-white hover:bg-white/10 transition-colors focus:outline-none 2xl:h-auto 2xl:w-auto 2xl:rounded-2xl 2xl:px-2.5 2xl:py-1.5';
-  const iconLabel = 'hidden 2xl:block text-[10.5px] font-medium uppercase tracking-[0.12em] text-white/90 group-hover/ic:text-white';
+  const iconBtn = 'group/ic relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-white/90 hover:text-white hover:bg-white/15 active:scale-95 transition-all duration-200 focus:outline-none';
   const navLinkCls = (active) =>
     `flex items-center gap-1.5 rounded-full px-3.5 xl:px-4 py-2.5 text-[12.5px] font-medium uppercase tracking-[0.12em] whitespace-nowrap transition-all duration-300 ${
       active ? 'bg-white/20 text-white font-semibold' : 'text-white/90 hover:bg-white/15 hover:text-white'
@@ -485,7 +485,7 @@ const Navbar = () => {
             </nav>
 
             {/* actions */}
-            <div className="flex items-center justify-self-end gap-0.5">
+            <div className="flex items-center justify-self-end gap-1.5 sm:gap-2.5 lg:gap-3">
               <button
                 ref={searchToggleRef}
                 type="button"
@@ -493,38 +493,47 @@ const Navbar = () => {
                 className={iconBtn}
                 aria-label="Search"
                 aria-expanded={searchOpen}
+                title="Search"
               >
-                <Search size={21} strokeWidth={1.6} />
-                <span className={iconLabel}>Search</span>
+                <Search size={21} strokeWidth={1.65} />
               </button>
 
-              <Link to="/account/wishlist" className={`${iconBtn} hidden sm:flex`} aria-label={`Wishlist — ${wishlistCount} items`}>
-                <span className="relative">
-                  <Heart size={21} strokeWidth={1.6} />
+              <Link
+                to="/account/wishlist"
+                className={`${iconBtn} hidden sm:flex`}
+                aria-label={`Wishlist — ${wishlistCount} items`}
+                title="Wishlist"
+              >
+                <span className="relative flex items-center justify-center">
+                  <Heart size={21} strokeWidth={1.65} />
                   {wishlistCount > 0 && (
-                    <span className="absolute -top-1.5 -right-2 min-w-[16px] h-4 px-1 bg-[#BEA266] text-black text-[9px] font-bold rounded-full flex items-center justify-center">{wishlistCount}</span>
+                    <span className="absolute -top-1 -right-1.5 min-w-[17px] h-[17px] px-1 bg-[#BEA266] text-black text-[9px] font-bold rounded-full flex items-center justify-center shadow-md">
+                      {wishlistCount}
+                    </span>
                   )}
                 </span>
-                <span className={iconLabel}>Wishlist</span>
               </Link>
 
               {isAuthenticated ? (
                 <div className="relative group hidden sm:block">
-                  <button type="button" className={iconBtn} aria-label="Account menu">
-                    <User size={21} strokeWidth={1.6} />
-                    <span className={iconLabel}>Account</span>
+                  <button type="button" className={iconBtn} aria-label="Account menu" title="Account">
+                    <User size={21} strokeWidth={1.65} />
                   </button>
-                  <div className="absolute right-0 top-full pt-2 w-52 opacity-0 group-hover:opacity-100 invisible group-hover:visible transition-all duration-200 z-50">
-                    <div className="bg-[#0E0C07] border border-[#2B2416] shadow-xl rounded-2xl overflow-hidden text-[#F3E7C6]">
-                      <div className="px-5 py-3.5 border-b border-[#2B2416]">
-                        <p className="font-semibold text-xs truncate">{customer?.name || 'Member'}</p>
-                        <p className="text-[11px] text-[#A89A78] truncate">{customer?.email}</p>
+                  <div className="absolute right-0 top-full pt-2 w-56 opacity-0 group-hover:opacity-100 invisible group-hover:visible transition-all duration-200 z-50">
+                    <div className="bg-[#121212] border border-neutral-700/80 shadow-2xl rounded-2xl overflow-hidden text-white">
+                      <div className="px-5 py-3.5 border-b border-neutral-800">
+                        <p className="font-bold text-sm text-white truncate">{customer?.name || 'Member'}</p>
+                        <p className="text-xs text-neutral-300 truncate mt-0.5">{customer?.email}</p>
                       </div>
-                      <Link to="/account" className="block px-5 py-2.5 text-xs hover:bg-white/10 transition-colors">My Profile</Link>
-                      <Link to="/account/orders" className="block px-5 py-2.5 text-xs hover:bg-white/10 transition-colors">Order History</Link>
+                      <Link to="/account" className="block px-5 py-2.5 text-xs text-white font-medium hover:bg-white/10 transition-colors">
+                        My Profile
+                      </Link>
+                      <Link to="/account/orders" className="block px-5 py-2.5 text-xs text-white font-medium hover:bg-white/10 transition-colors">
+                        Order History
+                      </Link>
                       <button
                         onClick={() => { dispatch(logout()); navigate('/'); }}
-                        className="w-full text-left px-5 py-2.5 text-xs hover:bg-white/10 transition-colors text-rose-400 border-t border-[#2B2416]"
+                        className="w-full text-left px-5 py-2.5 text-xs text-rose-400 font-medium hover:bg-white/10 hover:text-rose-300 transition-colors border-t border-neutral-800"
                       >
                         Sign Out
                       </button>
@@ -536,28 +545,33 @@ const Navbar = () => {
                   to={location.pathname.startsWith('/account') ? '/account?view=login' : `/account?view=login&redirect=${encodeURIComponent(location.pathname + location.search)}`}
                   className={`${iconBtn} hidden sm:flex`}
                   aria-label="Sign in"
+                  title="Sign in / Account"
                 >
-                  <User size={21} strokeWidth={1.6} />
-                  <span className={iconLabel}>Sign in</span>
+                  <User size={21} strokeWidth={1.65} />
                 </Link>
               )}
 
-              <Link to="/cart" className={iconBtn} aria-label={`Shopping bag — ${cartCount} items`}>
-                <span className="relative">
-                  <ShoppingBag size={21} strokeWidth={1.6} />
+              <button
+                type="button"
+                onClick={() => dispatch(openCart())}
+                className={iconBtn}
+                aria-label={`Shopping bag — ${cartCount} items`}
+                title="Shopping Bag"
+              >
+                <span className="relative flex items-center justify-center">
+                  <ShoppingBag size={21} strokeWidth={1.65} />
                   {cartCount > 0 && (
                     <motion.span
                       key={cartCount}
                       initial={{ scale: 0 }}
                       animate={{ scale: 1 }}
-                      className="absolute -top-1.5 -right-2 min-w-[16px] h-4 px-1 bg-[#BEA266] text-black text-[9px] font-bold rounded-full flex items-center justify-center"
+                      className="absolute -top-1 -right-1.5 min-w-[17px] h-[17px] px-1 bg-[#BEA266] text-black text-[9px] font-bold rounded-full flex items-center justify-center shadow-md"
                     >
                       {cartCount}
                     </motion.span>
                   )}
                 </span>
-                <span className={iconLabel}>Bag</span>
-              </Link>
+              </button>
             </div>
           </div>
 
@@ -913,22 +927,47 @@ const Navbar = () => {
                 {[
                   { to: isAuthenticated ? '/account' : '/account?view=login', icon: User, label: isAuthenticated ? 'Account' : 'Sign in' },
                   { to: '/account/wishlist', icon: Heart, label: 'Wishlist', count: wishlistCount },
-                  { to: '/cart', icon: ShoppingBag, label: 'Bag', count: cartCount },
-                ].map(({ to, icon: Icon, label, count }, i) => (
-                  <Link
-                    key={label}
-                    to={to}
-                    onClick={() => dispatch(closeMobileMenu())}
-                    className={`flex h-16 flex-col items-center justify-center gap-1 text-white hover:bg-white/5 ${i > 0 ? 'border-l border-[#2B2416]' : ''}`}
-                  >
-                    <span className="relative">
-                      <Icon size={20} strokeWidth={1.6} />
-                      {count > 0 && (
-                        <span className="absolute -right-2.5 -top-1.5 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-[#BEA266] px-1 text-[9px] font-bold text-black">{count}</span>
-                      )}
-                    </span>
-                    <span className="text-[10px] font-medium uppercase tracking-[0.14em] text-white/80">{label}</span>
-                  </Link>
+                  {
+                    action: () => {
+                      dispatch(closeMobileMenu());
+                      dispatch(openCart());
+                    },
+                    icon: ShoppingBag,
+                    label: 'Bag',
+                    count: cartCount
+                  },
+                ].map(({ to, action, icon: Icon, label, count }, i) => (
+                  action ? (
+                    <button
+                      key={label}
+                      type="button"
+                      onClick={action}
+                      className={`flex h-16 flex-col items-center justify-center gap-1 text-white hover:bg-white/5 ${i > 0 ? 'border-l border-[#2B2416]' : ''}`}
+                    >
+                      <span className="relative">
+                        <Icon size={20} strokeWidth={1.6} />
+                        {count > 0 && (
+                          <span className="absolute -right-2.5 -top-1.5 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-[#BEA266] px-1 text-[9px] font-bold text-black">{count}</span>
+                        )}
+                      </span>
+                      <span className="text-[10px] font-medium uppercase tracking-[0.14em] text-white/80">{label}</span>
+                    </button>
+                  ) : (
+                    <Link
+                      key={label}
+                      to={to}
+                      onClick={() => dispatch(closeMobileMenu())}
+                      className={`flex h-16 flex-col items-center justify-center gap-1 text-white hover:bg-white/5 ${i > 0 ? 'border-l border-[#2B2416]' : ''}`}
+                    >
+                      <span className="relative">
+                        <Icon size={20} strokeWidth={1.6} />
+                        {count > 0 && (
+                          <span className="absolute -right-2.5 -top-1.5 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-[#BEA266] px-1 text-[9px] font-bold text-black">{count}</span>
+                        )}
+                      </span>
+                      <span className="text-[10px] font-medium uppercase tracking-[0.14em] text-white/80">{label}</span>
+                    </Link>
+                  )
                 ))}
               </div>
             </motion.aside>

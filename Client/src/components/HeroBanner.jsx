@@ -4,6 +4,7 @@ import { useSelector } from 'react-redux';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { getImageUrl } from '../utils/imageUrl';
 import { StaggeredText } from './animations';
+import { HeroBannerSkeleton } from './skeletons';
 
 const AUTOPLAY_INTERVAL = 4500;
 
@@ -77,15 +78,13 @@ const HeroBanner = () => {
     touchEndX.current = null;
   };
 
-  const height = 'hero-fullscreen';
-
   if (loading) {
-    return <section className={`w-full animate-pulse bg-[#F3ECDB] ${height}`} aria-label="Loading banner" />;
+    return <HeroBannerSkeleton />;
   }
 
   return (
     <section
-      className={`relative w-full overflow-hidden bg-[#F3ECDB] ${height}`}
+      className="relative w-full h-auto lg:max-h-[105vh] overflow-hidden bg-white"
       aria-label="Featured banners"
       aria-roledescription="carousel"
       onTouchStart={handleTouchStart}
@@ -94,7 +93,7 @@ const HeroBanner = () => {
     >
       {/* Sliding Carousel Track */}
       <div
-        className="flex h-full w-full transition-transform duration-700 ease-out will-change-transform"
+        className="flex w-full items-start transition-transform duration-700 ease-out will-change-transform"
         style={{ transform: `translateX(-${current * 100}%)` }}
       >
         {slides.map((s, i) => {
@@ -103,13 +102,13 @@ const HeroBanner = () => {
           return (
             <div
               key={s.id}
-              className="relative h-full w-full flex-shrink-0 overflow-hidden"
+              className="relative w-full h-auto lg:max-h-[105vh] flex-shrink-0 overflow-hidden"
               aria-hidden={!active}
             >
               <img
                 src={s.image}
                 alt={s.alt}
-                className="h-full w-full object-cover"
+                className="w-full h-auto lg:max-h-[105vh] block object-cover object-center"
                 loading={i === 0 ? 'eager' : 'lazy'}
                 draggable={false}
               />
@@ -149,7 +148,7 @@ const HeroBanner = () => {
                       <Link
                         to={s.ctaLink}
                         tabIndex={active ? 0 : -1}
-                        className="font-inter mt-4 inline-block rounded-full bg-white px-6 py-2.5 text-sm font-semibold text-[#2A2014] hover:bg-[#BEA266] hover:text-white transition-colors"
+                        className="font-montserrat mt-4 inline-block rounded-full bg-neutral-950 px-6 py-2.5 text-sm font-semibold text-white hover:bg-brand-gold hover:text-black transition-all shadow-md border border-neutral-900 hover:border-brand-gold"
                       >
                         {s.ctaText}
                       </Link>
@@ -167,14 +166,14 @@ const HeroBanner = () => {
           <button
             onClick={prev}
             aria-label="Previous slide"
-            className="absolute left-3 top-1/2 z-20 hidden h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 text-[#2A2014] shadow hover:bg-white sm:flex transition-transform active:scale-95"
+            className="absolute left-3 top-1/2 z-20 hidden h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 text-[#2A2014] shadow hover:bg-brand-gold hover:text-black sm:flex transition-all active:scale-95"
           >
             <ChevronLeft size={20} />
           </button>
           <button
             onClick={next}
             aria-label="Next slide"
-            className="absolute right-3 top-1/2 z-20 hidden h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 text-[#2A2014] shadow hover:bg-white sm:flex transition-transform active:scale-95"
+            className="absolute right-3 top-1/2 z-20 hidden h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 text-[#2A2014] shadow hover:bg-brand-gold hover:text-black sm:flex transition-all active:scale-95"
           >
             <ChevronRight size={20} />
           </button>

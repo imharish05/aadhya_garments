@@ -92,11 +92,11 @@ const PriceFilter = ({ priceMin = 0, priceMax = 50000, valueMin, valueMax, onApp
           { label: 'Max price', val: max, set: setMax },
         ].map(f => (
           <label key={f.label} className="block">
-            <span className="mb-1.5 block font-inter text-[10px] font-semibold uppercase tracking-[0.18em] text-black/50">
+            <span className="mb-1.5 block font-sans text-[10px] font-semibold uppercase tracking-[0.18em] text-black/50">
               {f.label}
             </span>
             <span className="flex items-center gap-1.5 rounded-full border border-black/20 bg-white px-4 py-2.5 transition-colors focus-within:border-black">
-              <span className="font-inter text-[13px] text-black/50">₹</span>
+              <span className="font-sans text-[13px] text-black/50">₹</span>
               <input
                 type="number"
                 inputMode="numeric"
@@ -106,7 +106,7 @@ const PriceFilter = ({ priceMin = 0, priceMax = 50000, valueMin, valueMax, onApp
                 onChange={e => f.set(e.target.value === '' ? '' : Number(e.target.value))}
                 onBlur={clampAndCommit}
                 onKeyDown={e => e.key === 'Enter' && e.currentTarget.blur()}
-                className="w-full min-w-0 bg-transparent font-inter text-[14px] font-semibold text-black outline-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                className="w-full min-w-0 bg-transparent font-sans text-[14px] font-semibold text-black outline-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
                 aria-label={f.label}
               />
             </span>
@@ -118,7 +118,7 @@ const PriceFilter = ({ priceMin = 0, priceMax = 50000, valueMin, valueMax, onApp
         <button
           type="button"
           onClick={() => onApply(priceMin, priceMax)}
-          className="mt-4 font-inter text-[11px] font-semibold uppercase tracking-[0.16em] text-[#7A5F28] underline underline-offset-4 hover:text-black"
+          className="mt-4 font-sans text-[11px] font-semibold uppercase tracking-[0.16em] text-[#7A5F28] underline underline-offset-4 hover:text-black"
         >
           Reset price
         </button>

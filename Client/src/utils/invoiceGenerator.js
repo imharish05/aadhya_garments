@@ -329,18 +329,7 @@ export const generateInvoiceHTML = (order) => {
   const subtotal = Number(order.subtotal || subtotalCalc);
   const discountAmount = Number(order.discountAmount || order.discount || 0);
   const couponDiscount = Number(order.couponDiscount || 0);
-  const loyaltyDiscount = Number(order.loyaltyDiscount || 0);
-
-  let resolvedCoupon = couponDiscount;
-  let resolvedLoyalty = loyaltyDiscount;
-
-  if (resolvedCoupon === 0 && resolvedLoyalty === 0 && discountAmount > 0) {
-    if (order.couponId || order.coupon) {
-      resolvedCoupon = discountAmount;
-    } else {
-      resolvedLoyalty = discountAmount;
-    }
-  }
+  const resolvedCoupon = couponDiscount > 0 ? couponDiscount : discountAmount;
 
   const shippingAmount = Number(order.shippingAmount || 0);
   const explicitGw = Number(order.giftWrapFee || order.giftWrapPrice || 0);
@@ -961,13 +950,6 @@ export const generateInvoiceHTML = (order) => {
           <div class="totals-row discount">
             <span>Coupon Discount${order.coupon?.code ? ` (${order.coupon.code})` : ''}</span>
             <span>-${fmt(resolvedCoupon)}</span>
-          </div>
-        ` : ''}
-
-        ${resolvedLoyalty > 0 ? `
-          <div class="totals-row discount">
-            <span>Loyalty Points Redeemed${order.redeemedPoints ? ` (${order.redeemedPoints} pts)` : ''}</span>
-            <span>-${fmt(resolvedLoyalty)}</span>
           </div>
         ` : ''}
 

@@ -1,7 +1,7 @@
-import { useState, useEffect, useRef } from 'react';
+﻿import { useState, useEffect, useRef } from 'react';
 import { NavLink, Outlet, useSearchParams, useLocation, useNavigate } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
-import { User, MapPin, Package, Heart, Star, Gift, Headphones, LogOut, Lock, Mail, Eye, EyeOff, Phone, ArrowLeft, CheckCircle, RefreshCw, MessageSquare, RotateCcw } from 'lucide-react';
+import { User, MapPin, Package, Heart, Star, Headphones, LogOut, Lock, Mail, Eye, EyeOff, Phone, ArrowLeft, CheckCircle, RefreshCw, MessageSquare, RotateCcw, ShieldCheck, Sparkles } from 'lucide-react';
 import Footer from '../../components/Footer';
 import { loginCustomer, registerCustomer, logout, clearError, fetchProfile } from '../../redux/slices/authSlice';
 import { fetchWishlist } from '../../redux/slices/wishlistSlice';
@@ -17,9 +17,6 @@ const NAV_ITEMS = [
   { to: '/account/orders', label: 'My Orders', icon: Package },
   { to: '/account/wishlist', label: 'Wishlist', icon: Heart },
   { to: '/account/reviews', label: 'My Reviews', icon: MessageSquare },
-  { to: '/account/loyalty', label: 'Loyalty & Cashback', icon: Star },
-  { to: '/account/personal-shopper', label: 'Personal Shopper', icon: Gift },
-  // { to: '/account/support', label: 'Support', icon: Headphones },
 ];
 
 // Auth view states
@@ -37,7 +34,7 @@ const AccountLayout = () => {
   const { isAuthenticated, customer, loading, error } = useSelector(s => s.auth);
   const otpRefs = useRef([]);
 
-  // Auto scroll to top on account route change and refresh customer profile (loyalty points, balance, etc.)
+  // Auto scroll to top on account route change and refresh customer profile
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
     if (isAuthenticated) {
@@ -104,8 +101,7 @@ const AccountLayout = () => {
       if (tabParam === 'orders' || tabParam === 'returns' || tabParam === 'refunds') navigate('/account/orders', { replace: true });
       else if (tabParam === 'wishlist') navigate('/account/wishlist', { replace: true });
       else if (tabParam === 'reviews') navigate('/account/reviews', { replace: true });
-      else if (tabParam === 'loyalty') navigate('/account/loyalty', { replace: true });
-      else if (tabParam === 'personal-shopper' || tabParam === 'shopper') navigate('/account/personal-shopper', { replace: true });
+      else if (tabParam === 'personal-shopper' || tabParam === 'shopper') navigate('/account', { replace: true });
       // else if (tabParam === 'support') navigate('/account/support', { replace: true });
     }
   }, [searchParams, navigate, isAuthenticated]);
@@ -302,72 +298,82 @@ const AccountLayout = () => {
 
   const handleSignOut = () => { dispatch(logout()); toast.success('Signed out successfully.'); };
 
-  // ── Unauthenticated UI ──────────────────────────────────────────────────────
+  // ── Unauthenticated UI (Clean & Simple Login / Register) ───────────────────
   if (!isAuthenticated) {
     return (
-      <main id="main-content" className="bg-[#FDFDFB] min-h-[85vh] flex items-center justify-center py-20 px-6">
-        <div className="w-full max-w-md bg-white border border-neutral-100 p-8 md:p-10 shadow-sm rounded-lg">
+      <main id="main-content" className="bg-[#FAF9F6] min-h-[85vh] flex items-center justify-center py-16 px-4 sm:px-6">
+        <div className="w-full max-w-[430px] bg-white border border-neutral-200/80 p-6 sm:p-8 shadow-sm rounded-2xl">
 
           {/* ════════════════════════════════════
-              STEP 1 — Enter Email
+              FORGOT PASSWORD FLOWS
           ════════════════════════════════════ */}
           {view === VIEW_FORGOT_EMAIL && (
             <>
-              <button onClick={() => setView(VIEW_LOGIN)} className="flex items-center gap-1.5 text-xs text-neutral-500 hover:text-neutral-800 mb-6 transition-colors" id="back-to-login-btn">
+              <button
+                type="button"
+                onClick={() => setView(VIEW_LOGIN)}
+                className="inline-flex items-center gap-1.5 text-xs font-semibold text-neutral-500 hover:text-neutral-900 mb-6 transition-colors"
+                id="back-to-login-btn"
+              >
                 <ArrowLeft size={14} /> Back to Sign In
               </button>
-              <div className="text-center mb-8">
-                <div className="w-14 h-14 rounded-full bg-neutral-950 flex items-center justify-center mx-auto mb-4 text-brand-gold">
-                  <Lock size={22} strokeWidth={1.5} />
-                </div>
+              <div className="mb-6">
                 <h1 className="font-playfair text-2xl font-bold text-neutral-900">Forgot password?</h1>
-                <p className="text-xs text-neutral-500 mt-2">Enter your email and we'll send you a 6-digit OTP.</p>
+                <p className="text-xs text-neutral-500 mt-1.5">
+                  Enter your email address to receive a 6-digit verification code.
+                </p>
               </div>
 
               <form onSubmit={handleSendOtp} className="space-y-4" noValidate>
                 <div>
-                  <label className="block text-xs font-semibold text-neutral-700 mb-1.5" htmlFor="forgot-email">Email Address</label>
-                  <div className="relative">
-                    <span className="absolute left-3 top-3.5 text-neutral-400"><Mail size={16} /></span>
-                    <input
-                      id="forgot-email"
-                      type="email"
-                      value={forgotEmail}
-                      onChange={e => { setForgotEmail(e.target.value); if (forgotEmailError) setForgotEmailError(''); }}
-                      placeholder="Enter your mail"
-                      className={`w-full border ${forgotEmailError ? 'border-red-400 focus:border-red-500' : 'border-neutral-200/80 focus:border-brand-gold'} rounded-lg pl-10 pr-4 py-3 text-sm focus:outline-none bg-neutral-50/30 transition-colors`}
-                    />
-                  </div>
+                  <label className="block text-xs font-medium text-neutral-700 mb-1.5" htmlFor="forgot-email">
+                    Email Address
+                  </label>
+                  <input
+                    id="forgot-email"
+                    type="email"
+                    value={forgotEmail}
+                    onChange={e => { setForgotEmail(e.target.value); if (forgotEmailError) setForgotEmailError(''); }}
+                    placeholder="name@example.com"
+                    className={`w-full border ${forgotEmailError ? 'border-red-400 focus:border-red-500' : 'border-neutral-200 focus:border-[#BEA266]'} rounded-xl px-4 py-3 text-sm focus:outline-none bg-neutral-50/40 focus:bg-white transition-colors`}
+                  />
                   {forgotEmailError && <p className="text-xs text-red-500 mt-1">{forgotEmailError}</p>}
                 </div>
-                <button type="submit" disabled={forgotLoading} className="btn-primary w-full py-3 rounded-lg flex items-center justify-center font-semibold text-sm transition-transform active:scale-[0.98]" id="send-otp-btn">
-                  {forgotLoading ? <div className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> : 'Send OTP'}
+
+                <button
+                  type="submit"
+                  disabled={forgotLoading}
+                  className="w-full py-3.5 rounded-xl bg-[#17130B] hover:bg-black text-[#F3E7C6] font-semibold text-xs uppercase tracking-[0.14em] flex items-center justify-center transition-all shadow-sm"
+                  id="send-otp-btn"
+                >
+                  {forgotLoading ? <div className="h-4 w-4 border-2 border-[#F3E7C6] border-t-transparent rounded-full animate-spin" /> : 'Send OTP Code'}
                 </button>
               </form>
             </>
           )}
 
-          {/* ════════════════════════════════════
-              STEP 2 — Enter OTP
-          ════════════════════════════════════ */}
           {view === VIEW_FORGOT_OTP && (
             <>
-              <button onClick={() => setView(VIEW_FORGOT_EMAIL)} className="flex items-center gap-1.5 text-xs text-neutral-500 hover:text-neutral-800 mb-6 transition-colors" id="back-to-email-btn">
+              <button
+                type="button"
+                onClick={() => setView(VIEW_FORGOT_EMAIL)}
+                className="inline-flex items-center gap-1.5 text-xs font-semibold text-neutral-500 hover:text-neutral-900 mb-6 transition-colors"
+                id="back-to-email-btn"
+              >
                 <ArrowLeft size={14} /> Change email
               </button>
-              <div className="text-center mb-8">
-                <div className="w-14 h-14 rounded-full bg-green-50 flex items-center justify-center mx-auto mb-4">
-                  <CheckCircle size={26} className="text-green-500" strokeWidth={1.5} />
+              <div className="mb-6 text-center">
+                <div className="w-12 h-12 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center mx-auto mb-3">
+                  <CheckCircle size={22} strokeWidth={2} />
                 </div>
                 <h1 className="font-playfair text-2xl font-bold text-neutral-900">Check your email</h1>
-                <p className="text-xs text-neutral-500 mt-2">
-                  We sent a 6-digit OTP to<br/>
-                  <span className="font-semibold text-neutral-700">{forgotEmail}</span>
+                <p className="text-xs text-neutral-500 mt-1.5">
+                  We sent a 6-digit code to <strong className="text-neutral-800 font-semibold">{forgotEmail}</strong>
                 </p>
               </div>
 
               {/* 6-digit OTP boxes */}
-              <div className="flex items-center justify-center gap-2 mb-2" onPaste={handleOtpPaste}>
+              <div className="flex items-center justify-center gap-2 mb-3" onPaste={handleOtpPaste}>
                 {otp.map((digit, idx) => (
                   <input
                     key={idx}
@@ -379,143 +385,167 @@ const AccountLayout = () => {
                     onChange={e => handleOtpChange(e.target.value, idx)}
                     onKeyDown={e => handleOtpKeyDown(e, idx)}
                     disabled={otpLoading}
-                    className={`w-11 h-13 text-center text-xl font-bold border-2 rounded-lg focus:outline-none transition-all
-                      ${otpError ? 'border-red-400 bg-red-50 text-red-700' : digit ? 'border-brand-gold bg-[#FBF7ED] text-neutral-900' : 'border-neutral-200 bg-neutral-50 text-neutral-900'}
-                      ${otpLoading ? 'opacity-50 cursor-not-allowed' : 'focus:border-brand-gold'}`}
-                    style={{ width: '44px', height: '52px' }}
+                    className={`w-11 h-12 text-center text-lg font-bold border rounded-xl focus:outline-none transition-all
+                      ${otpError ? 'border-red-400 bg-red-50 text-red-700' : digit ? 'border-[#BEA266] bg-[#FAF9F5] text-neutral-900' : 'border-neutral-200 bg-neutral-50/50 text-neutral-900'}
+                      ${otpLoading ? 'opacity-50 cursor-not-allowed' : 'focus:border-[#BEA266]'}`}
                     aria-label={`OTP digit ${idx + 1}`}
                     id={`otp-digit-${idx}`}
                   />
                 ))}
               </div>
 
-              {otpError && <p className="text-xs text-red-500 text-center mt-1 mb-3">{otpError}</p>}
+              {otpError && <p className="text-xs text-red-500 text-center mb-3">{otpError}</p>}
 
               <button
+                type="button"
                 onClick={() => handleVerifyOtp()}
                 disabled={otpLoading || otp.some(d => !d)}
-                className="btn-primary w-full py-3 rounded-lg flex items-center justify-center font-semibold text-sm transition-transform active:scale-[0.98] mt-4"
+                className="w-full py-3.5 rounded-xl bg-[#17130B] hover:bg-black text-[#F3E7C6] font-semibold text-xs uppercase tracking-[0.14em] flex items-center justify-center transition-all shadow-sm mt-3"
                 id="verify-otp-btn"
               >
-                {otpLoading
-                  ? <div className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                  : 'Verify OTP'}
+                {otpLoading ? <div className="h-4 w-4 border-2 border-[#F3E7C6] border-t-transparent rounded-full animate-spin" /> : 'Verify Code'}
               </button>
 
-              {/* Resend */}
               <div className="text-center mt-5">
                 {resendCooldown > 0 ? (
-                  <p className="text-xs text-neutral-400">Resend OTP in <span className="font-semibold text-neutral-600">{resendCooldown}s</span></p>
+                  <p className="text-xs text-neutral-400">Resend code in <span className="font-semibold text-neutral-700">{resendCooldown}s</span></p>
                 ) : (
                   <button
+                    type="button"
                     onClick={handleSendOtp}
                     disabled={forgotLoading}
-                    className="text-xs text-brand-gold hover:underline font-semibold flex items-center gap-1.5 mx-auto"
+                    className="text-xs text-[#996822] hover:underline font-semibold inline-flex items-center gap-1.5"
                     id="resend-otp-btn"
                   >
                     <RefreshCw size={12} />
-                    {forgotLoading ? 'Sending…' : 'Resend OTP'}
+                    {forgotLoading ? 'Sending…' : 'Resend Code'}
                   </button>
                 )}
               </div>
             </>
           )}
 
-          {/* ════════════════════════════════════
-              STEP 3 — Set New Password
-          ════════════════════════════════════ */}
           {view === VIEW_FORGOT_RESET && (
             <>
-              <div className="text-center mb-8">
-                <div className="w-14 h-14 rounded-full bg-neutral-950 flex items-center justify-center mx-auto mb-4 text-brand-gold">
-                  <Lock size={22} strokeWidth={1.5} />
-                </div>
+              <div className="mb-6">
                 <h1 className="font-playfair text-2xl font-bold text-neutral-900">Set new password</h1>
-                <p className="text-xs text-neutral-500 mt-2">OTP verified! Choose a strong new password.</p>
+                <p className="text-xs text-neutral-500 mt-1.5">Choose a secure password for your account.</p>
               </div>
 
               <form onSubmit={handleResetPassword} className="space-y-4" noValidate>
-                {/* New password */}
                 <div>
-                  <label className="block text-xs font-semibold text-neutral-700 mb-1.5" htmlFor="new-password">New Password</label>
+                  <label className="block text-xs font-medium text-neutral-700 mb-1.5" htmlFor="new-password">New Password</label>
                   <div className="relative">
-                    <span className="absolute left-3 top-3.5 text-neutral-400"><Lock size={16} /></span>
                     <input
                       id="new-password"
                       type={showNewPw ? 'text' : 'password'}
                       value={newPw}
                       onChange={e => { setNewPw(e.target.value); if (newPwError) { const r = validatePassword(e.target.value); setNewPwError(r.isValid ? '' : r.message); } }}
                       placeholder="Min. 6 characters"
-                      className={`w-full border ${newPwError ? 'border-red-400 focus:border-red-500' : 'border-neutral-200/80 focus:border-brand-gold'} rounded-lg pl-10 pr-10 py-3 text-sm focus:outline-none bg-neutral-50/30 transition-colors`}
+                      className={`w-full border ${newPwError ? 'border-red-400 focus:border-red-500' : 'border-neutral-200 focus:border-[#BEA266]'} rounded-xl px-4 pr-10 py-3 text-sm focus:outline-none bg-neutral-50/40 focus:bg-white transition-colors`}
                     />
-                    <button type="button" onClick={() => setShowNewPw(!showNewPw)} className="absolute right-3 top-3.5 text-neutral-400 hover:text-neutral-600" aria-label="Toggle password">
+                    <button type="button" onClick={() => setShowNewPw(!showNewPw)} className="absolute right-3 top-3.5 text-neutral-400 hover:text-neutral-600">
                       {showNewPw ? <EyeOff size={16} /> : <Eye size={16} />}
                     </button>
                   </div>
                   {newPwError && <p className="text-xs text-red-500 mt-1">{newPwError}</p>}
                 </div>
 
-                {/* Confirm password */}
                 <div>
-                  <label className="block text-xs font-semibold text-neutral-700 mb-1.5" htmlFor="confirm-password">Confirm New Password</label>
+                  <label className="block text-xs font-medium text-neutral-700 mb-1.5" htmlFor="confirm-password">Confirm New Password</label>
                   <div className="relative">
-                    <span className="absolute left-3 top-3.5 text-neutral-400"><Lock size={16} /></span>
                     <input
                       id="confirm-password"
                       type={showConfirm ? 'text' : 'password'}
                       value={confirmPw}
                       onChange={e => { setConfirmPw(e.target.value); if (confirmPwError) setConfirmPwError(e.target.value === newPw ? '' : 'Passwords do not match.'); }}
                       placeholder="Repeat your password"
-                      className={`w-full border ${confirmPwError ? 'border-red-400 focus:border-red-500' : 'border-neutral-200/80 focus:border-brand-gold'} rounded-lg pl-10 pr-10 py-3 text-sm focus:outline-none bg-neutral-50/30 transition-colors`}
+                      className={`w-full border ${confirmPwError ? 'border-red-400 focus:border-red-500' : 'border-neutral-200 focus:border-[#BEA266]'} rounded-xl px-4 pr-10 py-3 text-sm focus:outline-none bg-neutral-50/40 focus:bg-white transition-colors`}
                     />
-                    <button type="button" onClick={() => setShowConfirm(!showConfirm)} className="absolute right-3 top-3.5 text-neutral-400 hover:text-neutral-600" aria-label="Toggle confirm password">
+                    <button type="button" onClick={() => setShowConfirm(!showConfirm)} className="absolute right-3 top-3.5 text-neutral-400 hover:text-neutral-600">
                       {showConfirm ? <EyeOff size={16} /> : <Eye size={16} />}
                     </button>
                   </div>
                   {confirmPwError && <p className="text-xs text-red-500 mt-1">{confirmPwError}</p>}
                 </div>
 
-                <button type="submit" disabled={resetLoading} className="btn-primary w-full py-3 rounded-lg flex items-center justify-center font-semibold text-sm transition-transform active:scale-[0.98] mt-2" id="reset-password-btn">
-                  {resetLoading ? <div className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> : 'Reset Password'}
+                <button
+                  type="submit"
+                  disabled={resetLoading}
+                  className="w-full py-3.5 rounded-xl bg-[#17130B] hover:bg-black text-[#F3E7C6] font-semibold text-xs uppercase tracking-[0.14em] flex items-center justify-center transition-all shadow-sm mt-2"
+                  id="reset-password-btn"
+                >
+                  {resetLoading ? <div className="h-4 w-4 border-2 border-[#F3E7C6] border-t-transparent rounded-full animate-spin" /> : 'Reset Password'}
                 </button>
               </form>
             </>
           )}
 
           {/* ════════════════════════════════════
-              LOGIN / REGISTER
+              LOGIN / REGISTER (Segmented Tabs)
           ════════════════════════════════════ */}
           {(view === VIEW_LOGIN || view === VIEW_REGISTER) && (
             <>
-              <div className="text-center mb-8">
-                <div className="w-14 h-14 rounded-full bg-neutral-950 flex items-center justify-center mx-auto mb-4 text-brand-gold">
-                  <User size={24} strokeWidth={1.5} />
-                </div>
-                <h1 className="font-playfair text-2xl font-bold text-neutral-900">
-                  {view === VIEW_REGISTER ? 'Create an Account' : 'Welcome Back'}
+              {/* Clean Brand Header */}
+              <div className="text-center mb-6">
+                <h1 className="font-playfair text-2xl font-bold text-neutral-900 tracking-tight">
+                  {view === VIEW_LOGIN ? 'Welcome back' : 'Create an account'}
                 </h1>
-                <p className="text-xs text-neutral-500 mt-2">
-                  {view === VIEW_REGISTER
-                    ? 'Sign up to unlock rewards, wishlists, and personalized styling.'
-                    : 'Access your orders, custom wishlist, and member cashbacks.'}
+                <p className="text-xs text-neutral-500 mt-1">
+                  {view === VIEW_LOGIN
+                    ? 'Enter your credentials to access your account'
+                    : 'Join to track orders, manage addresses, and save favorites'}
                 </p>
+              </div>
+
+              {/* Simple Segmented Toggle Switcher */}
+              <div className="grid grid-cols-2 p-1 bg-neutral-100 rounded-xl mb-6">
+                <button
+                  type="button"
+                  onClick={() => setView(VIEW_LOGIN)}
+                  className={`py-2 text-xs font-semibold rounded-lg transition-all ${
+                    view === VIEW_LOGIN
+                      ? 'bg-white text-neutral-900 shadow-sm'
+                      : 'text-neutral-500 hover:text-neutral-900'
+                  }`}
+                  id="tab-sign-in"
+                >
+                  Sign In
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setView(VIEW_REGISTER)}
+                  className={`py-2 text-xs font-semibold rounded-lg transition-all ${
+                    view === VIEW_REGISTER
+                      ? 'bg-white text-neutral-900 shadow-sm'
+                      : 'text-neutral-500 hover:text-neutral-900'
+                  }`}
+                  id="tab-register"
+                >
+                  Create Account
+                </button>
               </div>
 
               <form onSubmit={handleSubmit} className="space-y-4" noValidate>
                 {view === VIEW_REGISTER && (
                   <>
-                    {/* Name */}
+                    {/* Full Name */}
                     <div>
-                      <label className="block text-xs font-semibold text-neutral-700 mb-1.5" htmlFor="auth-name">Full Name</label>
-                      <div className="relative">
-                        <span className="absolute left-3 top-3.5 text-neutral-400"><User size={16} /></span>
-                        <input id="auth-name" type="text" value={name} onChange={e => onNameChange(e.target.value)} placeholder="Enter your name"
-                          className={`w-full border ${errors.name ? 'border-red-400 focus:border-red-500' : 'border-neutral-200/80 focus:border-brand-gold'} rounded-lg pl-10 pr-4 py-3 text-sm focus:outline-none bg-neutral-50/30 transition-colors`} />
-                      </div>
+                      <label className="block text-xs font-medium text-neutral-700 mb-1.5" htmlFor="auth-name">
+                        Full Name
+                      </label>
+                      <input
+                        id="auth-name"
+                        type="text"
+                        value={name}
+                        onChange={e => onNameChange(e.target.value)}
+                        placeholder="John Doe"
+                        className={`w-full border ${errors.name ? 'border-red-400 focus:border-red-500' : 'border-neutral-200 focus:border-[#BEA266]'} rounded-xl px-4 py-3 text-sm focus:outline-none bg-neutral-50/40 focus:bg-white transition-colors`}
+                      />
                       {errors.name && <p className="text-xs text-red-500 mt-1">{errors.name}</p>}
                     </div>
 
-                    {/* Phone */}
+                    {/* Phone Number */}
                     <div>
                       <PhoneInput
                         id="auth-phone"
@@ -531,59 +561,87 @@ const AccountLayout = () => {
                         error={errors.phone}
                         required
                         className="w-full"
-                        inputClassName="py-3 text-sm"
+                        inputClassName="py-3 text-sm rounded-xl"
                       />
                     </div>
                   </>
                 )}
 
-                {/* Email */}
+                {/* Email Address */}
                 <div>
-                  <label className="block text-xs font-semibold text-neutral-700 mb-1.5" htmlFor="auth-email">Email Address</label>
-                  <div className="relative">
-                    <span className="absolute left-3 top-3.5 text-neutral-400"><Mail size={16} /></span>
-                    <input id="auth-email" type="email" value={email} onChange={e => onEmailChange(e.target.value)} placeholder="example@gmail.com"
-                      className={`w-full border ${errors.email ? 'border-red-400 focus:border-red-500' : 'border-neutral-200/80 focus:border-brand-gold'} rounded-lg pl-10 pr-4 py-3 text-sm focus:outline-none bg-neutral-50/30 transition-colors`} />
-                  </div>
+                  <label className="block text-xs font-medium text-neutral-700 mb-1.5" htmlFor="auth-email">
+                    Email Address
+                  </label>
+                  <input
+                    id="auth-email"
+                    type="email"
+                    value={email}
+                    onChange={e => onEmailChange(e.target.value)}
+                    placeholder="name@example.com"
+                    className={`w-full border ${errors.email ? 'border-red-400 focus:border-red-500' : 'border-neutral-200 focus:border-[#BEA266]'} rounded-xl px-4 py-3 text-sm focus:outline-none bg-neutral-50/40 focus:bg-white transition-colors`}
+                  />
                   {errors.email && <p className="text-xs text-red-500 mt-1">{errors.email}</p>}
                 </div>
 
                 {/* Password */}
                 <div>
                   <div className="flex items-center justify-between mb-1.5">
-                    <label className="block text-xs font-semibold text-neutral-700" htmlFor="auth-password">Password</label>
+                    <label className="block text-xs font-medium text-neutral-700" htmlFor="auth-password">
+                      Password
+                    </label>
                     {view === VIEW_LOGIN && (
-                      <button type="button" onClick={() => { setForgotEmail(email); setView(VIEW_FORGOT_EMAIL); }}
-                        className="text-xs text-brand-gold hover:underline font-medium" id="forgot-password-link">
+                      <button
+                        type="button"
+                        onClick={() => { setForgotEmail(email); setView(VIEW_FORGOT_EMAIL); }}
+                        className="text-xs text-[#996822] hover:underline font-medium"
+                        id="forgot-password-link"
+                      >
                         Forgot password?
                       </button>
                     )}
                   </div>
                   <div className="relative">
-                    <span className="absolute left-3 top-3.5 text-neutral-400"><Lock size={16} /></span>
-                    <input id="auth-password" type={showPassword ? 'text' : 'password'} value={password} onChange={e => onPasswordChange(e.target.value)} placeholder="••••••••"
-                      className={`w-full border ${errors.password ? 'border-red-400 focus:border-red-500' : 'border-neutral-200/80 focus:border-brand-gold'} rounded-lg pl-10 pr-10 py-3 text-sm focus:outline-none bg-neutral-50/30 transition-colors`} />
-                    <button type="button" onClick={() => setShowPw(!showPassword)} className="absolute right-3 top-3.5 text-neutral-400 hover:text-neutral-600" aria-label={showPassword ? 'Hide' : 'Show'}>
+                    <input
+                      id="auth-password"
+                      type={showPassword ? 'text' : 'password'}
+                      value={password}
+                      onChange={e => onPasswordChange(e.target.value)}
+                      placeholder="••••••••"
+                      className={`w-full border ${errors.password ? 'border-red-400 focus:border-red-500' : 'border-neutral-200 focus:border-[#BEA266]'} rounded-xl px-4 pr-10 py-3 text-sm focus:outline-none bg-neutral-50/40 focus:bg-white transition-colors`}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPw(!showPassword)}
+                      className="absolute right-3 top-3.5 text-neutral-400 hover:text-neutral-600"
+                      aria-label={showPassword ? 'Hide password' : 'Show password'}
+                    >
                       {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                     </button>
                   </div>
                   {errors.password && <p className="text-xs text-red-500 mt-1">{errors.password}</p>}
                 </div>
 
-                {error && <p className="text-xs text-red-600 bg-red-50 p-2.5 rounded-lg border border-red-100">{error}</p>}
+                {error && (
+                  <p className="text-xs text-red-600 bg-red-50 px-3 py-2 rounded-xl border border-red-100">
+                    {error}
+                  </p>
+                )}
 
-                <button type="submit" disabled={loading} className="btn-primary w-full py-3 rounded-lg flex items-center justify-center font-semibold text-sm transition-transform active:scale-[0.98] mt-6" id="auth-submit-btn">
-                  {loading
-                    ? <div className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                    : view === VIEW_REGISTER ? 'Create Account' : 'Sign In'}
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full py-3.5 rounded-xl bg-[#17130B] hover:bg-black text-[#F3E7C6] font-semibold text-xs uppercase tracking-[0.14em] flex items-center justify-center transition-all shadow-sm active:scale-[0.99] mt-2"
+                  id="auth-submit-btn"
+                >
+                  {loading ? (
+                    <div className="h-4 w-4 border-2 border-[#F3E7C6] border-t-transparent rounded-full animate-spin" />
+                  ) : view === VIEW_REGISTER ? (
+                    'Create Account'
+                  ) : (
+                    'Sign In'
+                  )}
                 </button>
               </form>
-
-              <div className="text-center mt-6 pt-6 border-t border-neutral-100">
-                <button onClick={() => setView(view === VIEW_REGISTER ? VIEW_LOGIN : VIEW_REGISTER)} className="text-xs text-brand-gold hover:underline font-semibold" id="auth-toggle-btn">
-                  {view === VIEW_REGISTER ? 'Already have an account? Sign In' : 'New to Twin A Apparels? Create an Account'}
-                </button>
-              </div>
             </>
           )}
         </div>
@@ -592,51 +650,53 @@ const AccountLayout = () => {
   }
 
   // ── Authenticated layout ────────────────────────────────────────────────────
+  const { items: wishlistItems } = useSelector(s => s.wishlist);
+  const { items: ordersItems } = useSelector(s => s.orders);
+  const wishlistCount = (wishlistItems || []).length;
+  const ordersCount = (ordersItems || []).length;
+
   return (
     <main id="main-content">
       <div className="max-w-site mx-auto px-4 md:px-8 py-6 md:py-12">
         {/* Mobile Navigation Header & Horizontal Pill Strip (< md) */}
         <div className="block md:hidden mb-6">
           {/* User Info Bar */}
-          <div className="bg-white shadow-xs px-3 py-2.5 rounded-lg border border-neutral-200/60 flex items-center justify-between">
-            <div className="flex items-center gap-2 min-w-0">
-              <div className="w-7 h-7 rounded-full bg-brand-gold flex items-center justify-center flex-shrink-0">
-                <span className="text-white font-bold text-xs">{customer?.name?.[0]?.toUpperCase() || 'B'}</span>
+          <div className="bg-gradient-to-r from-white via-[#FCFAF6] to-white shadow-xs px-3.5 py-3 rounded-2xl border border-neutral-200/80 flex items-center justify-between">
+            <div className="flex items-center gap-2.5 min-w-0">
+              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#1C1812] to-[#2E271D] text-[#E8D49E] border border-[#C9A24B]/50 flex items-center justify-center flex-shrink-0 shadow-xs">
+                <span className="font-playfair font-bold text-xs">{customer?.name?.[0]?.toUpperCase() || 'A'}</span>
               </div>
-              <div className="min-w-0 flex items-center gap-2">
-                <p className="font-semibold text-xs text-neutral-900 truncate">{customer?.name || '—'}</p>
-                <div className="flex items-center gap-0.5 text-[10px] text-brand-gold font-medium bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200/50">
-                  <Star size={10} className="fill-brand-gold" />
-                  <span>{customer?.loyaltyPoints || 0} pts</span>
-                </div>
+              <div className="min-w-0">
+                <p className="font-semibold text-xs text-neutral-900 truncate leading-tight">{customer?.name || 'Valued Member'}</p>
+                <p className="text-[10px] text-neutral-500 truncate leading-tight">{customer?.email || '—'}</p>
               </div>
             </div>
             <button
               onClick={handleSignOut}
-              className="px-2 py-1 text-[11px] text-red-500 font-semibold hover:bg-red-50 rounded-lg flex items-center gap-1 transition-colors flex-shrink-0"
+              className="px-2.5 py-1 text-[11px] text-red-500 font-semibold hover:bg-red-50 rounded-lg flex items-center gap-1 transition-colors flex-shrink-0 border border-red-100"
               id="mobile-account-logout"
             >
               <LogOut size={12} /> Sign Out
             </button>
           </div>
 
-          {/* Horizontal Nav Pills — Single line compact strip with custom 3px thin scrollbar */}
-          <nav className="flex items-center gap-2 overflow-x-auto scrollbar-thin mt-2 mb-2 py-3 px-1 select-none">
+          {/* Horizontal Nav Pills */}
+          <nav className="flex items-center gap-1.5 overflow-x-auto scrollbar-thin mt-2.5 py-1 select-none">
             {NAV_ITEMS.map(({ to, label, icon: Icon, end }) => (
               <NavLink
                 key={to}
                 to={to}
                 end={end}
                 className={({ isActive }) =>
-                  `flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-semibold rounded-full border transition-all ${
+                  `flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-full border transition-all ${
                     isActive
-                      ? 'bg-brand-gold text-white border-brand-gold shadow-xs'
-                      : 'bg-white text-neutral-700 border-neutral-200 hover:bg-neutral-50'
+                      ? 'bg-[#17130B] text-[#F3E7C6] border-[#17130B] shadow-xs font-semibold'
+                      : 'bg-white text-neutral-600 border-neutral-200/80 hover:bg-neutral-50'
                   }`
                 }
                 id={`mobile-nav-${label.toLowerCase().replace(/\s.*/, '')}`}
               >
-                <Icon size={12} strokeWidth={1.75} />
+                <Icon size={13} strokeWidth={1.8} />
                 <span>{label}</span>
               </NavLink>
             ))}
@@ -646,30 +706,86 @@ const AccountLayout = () => {
         {/* Layout Wrapper */}
         <div className="flex flex-col md:flex-row gap-8">
           {/* Desktop Sidebar (>= md) */}
-          <aside className="hidden md:block w-60 flex-shrink-0">
-            <div className="bg-white shadow-sm p-5 text-center mb-4 border border-neutral-100 rounded-lg">
-              <div className="w-16 h-16 rounded-full bg-brand-gold flex items-center justify-center mx-auto mb-3">
-                <span className="text-white font-bold text-xl">{customer?.name?.[0]?.toUpperCase() || 'B'}</span>
+          <aside className="hidden md:block w-64 flex-shrink-0">
+            {/* User Profile Card */}
+            <div className="bg-gradient-to-b from-white to-[#FDFBF7] shadow-sm p-6 text-center mb-4 border border-neutral-200/80 rounded-2xl relative overflow-hidden">
+              <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-transparent via-[#C9A24B] to-transparent opacity-80" />
+              <div className="relative inline-block mb-3">
+                <div className="w-16 h-16 rounded-full bg-gradient-to-br from-[#1C1812] to-[#2E271D] text-[#E8D49E] border-2 border-[#C9A24B]/40 flex items-center justify-center mx-auto shadow-md ring-4 ring-[#C9A24B]/10">
+                  <span className="font-playfair font-bold text-2xl tracking-wide">{customer?.name?.[0]?.toUpperCase() || 'A'}</span>
+                </div>
+                <div className="absolute -bottom-1 -right-1 bg-[#17130B] text-[#E5C778] p-1 rounded-full border border-[#C9A24B]/60 shadow-xs" title="Verified Account">
+                  <ShieldCheck size={12} strokeWidth={2.5} />
+                </div>
               </div>
-              <p className="font-medium">{customer?.name || '—'}</p>
-              <p className="text-xs text-brand-grey truncate">{customer?.email || '—'}</p>
-              <div className="mt-3 flex items-center justify-center gap-1">
-                <Star size={12} className="fill-brand-gold text-brand-gold" />
-                <span className="text-xs font-medium text-brand-gold">{customer?.loyaltyPoints || 0} pts</span>
+              <p className="font-semibold text-neutral-900 text-sm tracking-tight truncate">{customer?.name || 'Valued Member'}</p>
+              <p className="text-xs text-neutral-500 truncate mt-0.5">{customer?.email || '—'}</p>
+              <div className="mt-3 inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#FAF5E8] border border-[#E9D8A6]/60 text-[10px] font-semibold text-[#8B6E22] tracking-wider uppercase">
+                <Sparkles size={10} className="text-[#C9A24B]" />
+                <span>Verified Client</span>
               </div>
             </div>
-            <nav className="bg-white shadow-sm rounded-lg border border-neutral-100 overflow-hidden">
+
+            {/* Navigation Menu */}
+            <nav className="bg-white shadow-sm rounded-2xl border border-neutral-200/80 p-2 space-y-1">
               {NAV_ITEMS.map(({ to, label, icon: Icon, end }) => (
-                <NavLink key={to} to={to} end={end}
-                  className={({ isActive }) => `w-full flex items-center gap-3 px-4 py-3 text-sm text-left border-l-2 transition-all hover:bg-brand-light ${isActive ? 'border-brand-gold text-brand-gold bg-brand-light/50 font-medium' : 'border-transparent text-brand-grey'}`}
-                  id={`account-nav-${label.toLowerCase().replace(/\s.*/, '')}`}>
-                  <Icon size={16} strokeWidth={1.5} />{label}
+                <NavLink
+                  key={to}
+                  to={to}
+                  end={end}
+                  className={({ isActive }) =>
+                    `w-full flex items-center justify-between px-3.5 py-2.5 text-xs font-medium rounded-xl transition-all ${
+                      isActive
+                        ? 'bg-[#17130B] text-[#F3E7C6] shadow-sm font-semibold'
+                        : 'text-neutral-600 hover:text-neutral-900 hover:bg-neutral-100/70'
+                    }`
+                  }
+                  id={`account-nav-${label.toLowerCase().replace(/\s.*/, '')}`}
+                >
+                  {({ isActive }) => (
+                    <>
+                      <div className="flex items-center gap-3">
+                        <Icon size={16} strokeWidth={isActive ? 2 : 1.75} className={isActive ? 'text-[#C9A24B]' : 'text-neutral-400'} />
+                        <span>{label}</span>
+                      </div>
+                      {label === 'Wishlist' && wishlistCount > 0 && (
+                        <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-bold ${isActive ? 'bg-[#C9A24B] text-neutral-950' : 'bg-neutral-100 text-neutral-600'}`}>
+                          {wishlistCount}
+                        </span>
+                      )}
+                      {label === 'My Orders' && ordersCount > 0 && (
+                        <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-bold ${isActive ? 'bg-[#C9A24B] text-neutral-950' : 'bg-neutral-100 text-neutral-600'}`}>
+                          {ordersCount}
+                        </span>
+                      )}
+                    </>
+                  )}
                 </NavLink>
               ))}
-              <button onClick={handleSignOut} className="w-full flex items-center gap-3 px-4 py-3 text-sm text-left border-l-2 border-transparent text-red-400 hover:bg-red-50 transition-all" id="account-logout">
-                <LogOut size={16} strokeWidth={1.5} /> Sign Out
-              </button>
+
+              <div className="pt-2 mt-2 border-t border-neutral-100">
+                <button
+                  onClick={handleSignOut}
+                  className="w-full flex items-center gap-3 px-3.5 py-2.5 text-xs font-medium rounded-xl text-red-500 hover:bg-red-50 hover:text-red-600 transition-colors"
+                  id="account-logout"
+                >
+                  <LogOut size={16} strokeWidth={1.75} />
+                  <span>Sign Out</span>
+                </button>
+              </div>
             </nav>
+
+            {/* Concierge Assistance Card */}
+            <div className="mt-4 p-4 rounded-2xl bg-gradient-to-br from-[#FAF8F5] to-[#F3EEE3] border border-[#E8DFC8]/60 text-center">
+              <p className="text-[11px] font-semibold tracking-wider uppercase text-[#8B6E22]">Client Concierge</p>
+              <p className="text-xs text-neutral-600 mt-1">Need assistance with your orders or sizing?</p>
+              <a
+                href="mailto:support@aadhayagarments.com"
+                className="mt-2.5 inline-flex items-center justify-center gap-1.5 text-[11px] font-bold text-neutral-900 bg-white hover:bg-neutral-50 px-3 py-1.5 rounded-lg border border-neutral-200/80 shadow-2xs transition-all w-full"
+              >
+                <Mail size={12} className="text-[#C9A24B]" /> Contact Support
+              </a>
+            </div>
           </aside>
           <div className="flex-1 min-w-0"><Outlet /></div>
         </div>

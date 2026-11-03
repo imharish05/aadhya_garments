@@ -17,6 +17,12 @@ import { SplitTextReveal, FadeUp, EyebrowReveal, StaggeredText } from '../compon
 import Footer from '../components/Footer';
 import OurPromise from '../components/OurPromise';
 import AboutTeaser from '../components/AboutTeaser';
+import {
+  ProductGridSkeleton,
+  CountdownBannerSkeleton,
+  PromoBannerSkeleton,
+  ExclusiveDealsBannerSkeleton,
+} from '../components/skeletons';
 
 import { getImageUrl } from '../utils/imageUrl';
 
@@ -127,8 +133,8 @@ const SectionHeader = ({ eyebrow, title, subtitle, centered = true, className = 
 const HomePage = () => {
   const dispatch = useDispatch();
   const { items: products, newArrivals, bestSellers, loading, bestSellersLoaded, newArrivalsLoaded } = useSelector(s => s.products);
-  const { items: categories } = useSelector(s => s.categories);
-  const { items: banners } = useSelector(s => s.banners);
+  const { items: categories, loading: categoriesLoading } = useSelector(s => s.categories);
+  const { items: banners, loading: bannersLoading } = useSelector(s => s.banners);
   const [mainTab, setMainTab] = useState('bestsellers');
   const carouselScrollRef = useRef(null);
   const carouselTickingRef = useRef(false);
@@ -361,18 +367,7 @@ const HomePage = () => {
 
             {/* Product grid / Carousel */}
             {isCarouselLoading ? (
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 lg:gap-6">
-                {[...Array(4)].map((_, i) => (
-                  <div key={i} className="bg-white shadow-sm rounded-lg overflow-hidden skeleton-card">
-                    <div className="skeleton aspect-square" />
-                    <div className="p-3 space-y-1.5">
-                      <div className="skeleton h-3.5 w-3/4" />
-                      <div className="skeleton h-3 w-1/2" />
-                      <div className="skeleton h-4 w-1/3" />
-                    </div>
-                  </div>
-                ))}
-              </div>
+              <ProductGridSkeleton count={4} layout="carousel" />
             ) : (
               <div className="relative group/carousel px-4">
                 {/* Left Arrow Button */}
@@ -380,7 +375,7 @@ const HomePage = () => {
                   <button
                     type="button"
                     onClick={() => scrollCarousel(-1)}
-                    className="absolute -left-2 sm:left-2 top-1/2 -translate-y-1/2 z-10 w-9 h-9 sm:w-11 sm:h-11 rounded-full bg-white hover:bg-neutral-50 border border-neutral-200 text-neutral-800 hidden sm:flex items-center justify-center active:scale-95 transition-all shadow-md hover:text-brand-gold cursor-pointer"
+                    className="absolute -left-2 sm:left-2 top-1/2 -translate-y-1/2 z-10 w-9 h-9 sm:w-11 sm:h-11 rounded-full bg-white hover:bg-brand-gold hover:border-brand-gold text-neutral-800 hover:text-black hidden sm:flex items-center justify-center active:scale-95 transition-all shadow-md cursor-pointer"
                     aria-label="Previous products"
                   >
                     <ChevronLeft size={20} />
@@ -408,7 +403,7 @@ const HomePage = () => {
                   <button
                     type="button"
                     onClick={() => scrollCarousel(1)}
-                    className="absolute -right-2 sm:right-2 top-1/2 -translate-y-1/2 z-10 w-9 h-9 sm:w-11 sm:h-11 rounded-full bg-white hover:bg-neutral-50 border border-neutral-200 text-neutral-800 hidden sm:flex items-center justify-center active:scale-95 transition-all shadow-md hover:text-brand-gold cursor-pointer"
+                    className="absolute -right-2 sm:right-2 top-1/2 -translate-y-1/2 z-10 w-9 h-9 sm:w-11 sm:h-11 rounded-full bg-white hover:bg-brand-gold hover:border-brand-gold text-neutral-800 hover:text-black hidden sm:flex items-center justify-center active:scale-95 transition-all shadow-md cursor-pointer"
                     aria-label="Next products"
                   >
                     <ChevronRight size={20} />
@@ -422,11 +417,11 @@ const HomePage = () => {
               <div className="flex justify-center mt-5">
                 <Link
                   to="/products?bestSeller=true"
-                  className="group inline-flex items-center gap-3 rounded-full bg-neutral-950 pl-7 pr-2 py-2 font-montserrat text-xs sm:text-sm font-semibold uppercase tracking-[0.16em] text-white transition-colors duration-300 hover:bg-neutral-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-neutral-950 shadow-sm"
+                  className="group inline-flex items-center gap-3 rounded-full bg-neutral-950 pl-7 pr-2 py-2 font-montserrat text-xs sm:text-sm font-semibold uppercase tracking-[0.16em] text-white transition-all duration-300 hover:bg-brand-gold hover:text-black focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-gold shadow-sm"
                   id="carousel-view-all-btn"
                 >
-                  <span>View All Best Sellers</span>
-                  <span className="flex h-8 w-8 sm:h-9 sm:w-9 items-center justify-center rounded-full bg-white/15 text-white transition-transform duration-300 group-hover:translate-x-1">
+                  <span className="group-hover:text-black transition-colors">View All Best Sellers</span>
+                  <span className="flex h-8 w-8 sm:h-9 sm:w-9 items-center justify-center rounded-full bg-white/15 text-white transition-all duration-300 group-hover:bg-black/10 group-hover:text-black group-hover:translate-x-1">
                     <ArrowRight size={16} />
                   </span>
                 </Link>
@@ -437,7 +432,7 @@ const HomePage = () => {
       )}
 
       {/* ── SECTION 7: Countdown / Deal of the Month Banner ────────────── */}
-      {countdownBanner && !isExpired && (
+      {countdownBanner && !isExpired ? (
         <section className="bg-gradient-to-r from-neutral-950 via-neutral-900 to-neutral-950 py-10 md:py-14 overflow-hidden border-y border-white/10" aria-label="Deal of the month countdown">
           <div className="max-w-site mx-auto px-4 sm:px-6 md:px-8 grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-6 xl:gap-8 items-center justify-items-center">
             {/* Text & Action */}
@@ -495,10 +490,12 @@ const HomePage = () => {
             </div>
           </div>
         </section>
-      )}
+      ) : bannersLoading ? (
+        <CountdownBannerSkeleton />
+      ) : null}
 
       {/* ── SECTION 6: Curated Collection Editorial Banner (PROMO Carousel) ── */}
-      {promoBanners.length > 0 && (
+      {promoBanners.length > 0 ? (
         <section className="py-8 bg-brand-light" aria-label="Curated collection">
           <div className="max-w-6xl mx-auto px-4 sm:px-6 md:px-8">
             {promoBanners.length === 1 ? (
@@ -530,8 +527,7 @@ const HomePage = () => {
                       <Link to={promoBanners[0].ctaLink || "/products"} className="btn-primary py-2 px-5 text-xs" id="bridal-cta">
                         {promoBanners[0].ctaText || "Explore Collection"}
                       </Link>
-                      <p className="text-white/40 text-[11px] mt-1">Personal styling consultation — <Link to="/account/personal-shopper" className="underline hover:text-brand-gold transition-colors">Book Now</Link></p>
-                    </div>
+                                          </div>
                   </div>
                 </div>
               </div>
@@ -573,8 +569,7 @@ const HomePage = () => {
                               <Link to={promo.ctaLink || "/products"} className="btn-primary py-2 px-5 text-xs" id={`promo-cta-${promo.id}`}>
                                 {promo.ctaText || "Explore Collection"}
                               </Link>
-                              <p className="text-white/40 text-[11px] mt-1">Personal styling consultation — <Link to="/account/personal-shopper" className="underline hover:text-brand-gold transition-colors">Book Now</Link></p>
-                            </div>
+                                                          </div>
                           </div>
                         </div>
                       </div>
@@ -615,12 +610,16 @@ const HomePage = () => {
             )}
           </div>
         </section>
-      )}
+      ) : bannersLoading ? (
+        <PromoBannerSkeleton />
+      ) : null}
 
       {/* ── PARALLAX SECTION A: The Art of Curated Living ── */}
 
       {/* ── SECTION 8: Dual Promo Tiles / Exclusive Collection Banner ───── */}
-      {exclusiveBanners.length === 1 && (
+      {exclusiveBanners.length === 0 && bannersLoading ? (
+        <ExclusiveDealsBannerSkeleton />
+      ) : exclusiveBanners.length === 1 ? (
         <section className="py-10 bg-white" aria-label="Promotional offers">
           <div className="max-w-site mx-auto px-6 md:px-8 flex justify-center">
             <div className="relative overflow-hidden w-full max-w-5xl aspect-[16/9] sm:aspect-[2.5/1] md:aspect-[3/1] shadow-lg group rounded-lg">
@@ -650,7 +649,7 @@ const HomePage = () => {
                 {exclusiveBanners[0].ctaText && (
                   <Link
                     to={exclusiveBanners[0].ctaLink || '/products'}
-                    className="text-brand-gold font-medium text-xs md:text-base flex items-center gap-1.5 md:gap-2 hover:gap-3 transition-all focus-visible:outline-white self-start"
+                    className="inline-flex items-center gap-1.5 md:gap-2 px-4 py-2.5 bg-neutral-950 hover:bg-brand-gold text-white hover:text-black font-montserrat font-semibold text-xs md:text-sm uppercase tracking-wider rounded-sm transition-all focus-visible:outline-white self-start shadow-sm border border-neutral-800 hover:border-brand-gold"
                     id={`promo-deal-${exclusiveBanners[0].id}`}
                   >
                     {exclusiveBanners[0].ctaText} <ArrowRight size={14} className="md:w-4 md:h-4" />
@@ -660,9 +659,7 @@ const HomePage = () => {
             </div>
           </div>
         </section>
-      )}
-
-      {exclusiveBanners.length >= 2 && (
+      ) : exclusiveBanners.length >= 2 ? (
         <section className="py-10 bg-white overflow-hidden" aria-label="Promotional offers">
           <div className="max-w-site mx-auto px-6 md:px-8">
             <div className="relative group/carousel">
@@ -679,7 +676,7 @@ const HomePage = () => {
                         const maxIdx = isMobileViewport ? exclusiveBanners.length - 1 : exclusiveBanners.length - 2;
                         return prev === 0 ? maxIdx : prev - 1;
                       })}
-                      className="p-2 border border-brand-text text-brand-text hover:bg-brand-text hover:text-white transition-colors active:scale-95"
+                      className="p-2 border border-neutral-300 text-neutral-800 hover:bg-brand-gold hover:text-black hover:border-brand-gold transition-colors active:scale-95"
                       aria-label="Previous deal"
                     >
                       <ChevronLeft size={18} strokeWidth={1.5} />
@@ -689,7 +686,7 @@ const HomePage = () => {
                         const maxIdx = isMobileViewport ? exclusiveBanners.length - 1 : exclusiveBanners.length - 2;
                         return prev >= maxIdx ? 0 : prev + 1;
                       })}
-                      className="p-2 border border-brand-text text-brand-text hover:bg-brand-text hover:text-white transition-colors active:scale-95"
+                      className="p-2 border border-neutral-300 text-neutral-800 hover:bg-brand-gold hover:text-black hover:border-brand-gold transition-colors active:scale-95"
                       aria-label="Next deal"
                     >
                       <ChevronRight size={18} strokeWidth={1.5} />
@@ -737,10 +734,10 @@ const HomePage = () => {
                         )}
                         <Link
                           to={banner.ctaLink}
-                          className="group/btn inline-flex items-center gap-1.5 md:gap-2 px-3.5 py-2 md:px-5 md:py-2.5 border border-brand-gold/80 hover:border-brand-gold bg-black/60 backdrop-blur-sm hover:bg-brand-gold text-brand-gold hover:text-neutral-950 text-[11px] md:text-xs font-semibold uppercase tracking-widest transition-all duration-300 rounded-sm self-start"
+                          className="group/btn inline-flex items-center gap-1.5 md:gap-2 px-3.5 py-2 md:px-5 md:py-2.5 border border-neutral-700 bg-neutral-950/80 backdrop-blur-sm hover:bg-brand-gold hover:border-brand-gold text-white hover:text-black text-[11px] md:text-xs font-semibold uppercase tracking-widest font-montserrat transition-all duration-300 rounded-sm self-start shadow-sm"
                           id={`promo-deal-${banner.id}`}
                         >
-                          <span>{banner.ctaText || 'Shop Now'}</span>
+                          <span className="group-hover/btn:text-black transition-colors">{banner.ctaText || 'Shop Now'}</span>
                           <ArrowRight size={12} className="md:w-3.5 md:h-3.5 transform transition-transform duration-300 group-hover/btn:translate-x-1" />
                         </Link>
                       </div>
@@ -766,7 +763,7 @@ const HomePage = () => {
             </div>
           </div>
         </section>
-      )}
+      ) : null}
 
       <Footer />
     </main>

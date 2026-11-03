@@ -1230,7 +1230,7 @@ const ProductDetailsPage = () => {
                             <div className="flex-1 h-1.5 bg-neutral-100 rounded-full overflow-hidden">
                               <div className="h-full bg-brand-gold transition-all duration-500 rounded-full" style={{ width: `${percentage}%` }} />
                             </div>
-                            <span className="w-10 text-right font-mono text-[11px] text-neutral-400">{count}</span>
+                            <span className="w-10 text-right font-sans text-[11px] text-neutral-400">{count}</span>
                           </div>
                         );
                       })}

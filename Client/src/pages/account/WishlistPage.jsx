@@ -10,6 +10,7 @@ import { getImageUrl } from '../../utils/imageUrl';
 import { getPlaceholderSvg } from '../../utils/placeholder';
 import { isCartItemMatch } from '../../utils/variantFormatter';
 import { StaggeredText } from '../../components/animations';
+import { ProductGridSkeleton } from '../../components/skeletons';
 
 const WishlistPage = () => {
   const dispatch = useDispatch();
@@ -17,7 +18,7 @@ const WishlistPage = () => {
   const { code: currencyCode, rate: currencyRate } = useSelector(s => s.currency);
   
   // Real Redux Wishlist items (containing fully detailed product objects)
-  const items = useSelector(s => s.wishlist.items) || [];
+  const { items = [], loading } = useSelector(s => s.wishlist) || {};
   const cartItems = useSelector(s => s.cart?.items || []);
 
   const isItemInCart = (item) => cartItems.some(i =>
@@ -84,7 +85,9 @@ const WishlistPage = () => {
         <span className="text-xs text-brand-grey font-medium">({items.length} {items.length === 1 ? 'item' : 'items'})</span>
       </div>
 
-      {items.length === 0 ? (
+      {loading && items.length === 0 ? (
+        <ProductGridSkeleton count={4} className="grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6" />
+      ) : items.length === 0 ? (
         <div className="bg-white p-16 text-center rounded-lg">
           <Heart size={48} className="text-brand-gold/40 mx-auto mb-4 animate-pulse" strokeWidth={1} />
           <StaggeredText as="p" text="Your Wishlist is Empty" segmentBy="chars" startDelay={0.1} className="font-playfair text-xl text-brand-text mb-2" />

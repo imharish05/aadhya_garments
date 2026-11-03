@@ -356,20 +356,20 @@ nav a,
 .btn-primary {
   display: inline-flex; align-items: center; justify-content: center;
   padding: 12px 32px;
-  background: var(--color-gold);
-  color: var(--color-white);
+  background: #000000;
+  color: #FFFFFF;
   font-family: var(--font-body);
   font-weight: 600;
   font-size: 14px;
   letter-spacing: 0.05em;
   text-transform: uppercase;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 4px 12px rgba(197, 136, 55, 0.15);
+  border: 1px solid #000000;
+  border-radius: 4px;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
-.btn-primary:hover { background: #a8712a; transform: translateY(-1.5px); box-shadow: 0 6px 20px rgba(197, 136, 55, 0.3); }
+.btn-primary:hover { background: var(--color-gold) !important; color: #000000 !important; border-color: var(--color-gold) !important; transform: translateY(-1.5px); box-shadow: 0 6px 20px rgba(197, 136, 55, 0.35); }
+.btn-primary:hover * { color: #000000 !important; }
 .btn-primary:active { transform: translateY(0) scale(0.97); }
 .btn-primary:focus-visible { outline: 2px solid var(--color-gold); outline-offset: 2px; }
 
@@ -377,19 +377,20 @@ nav a,
 .btn-primary-hero {
   display: inline-flex; align-items: center; justify-content: center;
   padding: 12px 32px;
-  background: #996822;
-  color: var(--color-white);
+  background: #000000;
+  color: #FFFFFF;
   font-family: 'Montserrat', sans-serif;
+  font-size: 13px;
   font-weight: 600;
-  font-size: 14px;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  border: 1px solid #000000;
+  border-radius: 4px;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
-.btn-primary-hero:hover { background: #81551a; transform: translateY(-1.5px); box-shadow: 0 6px 20px rgba(153, 104, 34, 0.3); }
+.btn-primary-hero:hover { background: var(--color-gold) !important; color: #000000 !important; border-color: var(--color-gold) !important; transform: translateY(-1.5px); box-shadow: 0 6px 20px rgba(197, 136, 55, 0.35); }
+.btn-primary-hero:hover * { color: #000000 !important; }
 .btn-primary-hero:active { transform: translateY(0) scale(0.97); }
 .btn-primary-hero:focus-visible { outline: 2px solid var(--color-gold); outline-offset: 2px; }
 
@@ -408,7 +409,7 @@ nav a,
   cursor: pointer;
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
-.btn-outline:hover { background: var(--color-text); color: var(--color-background); transform: translateY(-1.5px); }
+.btn-outline:hover { background: var(--color-gold) !important; color: #000000 !important; border-color: var(--color-gold) !important; transform: translateY(-1.5px); }
 .btn-outline:active { transform: translateY(0) scale(0.97); }
 .btn-outline:focus-visible { outline: 2px solid var(--color-text); outline-offset: 2px; }
 
@@ -422,11 +423,34 @@ nav a,
 }
 
 /* ── Skeleton Loader ────────────────────────────────────────────────────────── */
+@keyframes shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
 .skeleton {
-  background: linear-gradient(90deg, #e4e4e7 25%, #fafafa 50%, #e4e4e7 75%);
+  background: linear-gradient(90deg, #f0ede6 25%, #faf8f5 50%, #f0ede6 75%);
   background-size: 200% 100%;
-  animation: shimmer 1.5s infinite;
-  border-radius: 2px;
+  animation: shimmer 1.8s ease-in-out infinite;
+  border-radius: 4px;
+}
+
+.skeleton-dark {
+  background: linear-gradient(90deg, #18181b 25%, #27272a 50%, #18181b 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.8s ease-in-out infinite;
+  border-radius: 4px;
+}
+
+.skeleton-gold {
+  background: linear-gradient(90deg, rgba(197, 136, 55, 0.08) 25%, rgba(197, 136, 55, 0.2) 50%, rgba(197, 136, 55, 0.08) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.8s ease-in-out infinite;
+  border-radius: 4px;
 }
 
 /* ── Scrollbar ──────────────────────────────────────────────────────────────── */

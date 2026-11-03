@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Generates an elegant gold-accented luxury vector placeholder SVG as a data URL.
  * Used when product images fail to load or the user is offline.
  */

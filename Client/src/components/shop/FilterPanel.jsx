@@ -23,7 +23,7 @@ export const DISCOUNTS = [
 
 const Group = ({ title, children, className = '' }) => (
   <div className={className}>
-    <h3 className="mb-5 shrink-0 flex items-center gap-3 font-inter text-[11px] font-semibold uppercase tracking-[0.26em] text-[#7A5F28]">
+    <h3 className="mb-5 shrink-0 flex items-center gap-3 font-sans text-[11px] font-semibold uppercase tracking-[0.26em] text-[#7A5F28]">
       <span className="h-px w-6 bg-[#BEA266]" />
       {title}
     </h3>
@@ -37,7 +37,7 @@ const Chip = ({ active, onClick, children }) => (
     type="button"
     onClick={onClick}
     aria-pressed={active}
-    className={`rounded-full border px-3.5 py-2 font-inter text-[11px] font-semibold tracking-[0.04em] transition-colors ${
+    className={`rounded-full border px-3.5 py-2 font-sans text-[11px] font-semibold tracking-[0.04em] transition-colors ${
       active ? 'border-black bg-black text-[#DFC481]' : 'border-black/20 bg-white text-black hover:border-black'
     }`}
   >
@@ -76,7 +76,7 @@ const FilterPanel = ({
     </Group>
     */}
 
-    <Group title="Price" className="mt-6 shrink-0 border-t border-black/10 pt-6">
+    <Group title="Price" className="mt-6 shrink-0 border-t border-neutral-200/80 pt-6">
       <PriceFilter priceMin={priceMin} priceMax={priceMax} valueMin={valueMin} valueMax={valueMax} onApply={onPrice} />
     </Group>
   </div>

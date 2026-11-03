@@ -193,8 +193,6 @@ async function seedOrders() {
         subtotal,
         discountAmount: 0,
         couponDiscount: 0,
-        loyaltyDiscount: 0,
-        redeemedPoints: 0,
         shippingAmount,
         taxAmount,
         taxRate: 18.0,

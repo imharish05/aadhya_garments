@@ -1,4 +1,4 @@
-'use strict';
+﻿'use strict';
 
 /**
  * Robust variant attribute parser and formatter.

@@ -1,12 +1,34 @@
 import { useState } from 'react';
 import Loader from '../components/Loader';
 import Preloader from '../components/Preloader';
-import { Play, Sparkles, RefreshCw } from 'lucide-react';
+import { Play, Sparkles, LayoutGrid, Image, Layers, UserCheck } from 'lucide-react';
+import {
+  HeroBannerSkeleton,
+  PromoBannerSkeleton,
+  CountdownBannerSkeleton,
+  ExclusiveDealsBannerSkeleton,
+  ProductCardSkeleton,
+  ProductGridSkeleton,
+  ProductDetailsSkeleton,
+  OrdersListSkeleton,
+  OrderDetailSkeleton,
+  ReturnsListSkeleton,
+  SavedAddressSkeleton,
+  ReviewsListSkeleton,
+} from '../components/skeletons';
+
+const SKELETON_TABS = [
+  { id: 'products', label: 'Products & Grids', icon: LayoutGrid },
+  { id: 'banners', label: 'Banners & Deals', icon: Image },
+  { id: 'details', label: 'Product Details', icon: Layers },
+  { id: 'account', label: 'Orders & Content', icon: UserCheck },
+];
 
 const LoaderPreviewPage = () => {
   const [showPreloader, setShowPreloader] = useState(false);
   const [activeSize, setActiveSize] = useState('md');
   const [darkTheme, setDarkTheme] = useState(true);
+  const [activeSkeletonTab, setActiveSkeletonTab] = useState('products');
 
   return (
     <main id="main-content" className="min-h-[85vh] flex flex-col items-center bg-[#FAF8F5] text-neutral-900 py-16 px-4 md:px-8">
@@ -29,17 +51,17 @@ const LoaderPreviewPage = () => {
           className="text-3xl md:text-5xl font-bold tracking-tight text-neutral-900"
           style={{ fontFamily: '"Playfair Display", Georgia, serif' }}
         >
-          Twin A Apparels Luxury Preloader
+          API Loaders & Skeletons
         </h1>
         <p className="text-neutral-600 text-sm md:text-base font-medium max-w-xl mx-auto" style={{ fontFamily: '"Montserrat", sans-serif' }}>
-          Crafted specifically for Twin A Apparels — with ambient obsidian depth, dual gold geometric orbit rings, breathing logo pulse, and liquid progress animations.
+          Luxury placeholders and animated loaders for Twin A Apparels — shimmer skeletons for banners, products, product details, orders, and content.
         </p>
       </div>
 
       {/* Interactive Actions Grid */}
-      <div className="w-full max-w-4xl space-y-8">
+      <div className="w-full max-w-5xl space-y-12">
         {/* 1. Fullscreen Preloader Showcase Button */}
-        <div className="bg-gradient-to-r from-neutral-900 via-neutral-950 to-neutral-900 p-8 rounded-lg border border-neutral-800 text-white shadow-xl flex flex-col md:flex-row items-center justify-between gap-6">
+        <div className="bg-gradient-to-r from-neutral-900 via-neutral-950 to-neutral-900 p-8 rounded-xl border border-neutral-800 text-white shadow-xl flex flex-col md:flex-row items-center justify-between gap-6">
           <div className="space-y-1 text-center md:text-left">
             <h3 className="text-xl font-semibold text-[#F2D98D]" style={{ fontFamily: '"Playfair Display", Georgia, serif' }}>
               Full-Screen Website Entrance Preloader
@@ -57,15 +79,15 @@ const LoaderPreviewPage = () => {
           </button>
         </div>
 
-        {/* 2. Inline Component Loader Variations */}
-        <div className="bg-white p-8 rounded-lg border border-neutral-200 shadow-sm space-y-6">
+        {/* 2. Universal Inline Loader Component */}
+        <div className="bg-white p-8 rounded-xl border border-neutral-200/80 shadow-xs space-y-6">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-neutral-100 pb-4">
             <div>
               <h3 className="text-lg font-semibold text-neutral-900" style={{ fontFamily: '"Playfair Display", Georgia, serif' }}>
-                Universal Inline Loader Component
+                Universal Inline Spinner Component
               </h3>
               <p className="text-xs text-neutral-500">
-                Used in product cards, cart updates, checkout processing, and search queries.
+                Used in buttons, cart drawer updates, and small query states.
               </p>
             </div>
 
@@ -96,7 +118,7 @@ const LoaderPreviewPage = () => {
 
           {/* Loader Preview Stage */}
           <div
-            className={`min-h-[260px] rounded-lg flex flex-col items-center justify-center p-8 transition-colors ${
+            className={`min-h-[220px] rounded-lg flex flex-col items-center justify-center p-8 transition-colors ${
               darkTheme ? 'bg-[#080809] border border-neutral-800' : 'bg-neutral-50 border border-neutral-200'
             }`}
           >
@@ -106,11 +128,151 @@ const LoaderPreviewPage = () => {
               text="Curating Luxury..."
             />
           </div>
+        </div>
 
-          <div className="flex items-center justify-between text-xs font-mono text-neutral-400 pt-2">
-            <span>Component: &lt;Loader size="{activeSize}" /&gt;</span>
-            <span className="text-[#8A6820]">Gold: #C9A24B</span>
+        {/* 3. Skeleton Loaders Showcase Section */}
+        <div className="bg-white p-8 rounded-xl border border-neutral-200/80 shadow-xs space-y-6">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-neutral-100 pb-5">
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="h-2 w-2 rounded-full bg-[#C9A24B] animate-ping" />
+                <h3 className="text-xl font-semibold text-neutral-900" style={{ fontFamily: '"Playfair Display", Georgia, serif' }}>
+                  Luxury Shimmer Skeleton Loaders
+                </h3>
+              </div>
+              <p className="text-xs md:text-sm text-neutral-500 mt-1">
+                Content-matching skeleton loaders displayed during live API data fetches.
+              </p>
+            </div>
+
+            {/* Tabs */}
+            <div className="flex flex-wrap gap-1.5 bg-neutral-100 p-1 rounded-lg border border-neutral-200 text-xs font-semibold">
+              {SKELETON_TABS.map((tab) => {
+                const Icon = tab.icon;
+                const active = activeSkeletonTab === tab.id;
+                return (
+                  <button
+                    key={tab.id}
+                    onClick={() => setActiveSkeletonTab(tab.id)}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md transition-all ${
+                      active
+                        ? 'bg-black text-[#F2D98D] shadow-sm'
+                        : 'text-neutral-600 hover:text-black'
+                    }`}
+                  >
+                    <Icon size={14} />
+                    {tab.label}
+                  </button>
+                );
+              })}
+            </div>
           </div>
+
+          {/* Tab 1: Products & Grids */}
+          {activeSkeletonTab === 'products' && (
+            <div className="space-y-8">
+              <div>
+                <p className="text-xs font-semibold text-neutral-400 uppercase tracking-widest mb-3">
+                  Single Product Card Skeleton
+                </p>
+                <div className="max-w-[280px]">
+                  <ProductCardSkeleton />
+                </div>
+              </div>
+
+              <div>
+                <p className="text-xs font-semibold text-neutral-400 uppercase tracking-widest mb-3">
+                  Responsive Product Grid (Listing Page)
+                </p>
+                <ProductGridSkeleton count={4} />
+              </div>
+            </div>
+          )}
+
+          {/* Tab 2: Banners & Deals */}
+          {activeSkeletonTab === 'banners' && (
+            <div className="space-y-8">
+              <div>
+                <p className="text-xs font-semibold text-neutral-400 uppercase tracking-widest mb-3">
+                  Hero Banner Carousel Skeleton
+                </p>
+                <HeroBannerSkeleton />
+              </div>
+
+              <div>
+                <p className="text-xs font-semibold text-neutral-400 uppercase tracking-widest mb-3">
+                  Countdown Deal Banner Skeleton
+                </p>
+                <CountdownBannerSkeleton />
+              </div>
+
+              <div>
+                <p className="text-xs font-semibold text-neutral-400 uppercase tracking-widest mb-3">
+                  Editorial Promo Banner Skeleton
+                </p>
+                <PromoBannerSkeleton />
+              </div>
+
+              <div>
+                <p className="text-xs font-semibold text-neutral-400 uppercase tracking-widest mb-3">
+                  Exclusive Deals Cards Skeleton
+                </p>
+                <ExclusiveDealsBannerSkeleton />
+              </div>
+            </div>
+          )}
+
+          {/* Tab 3: Product Details */}
+          {activeSkeletonTab === 'details' && (
+            <div>
+              <p className="text-xs font-semibold text-neutral-400 uppercase tracking-widest mb-3">
+                Full Product Details Page Skeleton
+              </p>
+              <div className="border border-neutral-200 rounded-xl overflow-hidden bg-white">
+                <ProductDetailsSkeleton />
+              </div>
+            </div>
+          )}
+
+          {/* Tab 4: Account & Content */}
+          {activeSkeletonTab === 'account' && (
+            <div className="space-y-8">
+              <div>
+                <p className="text-xs font-semibold text-neutral-400 uppercase tracking-widest mb-3">
+                  My Orders List Skeleton
+                </p>
+                <OrdersListSkeleton count={2} />
+              </div>
+
+              <div>
+                <p className="text-xs font-semibold text-neutral-400 uppercase tracking-widest mb-3">
+                  Order Detail & Tracking Skeleton
+                </p>
+                <OrderDetailSkeleton />
+              </div>
+
+              <div>
+                <p className="text-xs font-semibold text-neutral-400 uppercase tracking-widest mb-3">
+                  Returns & Refunds Skeleton
+                </p>
+                <ReturnsListSkeleton count={2} />
+              </div>
+
+              <div>
+                <p className="text-xs font-semibold text-neutral-400 uppercase tracking-widest mb-3">
+                  Saved Addresses Grid Skeleton
+                </p>
+                <SavedAddressSkeleton count={2} />
+              </div>
+
+              <div>
+                <p className="text-xs font-semibold text-neutral-400 uppercase tracking-widest mb-3">
+                  Purchases & Reviews List Skeleton
+                </p>
+                <ReviewsListSkeleton count={2} />
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </main>

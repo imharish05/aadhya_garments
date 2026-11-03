@@ -70,7 +70,7 @@ const register = async (req, res) => {
       console.error('[authController] Failed to send welcome email:', err.message)
     );
 
-    res.status(201).json({ success: true, token, refreshToken, bonusPointsEarned: initialPoints });
+    res.status(201).json({ success: true, token, refreshToken });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }

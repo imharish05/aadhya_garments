@@ -1,4 +1,4 @@
-// Keep stored development upload URLs from contacting a visitor's local network.
+﻿// Keep stored development upload URLs from contacting a visitor's local network.
 export const isLocalHost = (hostname = '') => {
   const host = hostname.toLowerCase().replace(/\.$/, '').replace(/^\[|\]$/g, '');
   if (host === 'localhost' || host.endsWith('.localhost') || host.endsWith('.local') || host === '::1' || host === '::' || /^(fc|fd)[0-9a-f]{2}:|^fe[89ab][0-9a-f]:/i.test(host)) return true;

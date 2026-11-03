@@ -76,12 +76,10 @@ export const checkPermission = (admin, permKey) => {
     view_reviews: ['view_products', 'reviews.read'],
     delete_review: ['delete_product', 'reviews.delete'],
 
-    // Orders & Carts
+    // Orders
     view_orders: ['orders.read', 'orders.update'],
     update_orders: ['view_orders', 'orders.update'],
     cancel_orders: ['update_orders', 'orders.delete'],
-    view_abandoned_carts: ['view_orders', 'orders.read', 'abandoned_carts.read'],
-    delete_abandoned_cart: ['cancel_orders', 'orders.delete', 'abandoned_carts.delete'],
 
     // Marketing & Promotions
     view_marketing: ['view_coupons', 'view_banners', 'view_slider_messages'],
@@ -157,8 +155,7 @@ export const canAccessNav = (adminObj, path) => {
     case '/categories':
     case '/sub-categories':
     case '/orders':
-    case '/returns':
-    case '/abandoned-carts': return checkPermission(adminObj, 'view_orders');
+    case '/returns': return checkPermission(adminObj, 'view_orders');
     case '/coupons': return checkPermission(adminObj, 'view_coupons');
     case '/banners': return checkPermission(adminObj, 'view_banners');
     case '/slider-messages': return checkPermission(adminObj, 'view_slider_messages');

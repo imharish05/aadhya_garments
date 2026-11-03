@@ -367,18 +367,7 @@ const AdminOrderDetailsModal = ({ order, onClose, onStatusUpdate }) => {
             {(() => {
               const totalDisc = Number(order.discountAmount || 0);
               const couponDisc = Number(order.couponDiscount || 0);
-              const loyaltyDisc = Number(order.loyaltyDiscount || 0);
-
-              let resolvedCoupon = couponDisc;
-              let resolvedLoyalty = loyaltyDisc;
-
-              if (resolvedCoupon === 0 && resolvedLoyalty === 0 && totalDisc > 0) {
-                if (order.couponId || order.coupon) {
-                  resolvedCoupon = totalDisc;
-                } else {
-                  resolvedLoyalty = totalDisc;
-                }
-              }
+              const resolvedCoupon = couponDisc > 0 ? couponDisc : totalDisc;
 
               return (
                 <>

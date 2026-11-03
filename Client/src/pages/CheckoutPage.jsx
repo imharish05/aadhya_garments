@@ -2,9 +2,9 @@ import { useState, useEffect, useRef } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { useLocation, useNavigate, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Check, MapPin, CreditCard, Package, ChevronRight, Eye, EyeOff, Tag, Sparkles, ShieldAlert, ShieldCheck, AlertTriangle, Lightbulb, Truck, Award, Lock } from 'lucide-react';
+import { Check, MapPin, CreditCard, Package, ChevronRight, Eye, EyeOff, Tag, Sparkles, ShieldAlert, ShieldCheck, AlertTriangle, Lightbulb, Truck, Award, Lock, ShoppingBag } from 'lucide-react';
 import { placeOrder } from '../redux/slices/ordersSlice';
-import { clearLocal, syncCart, clearBuyNowItem, fetchCart, mergeGuestCart } from '../redux/slices/cartSlice';
+import { clearLocal, syncCart, clearBuyNowItem, fetchCart, mergeGuestCart, openCart } from '../redux/slices/cartSlice';
 import { fetchWishlist } from '../redux/slices/wishlistSlice';
 import { loginCustomer, registerCustomer, fetchProfile } from '../redux/slices/authSlice';
 import { setCurrency } from '../redux/slices/currencySlice';
@@ -90,25 +90,6 @@ const CheckoutPage = () => {
     codOnly: true,
   });
 
-  // Loyalty Settings & Auto-Apply state
-  const [loyaltySettings, setLoyaltySettings] = useState({
-    earnRate: 20,
-    redeemRate: 0.2,
-    maxRedeemAmount: 500
-  });
-
-  const [redeemPoints, setRedeemPoints] = useState(
-    location.state?.redeemPoints !== undefined
-      ? Boolean(location.state.redeemPoints)
-      : true
-  );
-
-  useEffect(() => {
-    if (location.state?.redeemPoints === undefined && customer && customer.loyaltyPoints > 0) {
-      setRedeemPoints(true);
-    }
-  }, [customer, location.state?.redeemPoints]);
-
   // Dynamic Tax / GST Rate
   const [taxRate, setTaxRate] = useState(5);
 
@@ -127,18 +108,6 @@ const CheckoutPage = () => {
       .catch(err => {
         console.warn('[Checkout] Using default OTP thresholds (INR 20,000 / AED 800):', err.message);
       });
-
-    api.get('/site-settings/loyalty')
-      .then(res => {
-        if (res.data?.success && res.data?.data) {
-          setLoyaltySettings({
-            earnRate: Number(res.data.data.earnRate) || 20,
-            redeemRate: Number(res.data.data.redeemRate) || 0.2,
-            maxRedeemAmount: Number(res.data.data.maxRedeemAmount) || 500
-          });
-        }
-      })
-      .catch(err => console.warn('[Checkout] Failed to fetch loyalty settings', err));
 
     api.get('/site-settings/tax')
       .then(res => {
@@ -255,7 +224,7 @@ const CheckoutPage = () => {
       const saved = sessionStorage.getItem('bb_checkout_same_delivery');
       if (saved !== null) return JSON.parse(saved);
     } catch {}
-    return false;
+    return true;
   });
 
   const [address, setAddress] = useState(() => {
@@ -436,7 +405,8 @@ const CheckoutPage = () => {
   useEffect(() => {
     if (items.length === 0 && !orderCompletedRef.current) {
       toast.error('Your cart is empty. Add something before checking out.');
-      navigate('/cart', { replace: true });
+      dispatch(openCart());
+      navigate('/products', { replace: true });
     }
   }, [items, navigate]);
 
@@ -460,10 +430,13 @@ const CheckoutPage = () => {
         }
         setAvailableCoupons(active);
         
-        // If an applied coupon from localStorage is no longer in the active list, clear it
+        // Always refresh appliedCoupon with the latest server data so cached old values are replaced
         if (appliedCoupon) {
-          const isStillActive = active.some(c => c.code?.toUpperCase() === appliedCoupon.code?.toUpperCase());
-          if (!isStillActive) {
+          const fresh = active.find(c => c.code?.toUpperCase() === appliedCoupon.code?.toUpperCase());
+          if (fresh) {
+            setAppliedCoupon(fresh);
+            localStorage.setItem('bb_applied_coupon', JSON.stringify(fresh));
+          } else {
             setAppliedCoupon(null);
             localStorage.removeItem('bb_applied_coupon');
           }
@@ -476,34 +449,34 @@ const CheckoutPage = () => {
     fetchCoupons();
   }, []);
 
-  const [userDiscountChoice, setUserDiscountChoice] = useState(null); // 'COUPON' | 'LOYALTY' | 'NONE' | null
-  const [userDisabledLoyalty, setUserDisabledLoyalty] = useState(false);
+  const [userDiscountChoice, setUserDiscountChoice] = useState(null); // 'COUPON' | 'NONE' | null
 
   const getCouponDiscount = (coupon, totalVal) => {
     if (!coupon) return 0;
     if (totalVal < Number(coupon.minOrderValue || 0)) return 0;
     const now = new Date();
-    if (coupon.validFrom && new Date(coupon.validFrom) > now) return 0;
-    if (coupon.validUntil && new Date(coupon.validUntil) < now) return 0;
+    if (coupon.validFrom) {
+      const from = new Date(coupon.validFrom);
+      if (!isNaN(from.getTime()) && from > now) return 0;
+    }
+    if (coupon.validUntil) {
+      const until = new Date(coupon.validUntil);
+      if (!isNaN(until.getTime()) && until < now) return 0;
+    }
 
     const value = Number(coupon.value || 0);
-    if (coupon.type === 'PERCENT') {
+    const type = String(coupon.type || '').toUpperCase();
+    if (type === 'PERCENT') {
       const maxD = Number(coupon.maxDiscount || Infinity);
       return Math.min((totalVal * value) / 100, maxD);
     }
-    if (coupon.type === 'FLAT') {
+    if (type === 'FLAT') {
       return Math.min(value, totalVal);
     }
     return 0;
   };
 
-  // ── AUTO-APPLY BEST DISCOUNT ENGINE ──
-  // 1. Calculate potential savings for loyalty points
-  const potentialLoyaltyDisc = (customer && customer.loyaltyPoints > 0 && !userDisabledLoyalty)
-    ? Math.min(customer.loyaltyPoints * loyaltySettings.redeemRate, loyaltySettings.maxRedeemAmount, subtotal)
-    : 0;
-
-  // 2. Scan ALL available coupons to find the single best coupon for current subtotal
+  // ── AUTO-APPLY BEST COUPON ENGINE ──
   let bestCoupon = null;
   let bestCouponDisc = 0;
   if (availableCoupons && availableCoupons.length > 0) {
@@ -516,58 +489,29 @@ const CheckoutPage = () => {
     });
   }
 
-  // 3. Resolve auto-select winner (Coupon vs Loyalty Points)
-  // If coupon discount >= loyalty discount and > 0, pick coupon (saves user loyalty points for future).
-  let autoSelectedType = null; // 'COUPON' | 'LOYALTY' | null
-  let autoSelectedCoupon = null;
-  let autoSelectedDiscountVal = 0;
-
-  if (bestCouponDisc >= potentialLoyaltyDisc && bestCouponDisc > 0) {
-    autoSelectedType = 'COUPON';
-    autoSelectedCoupon = bestCoupon;
-    autoSelectedDiscountVal = bestCouponDisc;
-  } else if (potentialLoyaltyDisc > 0) {
-    autoSelectedType = 'LOYALTY';
-    autoSelectedDiscountVal = potentialLoyaltyDisc;
-  }
-
-  // 4. Resolve active discount type based on user override or auto-selection
-  let activeDiscountType = null; // 'COUPON' | 'LOYALTY' | null
+  let activeDiscountType = null; // 'COUPON' | null
   let couponDiscount = 0;
-  let loyaltyDiscountVal = 0;
 
   if (userDiscountChoice === 'COUPON') {
-    const activeCpn = appliedCoupon || autoSelectedCoupon;
+    const activeCpn = appliedCoupon || bestCoupon;
     const disc = activeCpn ? getCouponDiscount(activeCpn, subtotal) : 0;
     if (disc > 0) {
       activeDiscountType = 'COUPON';
       couponDiscount = disc;
     }
-  } else if (userDiscountChoice === 'LOYALTY') {
-    if (potentialLoyaltyDisc > 0) {
-      activeDiscountType = 'LOYALTY';
-      loyaltyDiscountVal = potentialLoyaltyDisc;
-    }
   } else if (userDiscountChoice === 'NONE') {
     activeDiscountType = null;
   } else {
-    // Default (userDiscountChoice === null): Auto-select winner!
-    if (autoSelectedType === 'COUPON') {
+    // Default: Auto-select best coupon
+    if (bestCouponDisc > 0) {
       activeDiscountType = 'COUPON';
-      couponDiscount = autoSelectedDiscountVal;
-    } else if (autoSelectedType === 'LOYALTY') {
-      activeDiscountType = 'LOYALTY';
-      loyaltyDiscountVal = autoSelectedDiscountVal;
+      couponDiscount = bestCouponDisc;
     }
   }
 
-  // Active coupon object used for display and payload
   const activeCouponObj = activeDiscountType === 'COUPON'
-    ? (userDiscountChoice === 'COUPON' ? (appliedCoupon || autoSelectedCoupon) : autoSelectedCoupon)
+    ? (userDiscountChoice === 'COUPON' ? (appliedCoupon || bestCoupon) : bestCoupon)
     : null;
-
-  // Synchronize redeemPoints boolean for placeOrder payload
-  const effectiveRedeemPoints = activeDiscountType === 'LOYALTY';
 
   const handleApplyCheckoutCoupon = async (overrideCode = null) => {
     const code = (typeof overrideCode === 'string' ? overrideCode : couponCodeInput).trim().toUpperCase();
@@ -576,12 +520,16 @@ const CheckoutPage = () => {
     try {
       const res = await api.post('/coupons/validate', { code, subtotal });
       if (res.data?.success && res.data?.valid) {
-        setAppliedCoupon(res.data.coupon);
-        localStorage.setItem('bb_applied_coupon', JSON.stringify(res.data.coupon));
+        const cpn = res.data.coupon;
+        const disc = res.data.discountAmount !== undefined ? Number(res.data.discountAmount) : getCouponDiscount(cpn, subtotal);
+        if (disc <= 0 && cpn?.type !== 'FREE_SHIPPING') {
+          toast.error(`Coupon ${cpn.code} is valid but provides no discount for this order value.`);
+          return;
+        }
+        setAppliedCoupon(cpn);
+        localStorage.setItem('bb_applied_coupon', JSON.stringify(cpn));
         setUserDiscountChoice('COUPON');
-        setUserDisabledLoyalty(true);
-        setRedeemPoints(false);
-        toast.success(`Coupon ${res.data.coupon.code} applied! (Loyalty points unapplied as only 1 discount is allowed)`);
+        toast.success(`Coupon ${cpn.code} applied! Saved ₹${Math.round(disc)}`);
         setCouponCodeInput('');
       } else {
         toast.error(res.data?.message || 'Invalid coupon code');
@@ -600,25 +548,8 @@ const CheckoutPage = () => {
     toast.success('Coupon removed.');
   };
 
-  const handleToggleLoyaltyPoints = (checked) => {
-    if (checked) {
-      setUserDisabledLoyalty(false);
-      setRedeemPoints(true);
-      setAppliedCoupon(null);
-      localStorage.removeItem('bb_applied_coupon');
-      setUserDiscountChoice('LOYALTY');
-      toast.success(`Loyalty points applied! (Coupon unapplied as only 1 discount is allowed)`);
-    } else {
-      setUserDisabledLoyalty(true);
-      setRedeemPoints(false);
-      setUserDiscountChoice('NONE');
-      toast.success('Loyalty points unapplied. Points saved for your next order!');
-    }
-  };
-
   const handleResetToAutoSelect = () => {
     setUserDiscountChoice(null);
-    setUserDisabledLoyalty(false);
     setAppliedCoupon(null);
     localStorage.removeItem('bb_applied_coupon');
     toast.success('Auto-selected best discount for your order!');
@@ -646,7 +577,7 @@ const CheckoutPage = () => {
     shippingStatus = 'PENDING';
     shipping = 0;
   }
-  const totalDiscount = couponDiscount + loyaltyDiscountVal;
+  const totalDiscount = couponDiscount;
   const taxableSubtotal = Math.max(0, subtotal - totalDiscount);
 
   // Compute GST per item using product / variant gstRate
@@ -773,7 +704,8 @@ const CheckoutPage = () => {
     }
     if (items.length === 0) {
       toast.error('Your cart is empty. Add something before checking out.');
-      navigate('/cart');
+      dispatch(openCart());
+      navigate('/products');
       return;
     }
     if (shippingStatus === 'NOT_DELIVERABLE') {
@@ -807,7 +739,6 @@ const CheckoutPage = () => {
         paymentMethod: effectivePaymentMethod,
         referralCode,
         couponCode: activeDiscountType === 'COUPON' && activeCouponObj ? activeCouponObj.code : undefined,
-        redeemPoints: activeDiscountType === 'LOYALTY',
         geoCountry: geoCountry || 'IN',
         requestedCurrency: 'INR',
         currencyRate: 1,
@@ -839,7 +770,6 @@ const CheckoutPage = () => {
       // 3. COD: skip payment gateway entirely, go straight to confirmation
       if (isCod) {
         finishOrderClear();
-        if (customer) toast.success('Reward points added for this order!');
         navigate(`/order-confirmation?gateway=cod&orderId=${order.id}&status=success`, { replace: true });
         return;
       }
@@ -882,7 +812,6 @@ const CheckoutPage = () => {
                 finishOrderClear();
                 if (customer) {
                   dispatch(fetchProfile());
-                  toast.success('Reward points added for this order!');
                 }
                 navigate(`/order-confirmation?gateway=razorpay&orderId=${order.id}&status=success`, { replace: true });
               } else {
@@ -1012,761 +941,850 @@ const CheckoutPage = () => {
     return true;
   };
 
-  const inputCls = 'w-full border border-neutral-200 rounded-md px-3 py-2.5 text-sm focus:outline-none focus:border-brand-gold focus:ring-1 focus:ring-brand-gold/20 transition-colors placeholder-neutral-400 bg-white';
-  const labelCls = 'block text-[10px] font-semibold text-neutral-500 uppercase tracking-wider mb-1.5';
+  const inputCls = 'w-full h-11 border border-neutral-300 rounded-lg px-3.5 text-sm text-neutral-900 focus:outline-none focus:border-[#BEA266] focus:ring-1 focus:ring-[#BEA266]/30 transition-colors placeholder:text-neutral-400 bg-white shadow-xs';
+  const labelCls = 'block text-xs font-semibold text-neutral-700 mb-1.5';
 
   return (
-    <main id="main-content">
-      <div className="max-w-site mx-auto px-4 md:px-8 py-8 md:py-12">
-        <h1 className="font-playfair text-2xl md:text-3xl lg:text-4xl font-semibold mb-2">Secure Checkout</h1>
+    <main id="main-content" className="bg-[#FAF9F6] min-h-screen">
+      {/* ── Balanced Clean Checkout Header ── */}
+      <div className="bg-white border-b border-neutral-200 sticky top-0 z-30 shadow-xs">
+        <div className="max-w-[1360px] mx-auto px-4 sm:px-8 h-16 flex items-center justify-between">
+          {/* <Link to="/" className="flex items-center gap-2 group" aria-label="Twin A Apparels — Home">
+            <span className="font-playfair text-xl sm:text-2xl font-bold tracking-tight text-neutral-900 group-hover:text-[#996822] transition-colors">
+              Twin A Apparels
+            </span>
+          </Link> */}
 
-        {/* Restricted Location Banner */}
+          {/* Minimal 2-Step Progress Indicator */}
+          <div className="flex items-center gap-3 sm:gap-6 text-xs font-semibold">
+            <button
+              type="button"
+              onClick={() => step === 2 && setStep(1)}
+              className={`flex items-center gap-1.5 transition-colors ${
+                step === 1
+                  ? 'text-neutral-900 font-bold'
+                  : 'text-neutral-400 hover:text-neutral-700 cursor-pointer'
+              }`}
+            >
+              <span className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold ${
+                step === 1 ? 'bg-[#17130B] text-[#F3E7C6]' : 'bg-emerald-100 text-emerald-800'
+              }`}>
+                {step > 1 ? <Check size={12} strokeWidth={2.5} /> : '1'}
+              </span>
+              <span className="hidden sm:inline text-xs sm:text-sm">Delivery Details</span>
+            </button>
+
+            <span className="w-8 sm:w-16 h-px bg-neutral-200" />
+
+            <div className={`flex items-center gap-1.5 ${
+              step === 2 ? 'text-neutral-900 font-bold' : 'text-neutral-400'
+            }`}>
+              <span className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold ${
+                step === 2 ? 'bg-[#17130B] text-[#F3E7C6]' : 'bg-neutral-100 text-neutral-400'
+              }`}>
+                2
+              </span>
+              <span className="hidden sm:inline text-xs sm:text-sm">Payment & Review</span>
+            </div>
+          </div>
+
+          {/* Bag shortcut */}
+          <button
+            type="button"
+            onClick={() => dispatch(openCart())}
+            className="flex items-center gap-1.5 text-xs font-semibold text-neutral-600 hover:text-neutral-900 px-3 py-1.5 rounded-lg border border-neutral-200 hover:bg-neutral-50 transition-colors shadow-xs"
+          >
+            <ShoppingBag size={14} className="text-[#996822]" />
+            <span className="hidden md:inline">Bag</span>
+            <span className="bg-[#17130B] text-[#F3E7C6] text-[10px] px-1.5 py-0.2 rounded-full font-bold">
+              {items.length}
+            </span>
+          </button>
+        </div>
+      </div>
+
+      <div className="max-w-[1360px] mx-auto px-4 sm:px-8 lg:px-10 py-6 sm:py-8">
+        {/* Geo Restriction Alert */}
         {geoBlocked && (
-          <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-center gap-3 text-red-800">
-            <ShieldAlert size={28} className="text-red-600 shrink-0" />
+          <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl flex items-center gap-3 text-red-800">
+            <ShieldAlert size={22} className="text-red-600 shrink-0" />
             <div>
-              <p className="font-bold text-sm">Service Region Restriction</p>
+              <p className="font-bold text-sm">Region Restriction</p>
               <p className="text-xs text-red-700 mt-0.5">{geoMessage}</p>
             </div>
           </div>
         )}
 
-
-        {/* Returning customer panel */}
-        {!isAuthenticated && (
-          <div className="mb-6">
-            <p className="text-sm text-neutral-500 mb-3">
-              Returning customer?{' '}
-              <button
-                onClick={() => setShowLoginPanel(v => !v)}
-                className="text-brand-gold font-semibold hover:underline focus:outline-none"
-                id="toggle-login-panel"
-              >
-                Click here to login
-              </button>
-            </p>
-
-            <AnimatePresence>
-              {showLoginPanel && (
-                <motion.div
-                  key="login-panel"
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: 'auto' }}
-                  exit={{ opacity: 0, height: 0 }}
-                  className="overflow-hidden"
-                >
-                  <form
-                    onSubmit={handleLogin}
-                    className="bg-neutral-50 border border-neutral-200 rounded-lg p-5 mb-4"
+        <div className="grid lg:grid-cols-12 gap-8 lg:gap-12 xl:gap-14 items-start">
+          {/* ══════════════════════════════════════════════════
+              LEFT COLUMN: Form Area (7 Cols)
+          ══════════════════════════════════════════════════ */}
+          <div className="lg:col-span-7 space-y-6">
+            {/* Returning Customer Banner for Guests */}
+            {!isAuthenticated && step === 1 && (
+              <div className="bg-white border border-neutral-200 rounded-xl p-4 shadow-xs">
+                <div className="flex items-center justify-between text-xs sm:text-sm">
+                  <span className="text-neutral-600">
+                    Already have an account?
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setShowLoginPanel(v => !v)}
+                    className="font-semibold text-[#996822] hover:underline"
+                    id="toggle-login-panel"
                   >
-                    <p className="text-xs text-neutral-500 mb-4">
-                      If you have shopped with us before, please enter your login details below.
-                    </p>
-                    <div className="grid sm:grid-cols-2 gap-4">
-                      <div>
-                        <label className={labelCls} htmlFor="login-email">Email Address</label>
-                        <input
-                          id="login-email"
-                          type="email"
-                          value={loginEmail}
-                          onChange={e => setLoginEmail(e.target.value)}
-                          placeholder="exmaple@email.com"
-                          className={inputCls}
-                        />
-                      </div>
-                      <div>
-                        <label className={labelCls} htmlFor="login-password">Password</label>
-                        <div className="relative">
-                          <input
-                            id="login-password"
-                            type={showLoginPw ? 'text' : 'password'}
-                            value={loginPassword}
-                            onChange={e => setLoginPassword(e.target.value)}
-                            placeholder="Your password"
-                            className={`${inputCls} pr-10`}
-                          />
-                          <button type="button" onClick={() => setShowLoginPw(v => !v)} className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-neutral-600">
-                            {showLoginPw ? <EyeOff size={15} /> : <Eye size={15} />}
-                          </button>
+                    {showLoginPanel ? 'Hide Login' : 'Log in for faster checkout'}
+                  </button>
+                </div>
+
+                <AnimatePresence>
+                  {showLoginPanel && (
+                    <motion.div
+                      key="login-panel"
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: 'auto' }}
+                      exit={{ opacity: 0, height: 0 }}
+                      className="overflow-hidden"
+                    >
+                      <form onSubmit={handleLogin} className="mt-3 pt-3 border-t border-neutral-100 space-y-3">
+                        <div className="grid sm:grid-cols-2 gap-3">
+                          <div>
+                            <label className={labelCls} htmlFor="login-email">Email Address</label>
+                            <input
+                              id="login-email"
+                              type="email"
+                              value={loginEmail}
+                              onChange={e => setLoginEmail(e.target.value)}
+                              placeholder="name@example.com"
+                              className={inputCls}
+                            />
+                          </div>
+                          <div>
+                            <label className={labelCls} htmlFor="login-password">Password</label>
+                            <div className="relative">
+                              <input
+                                id="login-password"
+                                type={showLoginPw ? 'text' : 'password'}
+                                value={loginPassword}
+                                onChange={e => setLoginPassword(e.target.value)}
+                                placeholder="••••••••"
+                                className={`${inputCls} pr-10`}
+                              />
+                              <button
+                                type="button"
+                                onClick={() => setShowLoginPw(v => !v)}
+                                className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-neutral-600"
+                              >
+                                {showLoginPw ? <EyeOff size={15} /> : <Eye size={15} />}
+                              </button>
+                            </div>
+                          </div>
                         </div>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-4 mt-4">
-                      <button type="submit" disabled={loginLoading} className="btn-primary px-6 py-2 text-sm" id="login-btn">
-                        {loginLoading ? 'Logging in…' : 'Login'}
-                      </button>
-                      <Link
-                        to={`/account?view=forgot${loginEmail ? `&email=${encodeURIComponent(loginEmail.trim())}` : ''}`}
-                        className="text-xs text-brand-gold hover:underline"
-                        id="checkout-forgot-password-link"
-                      >
-                        Forgot password?
-                      </Link>
-                    </div>
-                  </form>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
-        )}
 
-        {/* Checkout steps */}
-        <div className="glass-step-pill flex items-center justify-center gap-0 mb-8 p-1 px-2 sm:p-2 sm:px-5 rounded-full w-fit mx-auto" aria-label="Checkout progress">
-          {STEPS.map((s, i) => (
-            <div key={s.id} className="flex items-center">
-              <button
-                onClick={() => step > s.id && setStep(s.id)}
-                className={`flex items-center gap-1 sm:gap-2 px-2 py-1.5 sm:px-4 sm:py-2 rounded-full text-[10px] sm:text-xs md:text-sm font-semibold tracking-wider uppercase transition-all ${step === s.id ? 'bg-brand-gold text-white' : step > s.id ? 'text-brand-gold cursor-pointer hover:bg-brand-light' : 'text-brand-grey cursor-default'}`}
-                aria-current={step === s.id ? 'step' : undefined}
-                id={`step-${s.id}`}
-              >
-                {step > s.id ? <Check size={10} className="sm:w-3.5 sm:h-3.5" /> : <s.icon size={10} className="sm:w-3.5 sm:h-3.5" />}
-                <span>
-                  {s.label}
-                </span>
-              </button>
-              {i < STEPS.length - 1 && <ChevronRight size={10} className="text-brand-grey mx-0.5 sm:mx-1 sm:w-3.5 sm:h-3.5" />}
-            </div>
-          ))}
-        </div>
+                        <div className="flex items-center justify-between pt-1">
+                          <button
+                            type="submit"
+                            disabled={loginLoading}
+                            className="py-2 px-4 bg-[#17130B] hover:bg-black text-[#F3E7C6] font-semibold text-xs uppercase tracking-wider rounded-lg transition-all shadow-xs"
+                            id="login-btn"
+                          >
+                            {loginLoading ? 'Signing in…' : 'Sign In'}
+                          </button>
+                          <Link
+                            to={`/account?view=forgot${loginEmail ? `&email=${encodeURIComponent(loginEmail.trim())}` : ''}`}
+                            className="text-xs text-[#996822] hover:underline"
+                          >
+                            Forgot password?
+                          </Link>
+                        </div>
+                      </form>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            )}
 
-        <div className="grid lg:grid-cols-3 gap-8 md:gap-10">
-          {/* Form area */}
-          <div className="lg:col-span-2">
             <AnimatePresence mode="wait">
-
-              {/* ── Step 1: Delivery ── */}
+              {/* ── STEP 1: Details & Delivery ── */}
               {step === 1 && (
                 <motion.div
                   key="step1"
-                  initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}
-                  transition={{ duration: 0.25 }}
-                  className="space-y-5"
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -8 }}
+                  transition={{ duration: 0.18 }}
+                  className="bg-white border border-neutral-200/90 rounded-2xl p-6 sm:p-8 lg:p-9 shadow-sm space-y-6"
                 >
-                  <div className="bg-white border border-neutral-200 rounded-xl p-4 sm:p-6">
-                    <h2 className="font-playfair text-lg sm:text-xl font-semibold mb-3 text-brand-text">Billing Address</h2>
-                    {isAuthenticated && customer && (
-                      <SavedAddressPicker
-                        key={'billing-' + customer.id}
-                        customer={customer}
-                        value={billingAddress}
-                        onModeChange={setBillingMode}
-                        onChange={value => {
-                          setBillingAddress(value);
-                          setFieldErrors({});
-                          setIsVerified(false);
-                          setOtpSent(false);
-                          if (deliverySameAsBilling) {
-                            if (['india', 'in'].includes((value.country || '').toLowerCase()) && !value.phone?.startsWith('+971')) {
-                              setAddress({ ...value, country: 'India' });
-                            } else {
-                              setDeliverySameAsBilling(false);
-                            }
-                            setSameDeliveryError('');
-                          }
-                        }}
-                      />
-                    )}
+                  <div className="border-b border-neutral-100 pb-3">
+                    <h2 className="font-playfair text-xl sm:text-2xl font-bold text-neutral-900">
+                      Shipping / Delivery Address
+                    </h2>
+                    <p className="text-xs text-neutral-500 mt-1">
+                      Enter the address where you want your orders delivered.
+                               </p>
+                  </div>
 
-                    <AnimatePresence initial={false}>
-                      {showBillingInputs && (
-                        <motion.div
-                          key="billing-inputs"
-                          initial={{ opacity: 0, height: 0 }}
-                          animate={{ opacity: 1, height: 'auto' }}
-                          exit={{ opacity: 0, height: 0 }}
-                          transition={{ duration: 0.25 }}
-                          className="overflow-hidden"
-                        >
-                          <p className="text-xs text-neutral-400 mb-5">All fields marked * are required</p>
+                  {/* Saved Address Picker if logged in */}
+                  {isAuthenticated && customer && (
+                    <SavedAddressPicker
+                      key={'billing-' + customer.id}
+                      customer={customer}
+                      value={billingAddress}
+                      onModeChange={setBillingMode}
+                      onChange={value => {
+                        setBillingAddress(value);
+                        setFieldErrors({});
+                        setIsVerified(false);
+                        setOtpSent(false);
+                        if (deliverySameAsBilling) {
+                          setAddress({ ...value, country: 'India' });
+                          setSameDeliveryError('');
+                        }
+                      }}
+                    />
+                  )}
 
-                          <div className="grid sm:grid-cols-2 gap-4">
-                            {/* Full Name */}
-                            <div className="sm:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-4">
-                              <div>
-                                <label className={labelCls} htmlFor="fullName">Full Name <span className="text-red-400">*</span></label>
-                                <input id="fullName" type="text" value={billingAddress.fullName}
-                                  onChange={e => {
-                                    const val = e.target.value;
-                                    setBillingAddress(p => ({ ...p, fullName: val }));
-                                    if (fieldErrors.fullName) setFieldErrors(p => ({ ...p, fullName: null }));
-                                  }}
-                                  placeholder="Enter your full name"
-                                  className={`${inputCls} ${fieldErrors.fullName ? 'border-red-500 bg-red-50/20 focus:border-red-500 focus:ring-red-200' : ''}`} required />
-                                {fieldErrors.fullName && <p className="text-[11px] text-red-500 mt-1 font-medium">{fieldErrors.fullName}</p>}
-                              </div>
-                              <div>
-                                <PhoneInput
-                                  id="phone"
-                                  name="phone"
-                                  label="Mobile Number"
-                                  value={billingAddress.phone}
-                                  onChange={(val, meta) => {
-                                    setBillingAddress(p => ({ ...p, phone: val }));
-                                    if (fieldErrors.phone) {
-                                      setFieldErrors(p => ({ ...p, phone: meta.isValid ? null : meta.error }));
-                                    }
-                                    const digitsOnly = (val || '').replace(/\D/g, '');
-                                    const isDubaiPhone = (val || '').startsWith('+971') || (digitsOnly.startsWith('971') && digitsOnly.length >= 11) || (digitsOnly.length === 9 && digitsOnly.startsWith('5'));
-                                    if (deliverySameAsBilling && isDubaiPhone) {
-                                      setDeliverySameAsBilling(false);
-                                      const msg = 'Delivery requires an Indian (+91) mobile number. Since your billing phone is a Dubai/UAE (+971) number, delivery address has been separated.';
-                                      setSameDeliveryError(msg);
-                                      toast.error(msg);
-                                    } else if (sameDeliveryError && !isDubaiPhone) {
-                                      setSameDeliveryError('');
-                                    }
-                                  }}
-                                  error={fieldErrors.phone}
-                                  required
-                                  inputClassName="min-w-0 py-2.5"
-                                />
-                              </div>
-                            </div>
-
-                            {/* Email */}
-                            <div className="sm:col-span-2">
-                              <label className={labelCls} htmlFor="email">Email Address <span className="text-red-400">*</span></label>
-                              <input id="email" type="email" value={billingAddress.email}
-                                onChange={e => {
-                                  const val = e.target.value;
-                                  setBillingAddress(p => ({ ...p, email: val }));
-                                  if (fieldErrors.email) setFieldErrors(p => ({ ...p, email: null }));
-                                }}
-                                placeholder="exmaple@email.com"
-                                className={`${inputCls} ${fieldErrors.email ? 'border-red-500 bg-red-50/20 focus:border-red-500 focus:ring-red-200' : ''}`} required />
-                              {fieldErrors.email && <p className="text-[11px] text-red-500 mt-1 font-medium">{fieldErrors.email}</p>}
-                            </div>
-
-                            {/* Street */}
-                            <div className="sm:col-span-2">
-                              <label className={labelCls} htmlFor="flatHouse">Street / House No. <span className="text-red-400">*</span></label>
-                              <input id="flatHouse" type="text" value={billingAddress.flatHouse}
-                                onChange={e => {
-                                  const val = e.target.value;
-                                  setBillingAddress(p => ({ ...p, flatHouse: val }));
-                                  if (fieldErrors.flatHouse) setFieldErrors(p => ({ ...p, flatHouse: null }));
-                                }}
-                                placeholder="House / flat no., road name"
-                                className={`${inputCls} ${fieldErrors.flatHouse ? 'border-red-500 bg-red-50/20 focus:border-red-500 focus:ring-red-200' : ''}`} required />
-                              {fieldErrors.flatHouse && <p className="text-[11px] text-red-500 mt-1 font-medium">{fieldErrors.flatHouse}</p>}
-                            </div>
-
-                            {/* Landmark (optional) */}
-                            <div className="sm:col-span-2">
-                              <label className={labelCls} htmlFor="landmark">Apartment / Landmark <span className="text-neutral-300">(optional)</span></label>
-                              <input id="landmark" type="text" value={billingAddress.landmark}
-                                onChange={e => setBillingAddress(p => ({ ...p, landmark: e.target.value }))}
-                                placeholder="Building name, floor, landmark" className={inputCls} />
-                            </div>
-
-                            {/* City */}
-                            <div>
-                              <label className={labelCls} htmlFor="city">City <span className="text-red-400">*</span></label>
-                              <input id="city" type="text" value={billingAddress.city}
-                                onChange={e => {
-                                  const val = e.target.value;
-                                  setBillingAddress(p => ({ ...p, city: val }));
-                                  if (fieldErrors.city) setFieldErrors(p => ({ ...p, city: null }));
-                                }}
-                                placeholder="City"
-                                className={`${inputCls} ${fieldErrors.city ? 'border-red-500 bg-red-50/20 focus:border-red-500 focus:ring-red-200' : ''}`} required />
-                              {fieldErrors.city && <p className="text-[11px] text-red-500 mt-1 font-medium">{fieldErrors.city}</p>}
-                            </div>
-
-                            {/* State Input */}
-                            <div>
-                              <label className={labelCls} htmlFor="state">State / Province / Region <span className="text-red-400">*</span></label>
-                              <input id="state" type="text" value={billingAddress.state}
-                                onChange={e => {
-                                  const val = e.target.value;
-                                  setBillingAddress(p => ({ ...p, state: val }));
-                                  if (fieldErrors.state) setFieldErrors(p => ({ ...p, state: null }));
-                                }}
-                                placeholder="State / Province / Region"
-                                className={`${inputCls} ${fieldErrors.state ? 'border-red-500 bg-red-50/20 focus:border-red-500 focus:ring-red-200' : ''}`} required />
-                              {fieldErrors.state && <p className="text-[11px] text-red-500 mt-1 font-medium">{fieldErrors.state}</p>}
-                            </div>
-
-                            {/* Pincode / Zipcode */}
-                            <div>
-                              <label className={labelCls} htmlFor="pincode">Pincode / Zipcode <span className="text-red-400">*</span></label>
-                              <input id="pincode" type="text" value={billingAddress.pincode}
-                                onChange={e => {
-                                  const val = e.target.value;
-                                  setBillingAddress(p => ({ ...p, pincode: val }));
-                                  if (fieldErrors.pincode) setFieldErrors(p => ({ ...p, pincode: null }));
-                                }}
-                                placeholder="Postal / Zip code"
-                                className={`${inputCls} ${fieldErrors.pincode ? 'border-red-500 bg-red-50/20 focus:border-red-500 focus:ring-red-200' : ''}`} required />
-                              {fieldErrors.pincode && <p className="text-[11px] text-red-500 mt-1 font-medium">{fieldErrors.pincode}</p>}
-                              {(!billingAddress.pincode || billingAddress.pincode.trim().length < 3) && deliverySameAsBilling && !fieldErrors.pincode && (
-                                <p className="text-[11px] text-neutral-400 mt-1 italic">
-                                  Enter pincode to calculate shipping charge
-                                </p>
-                              )}
-                            </div>
-
-                            {/* Country */}
-                            <div>
-                              <label className={labelCls} htmlFor="country">Country <span className="text-red-400">*</span></label>
-                              <input id="country" type="text" value={billingAddress.country}
-                                onChange={e => {
-                                  const val = e.target.value;
-                                  setBillingAddress(p => ({ ...p, country: val }));
-                                  if (fieldErrors.country) setFieldErrors(p => ({ ...p, country: null }));
-                                }}
-                                placeholder="Country"
-                                className={`${inputCls} ${fieldErrors.country ? 'border-red-500 bg-red-50/20 focus:border-red-500 focus:ring-red-200' : ''}`} required />
-                              {fieldErrors.country && <p className="text-[11px] text-red-500 mt-1 font-medium">{fieldErrors.country}</p>}
-                            </div>
+                  {/* Main Shipping Address Form */}
+                  <AnimatePresence initial={false}>
+                    {showBillingInputs && (
+                      <motion.div
+                        key="billing-inputs"
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: 'auto' }}
+                        exit={{ opacity: 0, height: 0 }}
+                        transition={{ duration: 0.2 }}
+                        className="space-y-4"
+                      >
+                        {/* Full Name & Phone Number (Side by side) */}
+                        <div className="grid sm:grid-cols-2 gap-4 items-start">
+                          <div>
+                            <label className={labelCls} htmlFor="fullName">
+                              Full Name <span className="text-rose-500">*</span>
+                            </label>
+                            <input
+                              id="fullName"
+                              type="text"
+                              value={billingAddress.fullName}
+                              onChange={e => {
+                                const val = e.target.value;
+                                setBillingAddress(p => ({ ...p, fullName: val }));
+                                if (fieldErrors.fullName) setFieldErrors(p => ({ ...p, fullName: null }));
+                              }}
+                              placeholder="John Doe"
+                              className={`${inputCls} ${fieldErrors.fullName ? 'border-red-400 bg-red-50/20' : ''}`}
+                              required
+                            />
+                            {fieldErrors.fullName && <p className="text-[11px] text-red-500 mt-1">{fieldErrors.fullName}</p>}
                           </div>
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
 
-                    {/* Delivery Availability Status banner when same delivery is active */}
-                    {pincodeZoneData && deliverySameAsBilling && (billingAddress.pincode || '').trim().length >= 3 && (
-                      <div className="mt-3 flex items-center gap-2 text-xs text-emerald-700 font-medium">
-                        {pincodeZoneData.deliverable ? (
-                          <>
-                            <MapPin size={14} className="shrink-0 text-emerald-600" />
-                            <span>
-                              <strong className="font-semibold text-emerald-900">Delivery Available ({pincodeZoneData.zoneName})</strong>
-                              {' — '}
-                              {shipping === 0 ? (
-                                pincodeZoneData.minOrderAmountForFreeDelivery !== null
-                                  ? `FREE Delivery (Order above ₹${pincodeZoneData.minOrderAmountForFreeDelivery})`
-                                  : 'FREE Delivery'
-                              ) : (
-                                `Shipping Fee: ₹${shipping}${pincodeZoneData.minOrderAmountForFreeDelivery !== null ? ` (Free on orders above ₹${pincodeZoneData.minOrderAmountForFreeDelivery})` : ''}`
-                              )}
-                            </span>
-                          </>
-                        ) : (
-                          <p className="text-xs text-red-600 font-semibold flex items-center gap-1.5">
-                            <AlertTriangle size={14} className="shrink-0 text-red-500" />
-                            {pincodeZoneData.message || 'Delivery not available for this pincode'}
-                          </p>
-                        )}
-                      </div>
-                    )}
-
-                    {/* Same delivery toggle */}
-                    <div className="mt-5 pt-4 border-t border-neutral-100">
-                      <label htmlFor="same-delivery" className="flex items-center gap-2.5 cursor-pointer select-none text-sm font-medium text-brand-text">
-                        <input id="same-delivery" type="checkbox" checked={deliverySameAsBilling}
-                          onChange={e => handleToggleDeliverySame(e.target.checked)}
-                          className="w-4 h-4 accent-brand-gold cursor-pointer rounded" />
-                        Delivery address is same as billing address
-                      </label>
-                      {(sameDeliveryError || fieldErrors.sameDelivery) && (
-                        <div className="mt-2.5 p-2.5 bg-red-50 text-xs text-red-600 font-medium flex items-start gap-2 rounded-lg">
-                          <AlertTriangle size={15} className="shrink-0 text-red-500 mt-0.5" />
-                          <span>{sameDeliveryError || fieldErrors.sameDelivery}</span>
+                          <div>
+                            <PhoneInput
+                              id="phone"
+                              name="phone"
+                              label="Mobile Number (India only)"
+                              allowedCountries={['IN']}
+                              defaultCountry="IN"
+                              value={billingAddress.phone}
+                              onChange={(val, meta) => {
+                                setBillingAddress(p => ({ ...p, phone: val }));
+                                if (fieldErrors.phone) {
+                                  setFieldErrors(p => ({ ...p, phone: meta.isValid ? null : meta.error }));
+                                }
+                              }}
+                              error={fieldErrors.phone}
+                              required
+                            />
+                          </div>
                         </div>
-                      )}
-                    </div>
 
-                    {/* Separate delivery address */}
+                        {/* Email Address */}
+                        <div>
+                          <label className={labelCls} htmlFor="email">
+                            Email Address <span className="text-rose-500">*</span>
+                          </label>
+                          <input
+                            id="email"
+                            type="email"
+                            value={billingAddress.email}
+                            onChange={e => {
+                              const val = e.target.value;
+                              setBillingAddress(p => ({ ...p, email: val }));
+                              if (fieldErrors.email) setFieldErrors(p => ({ ...p, email: null }));
+                            }}
+                            placeholder="name@example.com"
+                            className={`${inputCls} ${fieldErrors.email ? 'border-red-400 bg-red-50/20' : ''}`}
+                            required
+                          />
+                          {fieldErrors.email && <p className="text-[11px] text-red-500 mt-1">{fieldErrors.email}</p>}
+                        </div>
+
+                        {/* Street Address / House No. */}
+                        <div>
+                          <label className={labelCls} htmlFor="flatHouse">
+                            Street Address / House No. / Flat <span className="text-rose-500">*</span>
+                          </label>
+                          <input
+                            id="flatHouse"
+                            type="text"
+                            value={billingAddress.flatHouse}
+                            onChange={e => {
+                              const val = e.target.value;
+                              setBillingAddress(p => ({ ...p, flatHouse: val }));
+                              if (fieldErrors.flatHouse) setFieldErrors(p => ({ ...p, flatHouse: null }));
+                            }}
+                            placeholder="Flat/House no., building, street or locality"
+                            className={`${inputCls} ${fieldErrors.flatHouse ? 'border-red-400 bg-red-50/20' : ''}`}
+                            required
+                          />
+                          {fieldErrors.flatHouse && <p className="text-[11px] text-red-500 mt-1">{fieldErrors.flatHouse}</p>}
+                        </div>
+
+                        {/* Apartment / Landmark */}
+                        <div>
+                          <label className={labelCls} htmlFor="landmark">
+                            Apartment / Landmark <span className="text-neutral-400 font-normal">(optional)</span>
+                          </label>
+                          <input
+                            id="landmark"
+                            type="text"
+                            value={billingAddress.landmark}
+                            onChange={e => setBillingAddress(p => ({ ...p, landmark: e.target.value }))}
+                            placeholder="Near park, landmark, etc."
+                            className={inputCls}
+                          />
+                        </div>
+
+                        {/* City & Pincode (Side by side) */}
+                        <div className="grid grid-cols-2 gap-4 items-start">
+                          <div>
+                            <label className={labelCls} htmlFor="city">
+                              City <span className="text-rose-500">*</span>
+                            </label>
+                            <input
+                              id="city"
+                              type="text"
+                              value={billingAddress.city}
+                              onChange={e => {
+                                const val = e.target.value;
+                                setBillingAddress(p => ({ ...p, city: val }));
+                                if (fieldErrors.city) setFieldErrors(p => ({ ...p, city: null }));
+                              }}
+                              placeholder="City"
+                              className={`${inputCls} ${fieldErrors.city ? 'border-red-400 bg-red-50/20' : ''}`}
+                              required
+                            />
+                            {fieldErrors.city && <p className="text-[11px] text-red-500 mt-1">{fieldErrors.city}</p>}
+                          </div>
+
+                          <div>
+                            <label className={labelCls} htmlFor="pincode">
+                              Pincode <span className="text-rose-500">*</span>
+                            </label>
+                            <input
+                              id="pincode"
+                              type="text"
+                              maxLength={6}
+                              value={billingAddress.pincode}
+                              onChange={e => {
+                                const val = e.target.value.replace(/\D/g, '').slice(0, 6);
+                                setBillingAddress(p => ({ ...p, pincode: val }));
+                                if (fieldErrors.pincode) setFieldErrors(p => ({ ...p, pincode: null }));
+                              }}
+                              placeholder="6 digits"
+                              className={`${inputCls} ${fieldErrors.pincode ? 'border-red-400 bg-red-50/20' : ''}`}
+                              required
+                            />
+                            {fieldErrors.pincode && <p className="text-[11px] text-red-500 mt-1">{fieldErrors.pincode}</p>}
+                          </div>
+                        </div>
+
+                        {/* State & Country (Side by side) */}
+                        <div className="grid grid-cols-2 gap-4 items-start">
+                          <div>
+                            <label className={labelCls} htmlFor="state">
+                              State <span className="text-rose-500">*</span>
+                            </label>
+                            <input
+                              id="state"
+                              type="text"
+                              value={billingAddress.state}
+                              onChange={e => {
+                                const val = e.target.value;
+                                setBillingAddress(p => ({ ...p, state: val }));
+                                if (fieldErrors.state) setFieldErrors(p => ({ ...p, state: null }));
+                              }}
+                              placeholder="State"
+                              className={`${inputCls} ${fieldErrors.state ? 'border-red-400 bg-red-50/20' : ''}`}
+                              required
+                            />
+                            {fieldErrors.state && <p className="text-[11px] text-red-500 mt-1">{fieldErrors.state}</p>}
+                          </div>
+
+                          <div>
+                            <label className={labelCls} htmlFor="country">
+                              Country
+                            </label>
+                            <input
+                              id="country"
+                              type="text"
+                              readOnly
+                              value="India"
+                              className="w-full h-11 border border-neutral-200 rounded-lg px-3.5 text-sm text-neutral-600 bg-neutral-100/70 cursor-not-allowed font-medium"
+                            />
+                          </div>
+                        </div>
+
+                        {/* Delivery Availability Status badge */}
+                        {pincodeZoneData && (billingAddress.pincode || '').trim().length >= 3 && (
+                          <div className="pt-1">
+                            {pincodeZoneData.deliverable ? (
+                              <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-medium">
+                                <Check size={14} className="text-emerald-600 shrink-0" />
+                                <span>
+                                  Delivery available ({pincodeZoneData.zoneName}) — {shipping === 0 ? 'FREE Delivery' : `Shipping: ₹${shipping}`}
+                                </span>
+                              </div>
+                            ) : (
+                              <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-rose-50 border border-rose-200 text-rose-700 text-xs font-medium">
+                                <AlertTriangle size={14} className="text-rose-600 shrink-0" />
+                                <span>{pincodeZoneData.message || 'Delivery not available for this pincode'}</span>
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+
+                  {/* ── BILLING ADDRESS SECTION (SAME EXACT FIELDS) ── */}
+                  <div className="pt-2">
+                    <label htmlFor="same-delivery" className="flex items-center gap-2.5 cursor-pointer select-none text-xs sm:text-sm font-semibold text-neutral-800">
+                      <input
+                        id="same-delivery"
+                        type="checkbox"
+                        checked={deliverySameAsBilling}
+                        onChange={e => handleToggleDeliverySame(e.target.checked)}
+                        className="w-4 h-4 accent-[#BEA266] rounded cursor-pointer"
+                      />
+                      Billing address is the same as shipping address
+                    </label>
+
+                    {/* Exact Same Fields in Billing Address when unchecked */}
                     <AnimatePresence initial={false}>
                       {!deliverySameAsBilling && (
                         <motion.div
                           key="delivery-section"
-                          initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }}
-                          transition={{ duration: 0.3 }} className="overflow-hidden"
+                          initial={{ height: 0, opacity: 0 }}
+                          animate={{ height: 'auto', opacity: 1 }}
+                          exit={{ height: 0, opacity: 0 }}
+                          transition={{ duration: 0.2 }}
+                          className="overflow-hidden mt-4 pt-4 border-t border-neutral-100 space-y-4"
                         >
-                          <h3 className="font-playfair text-lg sm:text-xl font-semibold mt-5 mb-3 border-t border-neutral-100 pt-5 text-brand-text">Delivery Address</h3>
-                          {isAuthenticated && customer && (
-                            <SavedAddressPicker
-                              key={'delivery-' + customer.id}
-                              customer={customer}
-                              value={address}
-                              delivery
-                              onModeChange={setDeliveryMode}
-                              onChange={value => {
-                                setAddress(value);
-                                setFieldErrors({});
-                              }}
-                            />
-                          )}
+                          <div className="border-b border-neutral-100 pb-2">
+                            <h3 className="font-playfair text-lg sm:text-xl font-bold text-neutral-900">
+                              Billing Address
+                            </h3>
+                            <p className="text-xs text-neutral-500 mt-0.5">
+                              Enter the billing address associated with your payment method.
+                            </p>
+                          </div>
 
-                          <AnimatePresence initial={false}>
-                            {showDeliveryInputs && (
-                              <motion.div
-                                key="delivery-inputs"
-                                initial={{ opacity: 0, height: 0 }}
-                                animate={{ opacity: 1, height: 'auto' }}
-                                exit={{ opacity: 0, height: 0 }}
-                                transition={{ duration: 0.25 }}
-                                className="overflow-hidden"
-                              >
-                                <p className="text-xs text-neutral-400 mb-4">Delivery address fields (India only)</p>
-                                <div className="grid sm:grid-cols-2 gap-4">
-                                  <div className="sm:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                    <div>
-                                      <label className={labelCls} htmlFor="d-fullname">Full Name *</label>
-                                      <input id="d-fullname" type="text" value={address.fullName} onChange={e => setAddress(p => ({...p, fullName: e.target.value}))} placeholder="Full name" className={inputCls} />
-                                    </div>
-                                    <div>
-                                      <PhoneInput
-                                        id="d-phone"
-                                        name="del_phone"
-                                        label="Mobile (India +91 only)"
-                                        value={address.phone}
-                                        allowedCountries={['IN']}
-                                        defaultCountry="IN"
-                                        onChange={(val, meta) => {
-                                          setAddress(p => ({ ...p, phone: val }));
-                                          if (fieldErrors.del_phone) {
-                                            setFieldErrors(p => ({ ...p, del_phone: meta.isValid ? null : meta.error }));
-                                          }
-                                        }}
-                                        error={fieldErrors.del_phone}
-                                        required
-                                        inputClassName="min-w-0 py-2.5"
-                                      />
-                                    </div>
-                                  </div>
-                                  <div className="sm:col-span-2">
-                                    <label className={labelCls} htmlFor="d-email">Email *</label>
-                                    <input id="d-email" type="email" value={address.email} onChange={e => setAddress(p => ({...p, email: e.target.value}))} placeholder="exmaple@email.com" className={inputCls} />
-                                  </div>
-                                  <div className="sm:col-span-2">
-                                    <label className={labelCls} htmlFor="d-flat">Street / House No. *</label>
-                                    <input id="d-flat" type="text" value={address.flatHouse} onChange={e => setAddress(p => ({...p, flatHouse: e.target.value}))} placeholder="House / flat no., road name" className={inputCls} />
-                                  </div>
-                                  <div className="sm:col-span-2">
-                                    <label className={labelCls} htmlFor="d-landmark">Apartment / Landmark</label>
-                                    <input id="d-landmark" type="text" value={address.landmark} onChange={e => setAddress(p => ({...p, landmark: e.target.value}))} placeholder="Building name, floor, landmark" className={inputCls} />
-                                  </div>
-                                  <div>
-                                    <label className={labelCls} htmlFor="d-city">City *</label>
-                                    <input id="d-city" type="text" value={address.city} onChange={e => setAddress(p => ({...p, city: e.target.value}))} placeholder="City" className={inputCls} />
-                                  </div>
-                                  <div>
-                                    <label className={labelCls} htmlFor="d-state">State / Province / Region *</label>
-                                    <input id="d-state" type="text" value={address.state} onChange={e => setAddress(p => ({...p, state: e.target.value}))} placeholder="State / Province / Region" className={inputCls} />
-                                  </div>
-                                  <div>
-                                    <label className={labelCls} htmlFor="d-pincode">Pincode / Zipcode (6 digits) *</label>
-                                    <input id="d-pincode" type="text" value={address.pincode}
-                                      onChange={e => setAddress(p => ({...p, pincode: e.target.value.replace(/\D/g, '').slice(0, 6)}))}
-                                      placeholder="e.g. 600001" maxLength={6} className={inputCls} />
-                                    {(!address.pincode || address.pincode.trim().length < 6) && !deliverySameAsBilling && (
-                                      <p className="text-[11px] text-neutral-400 mt-1 italic">
-                                        Enter 6-digit Indian pincode to calculate shipping charge
-                                      </p>
-                                    )}
-                                  </div>
-                                  <div>
-                                    <label className={labelCls} htmlFor="d-country">Delivery Country *</label>
-                                    <div className="relative">
-                                      <input id="d-country" type="text" value="India" readOnly
-                                        className={`${inputCls} bg-neutral-100 font-semibold cursor-not-allowed text-neutral-700`} />
-                                    </div>
-                                  </div>
-                                </div>
-                              </motion.div>
-                            )}
-                          </AnimatePresence>
-
-                          {/* Delivery Availability Status for Delivery Address */}
-                          {pincodeZoneData && !deliverySameAsBilling && (address.pincode || '').trim().length === 6 && (
-                            <div className="mt-3 flex items-center gap-2 text-xs text-emerald-700 font-medium">
-                              {pincodeZoneData.deliverable ? (
-                                <>
-                                  <MapPin size={14} className="shrink-0 text-emerald-600" />
-                                  <span>
-                                    <strong className="font-semibold text-emerald-900">Delivery Available ({pincodeZoneData.zoneName})</strong>
-                                    {' — '}
-                                    {shipping === 0 ? (
-                                      pincodeZoneData.minOrderAmountForFreeDelivery !== null
-                                        ? `FREE Delivery (Order above ₹${pincodeZoneData.minOrderAmountForFreeDelivery})!`
-                                        : 'FREE Delivery!'
-                                    ) : (
-                                      `Shipping Fee: ₹${shipping}${pincodeZoneData.minOrderAmountForFreeDelivery !== null ? ` (Free on orders above ₹${pincodeZoneData.minOrderAmountForFreeDelivery})` : ''}`
-                                    )}
-                                  </span>
-                                </>
-                              ) : (
-                                <p className="text-xs text-red-600 font-semibold flex items-center gap-1.5">
-                                  <AlertTriangle size={14} className="shrink-0 text-red-500" />
-                                  {pincodeZoneData.message || 'Delivery not available for this pincode'}
-                                </p>
-                              )}
+                          {/* Full Name & Phone Number */}
+                          <div className="grid sm:grid-cols-2 gap-4 items-start">
+                            <div>
+                              <label className={labelCls} htmlFor="del_fullName">
+                                Full Name <span className="text-rose-500">*</span>
+                              </label>
+                              <input
+                                id="del_fullName"
+                                type="text"
+                                value={address.fullName}
+                                onChange={e => {
+                                  const val = e.target.value;
+                                  setAddress(p => ({ ...p, fullName: val }));
+                                  if (fieldErrors.del_fullName) setFieldErrors(p => ({ ...p, del_fullName: null }));
+                                }}
+                                placeholder="John Doe"
+                                className={`${inputCls} ${fieldErrors.del_fullName ? 'border-red-400 bg-red-50/20' : ''}`}
+                                required
+                              />
+                              {fieldErrors.del_fullName && <p className="text-[11px] text-red-500 mt-1">{fieldErrors.del_fullName}</p>}
                             </div>
-                          )}
 
+                            <div>
+                              <PhoneInput
+                                id="del_phone"
+                                name="del_phone"
+                                label="Mobile Number (India only)"
+                                allowedCountries={['IN']}
+                                defaultCountry="IN"
+                                value={address.phone}
+                                onChange={(val, meta) => {
+                                  setAddress(p => ({ ...p, phone: val }));
+                                  if (fieldErrors.del_phone) {
+                                    setFieldErrors(p => ({ ...p, del_phone: meta.isValid ? null : meta.error }));
+                                  }
+                                }}
+                                error={fieldErrors.del_phone}
+                                required
+                              />
+                            </div>
+                          </div>
+
+                          {/* Email Address */}
+                          <div>
+                            <label className={labelCls} htmlFor="del_email">
+                              Email Address <span className="text-rose-500">*</span>
+                            </label>
+                            <input
+                              id="del_email"
+                              type="email"
+                              value={address.email}
+                              onChange={e => {
+                                const val = e.target.value;
+                                setAddress(p => ({ ...p, email: val }));
+                                if (fieldErrors.del_email) setFieldErrors(p => ({ ...p, del_email: null }));
+                              }}
+                              placeholder="name@example.com"
+                              className={`${inputCls} ${fieldErrors.del_email ? 'border-red-400 bg-red-50/20' : ''}`}
+                              required
+                            />
+                            {fieldErrors.del_email && <p className="text-[11px] text-red-500 mt-1">{fieldErrors.del_email}</p>}
+                          </div>
+
+                          {/* Street Address / House No. */}
+                          <div>
+                            <label className={labelCls} htmlFor="del_flatHouse">
+                              Street Address / House No. / Flat <span className="text-rose-500">*</span>
+                            </label>
+                            <input
+                              id="del_flatHouse"
+                              type="text"
+                              value={address.flatHouse}
+                              onChange={e => {
+                                const val = e.target.value;
+                                setAddress(p => ({ ...p, flatHouse: val }));
+                                if (fieldErrors.del_flatHouse) setFieldErrors(p => ({ ...p, del_flatHouse: null }));
+                              }}
+                              placeholder="Flat/House no., building, street or locality"
+                              className={`${inputCls} ${fieldErrors.del_flatHouse ? 'border-red-400 bg-red-50/20' : ''}`}
+                              required
+                            />
+                            {fieldErrors.del_flatHouse && <p className="text-[11px] text-red-500 mt-1">{fieldErrors.del_flatHouse}</p>}
+                          </div>
+
+                          {/* Apartment / Landmark */}
+                          <div>
+                            <label className={labelCls} htmlFor="del_landmark">
+                              Apartment / Landmark <span className="text-neutral-400 font-normal">(optional)</span>
+                            </label>
+                            <input
+                              id="del_landmark"
+                              type="text"
+                              value={address.landmark}
+                              onChange={e => setAddress(p => ({ ...p, landmark: e.target.value }))}
+                              placeholder="Near park, landmark, etc."
+                              className={inputCls}
+                            />
+                          </div>
+
+                          {/* City & Pincode */}
+                          <div className="grid grid-cols-2 gap-4 items-start">
+                            <div>
+                              <label className={labelCls} htmlFor="del_city">
+                                City <span className="text-rose-500">*</span>
+                              </label>
+                              <input
+                                id="del_city"
+                                type="text"
+                                value={address.city}
+                                onChange={e => {
+                                  const val = e.target.value;
+                                  setAddress(p => ({ ...p, city: val }));
+                                  if (fieldErrors.del_city) setFieldErrors(p => ({ ...p, del_city: null }));
+                                }}
+                                placeholder="City"
+                                className={`${inputCls} ${fieldErrors.del_city ? 'border-red-400 bg-red-50/20' : ''}`}
+                                required
+                              />
+                              {fieldErrors.del_city && <p className="text-[11px] text-red-500 mt-1">{fieldErrors.del_city}</p>}
+                            </div>
+
+                            <div>
+                              <label className={labelCls} htmlFor="del_pincode">
+                                Pincode <span className="text-rose-500">*</span>
+                              </label>
+                              <input
+                                id="del_pincode"
+                                type="text"
+                                maxLength={6}
+                                value={address.pincode}
+                                onChange={e => {
+                                  const val = e.target.value.replace(/\D/g, '').slice(0, 6);
+                                  setAddress(p => ({ ...p, pincode: val }));
+                                  if (fieldErrors.del_pincode) setFieldErrors(p => ({ ...p, del_pincode: null }));
+                                }}
+                                placeholder="6 digits"
+                                className={`${inputCls} ${fieldErrors.del_pincode ? 'border-red-400 bg-red-50/20' : ''}`}
+                                required
+                              />
+                              {fieldErrors.del_pincode && <p className="text-[11px] text-red-500 mt-1">{fieldErrors.del_pincode}</p>}
+                            </div>
+                          </div>
+
+                          {/* State & Country */}
+                          <div className="grid grid-cols-2 gap-4 items-start">
+                            <div>
+                              <label className={labelCls} htmlFor="del_state">
+                                State <span className="text-rose-500">*</span>
+                              </label>
+                              <input
+                                id="del_state"
+                                type="text"
+                                value={address.state}
+                                onChange={e => {
+                                  const val = e.target.value;
+                                  setAddress(p => ({ ...p, state: val }));
+                                  if (fieldErrors.del_state) setFieldErrors(p => ({ ...p, del_state: null }));
+                                }}
+                                placeholder="State"
+                                className={`${inputCls} ${fieldErrors.del_state ? 'border-red-400 bg-red-50/20' : ''}`}
+                                required
+                              />
+                              {fieldErrors.del_state && <p className="text-[11px] text-red-500 mt-1">{fieldErrors.del_state}</p>}
+                            </div>
+
+                            <div>
+                              <label className={labelCls} htmlFor="del_country">
+                                Country
+                              </label>
+                              <input
+                                id="del_country"
+                                type="text"
+                                readOnly
+                                value="India"
+                                className="w-full h-11 border border-neutral-200 rounded-lg px-3.5 text-sm text-neutral-600 bg-neutral-100/70 cursor-not-allowed font-medium"
+                              />
+                            </div>
+                          </div>
                         </motion.div>
                       )}
                     </AnimatePresence>
                   </div>
 
-                  {/* Create account optional */}
+                  {/* ── CREATE ACCOUNT SECTION (For Guest Users) ── */}
                   {!isAuthenticated && (
-                    <div className="bg-white border border-neutral-200 rounded-lg p-5 md:p-6">
-                      <label className="flex items-center gap-3 cursor-pointer select-none">
-                        <input type="checkbox" checked={createAccount}
-                          onChange={e => setCreateAccount(e.target.checked)}
-                          className="w-4 h-4 accent-brand-gold rounded cursor-pointer" id="create-account-chk" />
-                        <span className="font-semibold text-sm text-brand-text">Create an account?</span>
-                      </label>
+                    <div className="pt-4 border-t border-neutral-100">
+                      <div className="p-4 rounded-xl border border-neutral-200 bg-[#FAF9F5] space-y-3">
+                        <label htmlFor="create-account-checkbox" className="flex items-start gap-2.5 cursor-pointer select-none">
+                          <input
+                            id="create-account-checkbox"
+                            type="checkbox"
+                            checked={createAccount}
+                            onChange={e => setCreateAccount(e.target.checked)}
+                            className="mt-0.5 w-4 h-4 accent-[#BEA266] rounded cursor-pointer shrink-0"
+                          />
+                          <div>
+                            <p className="text-xs sm:text-sm font-bold text-neutral-900">
+                              Create an account with these details?
+                            </p>
+                            <p className="text-[11px] sm:text-xs text-neutral-500 mt-0.5">
+                              Saves your name, email, and address for 1-click checkout and easy order tracking.
+                            </p>
+                          </div>
+                        </label>
 
-                      <AnimatePresence initial={false}>
-                        {createAccount && (
-                          <motion.div
-                            key="create-account"
-                            initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }}
-                            transition={{ duration: 0.25 }} className="overflow-hidden mt-4"
-                          >
-                            <div>
-                              <label className={labelCls} htmlFor="new-password">Password (min. 6 characters)</label>
-                              <div className="flex flex-col sm:flex-row gap-3 max-w-md items-start sm:items-center">
-                                <div className="relative flex-1 w-full">
+                        <AnimatePresence>
+                          {createAccount && (
+                            <motion.div
+                              initial={{ opacity: 0, height: 0 }}
+                              animate={{ opacity: 1, height: 'auto' }}
+                              exit={{ opacity: 0, height: 0 }}
+                              transition={{ duration: 0.18 }}
+                              className="pt-2.5 border-t border-neutral-200/80 space-y-3"
+                            >
+                              <div>
+                                <label className={labelCls} htmlFor="new-account-password">
+                                  Choose Password <span className="text-rose-500">*</span>
+                                </label>
+                                <div className="relative">
                                   <input
-                                    id="new-password"
+                                    id="new-account-password"
                                     type={showNewPw ? 'text' : 'password'}
                                     value={newPassword}
                                     onChange={e => setNewPassword(e.target.value)}
-                                    placeholder="Create a password"
+                                    placeholder="Min. 6 characters"
                                     className={`${inputCls} pr-10`}
-                                    minLength={6}
                                   />
-                                  <button type="button" onClick={() => setShowNewPw(v => !v)} className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-neutral-600">
-                                    {showNewPw ? <EyeOff size={15} /> : <Eye size={15} />}
+                                  <button
+                                    type="button"
+                                    onClick={() => setShowNewPw(!showNewPw)}
+                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-neutral-600"
+                                  >
+                                    {showNewPw ? <EyeOff size={16} /> : <Eye size={16} />}
                                   </button>
                                 </div>
+                              </div>
+
+                              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-1">
+                                <p className="text-[11px] text-neutral-500">
+                                  Account for: <strong className="text-neutral-800 font-semibold">{billingAddress.email || 'your email'}</strong>
+                                </p>
                                 <button
                                   type="button"
                                   onClick={handleRegister}
-                                  disabled={registerLoading}
-                                  className="btn-primary py-2.5 px-5 text-sm font-semibold whitespace-nowrap h-[42px] flex items-center justify-center min-w-[120px]"
-                                  id="register-btn"
+                                  disabled={registerLoading || !newPassword || newPassword.length < 6}
+                                  className="px-3.5 py-2 bg-[#17130B] hover:bg-black text-[#F3E7C6] text-xs font-semibold uppercase tracking-wider rounded-lg transition-all disabled:opacity-50"
                                 >
-                                  {registerLoading ? 'Registering...' : 'Register'}
+                                  {registerLoading ? 'Creating…' : 'Register Account'}
                                 </button>
                               </div>
-                              <p className="text-xs text-neutral-400 mt-2">
-                                Fill in your name, email, and phone under Billing Address, choose a password, and click <strong>Register</strong> to create your account instantly.
-                              </p>
-                            </div>
-                          </motion.div>
-                        )}
-                      </AnimatePresence>
-
-                      {!createAccount && (
-                        <div className="mt-4 bg-yellow-50 border border-yellow-200/70 rounded-md p-3 flex items-start gap-2">
-                          <Lightbulb size={18} className="text-amber-500 shrink-0 mt-0.5" />
-                          <p className="text-xs text-neutral-600 leading-relaxed">
-                            <strong>Note:</strong> Log in or check <strong className="text-brand-gold">"Create an account?"</strong> above to track your order history and receive delivery updates!
-                          </p>
-                        </div>
-                      )}
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+                      </div>
                     </div>
                   )}
 
-                  <button onClick={() => {
-                      if (!isAuthenticated) {
-                        toast.error('Please sign in or log in to your account to review your order.');
-                        setShowLoginPanel(true);
-                        const loginSection = document.getElementById('login-panel-section') || document.getElementById('main-content');
-                        if (loginSection) {
-                          loginSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                        }
-                        return;
-                      }
-                      if (validateStep1()) setStep(2);
-                    }}
-                    disabled={geoBlocked}
-                    className={`w-full py-3 text-sm font-semibold transition-all rounded ${geoBlocked ? 'bg-neutral-300 text-neutral-500 cursor-not-allowed opacity-60' : 'btn-primary'}`} id="step1-next">
-                    {geoBlocked ? 'Checkout Disabled (Restricted Region)' : 'Review Order'}
-                  </button>
 
+                  {/* Continue Button */}
+                  <div className="pt-3 border-t border-neutral-100">
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        if (!isAuthenticated) {
+                          if (createAccount && newPassword && newPassword.length >= 6) {
+                            try {
+                              await handleRegister();
+                              if (validateStep1()) setStep(2);
+                              return;
+                            } catch {
+                              return;
+                            }
+                          } else {
+                            toast.error('Please sign in or enter your details with an account to continue.');
+                            setShowLoginPanel(true);
+                            return;
+                          }
+                        }
+                        if (validateStep1()) setStep(2);
+                      }}
+                      disabled={geoBlocked}
+                      className="w-full py-3.5 rounded-lg bg-[#17130B] hover:bg-black text-[#F3E7C6] font-semibold text-xs sm:text-sm uppercase tracking-[0.14em] flex items-center justify-center gap-2 transition-all shadow-sm active:scale-[0.99]"
+                      id="step1-next"
+                    >
+                      {geoBlocked ? 'Checkout Disabled' : 'Continue to Payment'}
+                      <ChevronRight size={16} />
+                    </button>
+                  </div>
                 </motion.div>
               )}
 
-              {/* ── Step 2: Review Order & Pay ── */}
+              {/* ── STEP 2: Review & Payment ── */}
               {step === 2 && (
                 <motion.div
                   key="step2"
-                  initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}
-                  transition={{ duration: 0.25 }}
-                  className="bg-white border border-neutral-200 rounded-lg p-5 md:p-6 space-y-6"
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -8 }}
+                  transition={{ duration: 0.18 }}
+                  className="bg-white border border-neutral-200/90 rounded-2xl p-6 sm:p-8 lg:p-9 shadow-sm space-y-6"
                 >
-                  <h2 className="font-playfair text-xl font-semibold">Review Order & Pay</h2>
-
-                  {/* Address Summary */}
-                  <div className="grid sm:grid-cols-2 gap-5">
-                    <div className="bg-neutral-50 rounded-md p-4">
-                      <div className="flex justify-between items-center mb-2">
-                        <h3 className="font-semibold text-xs text-neutral-400 uppercase tracking-wider">Billing Address</h3>
-                        <button onClick={() => setStep(1)} className="text-xs text-brand-gold hover:underline font-medium">Edit</button>
-                      </div>
-                      <p className="text-sm font-medium text-brand-text">{billingAddress.fullName}</p>
-                      <p className="text-xs text-brand-grey">{billingAddress.phone} · {billingAddress.email}</p>
-                      <p className="text-xs text-brand-grey mt-1">{billingAddress.flatHouse}{billingAddress.landmark && `, ${billingAddress.landmark}`}</p>
-                      <p className="text-xs text-brand-grey">{billingAddress.city}, {billingAddress.state} {billingAddress.pincode}</p>
-                    </div>
-                    <div className="bg-neutral-50 rounded-md p-4">
-                      <div className="flex justify-between items-center mb-2">
-                        <div className="flex items-center gap-2">
-                          <h3 className="font-semibold text-xs text-neutral-400 uppercase tracking-wider">Delivery Address</h3>
-                          {deliverySameAsBilling && (
-                            <span className="text-[10px] font-semibold text-amber-800 bg-amber-100/70 border border-amber-200/80 px-1.5 py-0.5 rounded leading-none">
-                              Same as billing
-                            </span>
-                          )}
-                        </div>
-                        <button onClick={() => setStep(1)} className="text-xs text-brand-gold hover:underline font-medium">Edit</button>
-                      </div>
-                      {deliverySameAsBilling ? (
-                        <>
-                          <p className="text-sm font-medium text-brand-text">{billingAddress.fullName}</p>
-                          <p className="text-xs text-brand-grey">{billingAddress.phone} · {billingAddress.email}</p>
-                          <p className="text-xs text-brand-grey mt-1">{billingAddress.flatHouse}{billingAddress.landmark && `, ${billingAddress.landmark}`}</p>
-                          <p className="text-xs text-brand-grey">{billingAddress.city}, {billingAddress.state} {billingAddress.pincode}</p>
-                        </>
-                      ) : (
-                        <>
-                          <p className="text-sm font-medium text-brand-text">{address.fullName}</p>
-                          <p className="text-xs text-brand-grey">{address.phone}</p>
-                          <p className="text-xs text-brand-grey mt-1">{address.flatHouse}{address.landmark && `, ${address.landmark}`}</p>
-                          <p className="text-xs text-brand-grey">{address.city}, {address.state} {address.pincode}</p>
-                        </>
-                      )}
-                    </div>
+                  <div className="border-b border-neutral-100 pb-3">
+                    <h2 className="font-playfair text-xl sm:text-2xl font-bold text-neutral-900">
+                      Payment & Final Review
+                    </h2>
+                    <p className="text-xs text-neutral-500 mt-1">
+                      Review your delivery details and choose payment method
+                    </p>
                   </div>
 
+                  {/* Address Summary Card */}
+                  {(() => {
+                    const activeShipping = deliverySameAsBilling ? billingAddress : address;
+                    const addrFullName = activeShipping.fullName || billingAddress.fullName;
+                    const addrStreet = activeShipping.flatHouse || billingAddress.flatHouse;
+                    const addrLandmark = activeShipping.landmark || billingAddress.landmark;
+                    const addrCity = activeShipping.city || billingAddress.city;
+                    const addrState = activeShipping.state || billingAddress.state;
+                    const addrPincode = activeShipping.pincode || billingAddress.pincode;
+                    const addrPhone = activeShipping.phone || billingAddress.phone;
+                    const addrEmail = activeShipping.email || billingAddress.email;
 
-                  {/* Items in Order Breakdown */}
-                  <div className="bg-neutral-50 rounded-md p-4">
-                    <h3 className="font-semibold text-xs text-neutral-400 uppercase tracking-wider mb-3">
-                      Items in Order ({items.length})
-                    </h3>
-                    <div className="space-y-3">
-                      {items.map((item, idx) => {
-                        const details = getItemDetails(item);
-                        return (
-                          <div key={item.productId || item.id || idx} className="flex gap-3 items-center py-2 border-b border-neutral-200/60 last:border-0">
-                            <img
-                              src={details.image}
-                              alt={details.name}
-                              className="w-12 h-14 object-cover rounded border border-neutral-200 bg-white flex-shrink-0"
-                              onError={(e) => {
-                                e.target.onerror = null;
-                                e.target.src = 'https://images.unsplash.com/photo-1469334031218-e382a71b716b?w=160';
-                              }}
-                            />
-                            <div className="flex-1 min-w-0">
-                              <p className="text-xs font-semibold text-neutral-900 truncate">{details.name}</p>
-                              {details.variantText && (
-                                <p className="text-[11px] text-brand-gold font-medium mt-0.5">{details.variantText}</p>
-                              )}
-                              <p className="text-[11px] text-neutral-500 mt-0.5">Qty: {item.quantity} × {fmt(details.price)}</p>
-                            </div>
-                            <span className="text-xs font-bold text-neutral-900">{fmt(details.price * item.quantity)}</span>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-
-                  {/* Delivery estimate banner */}
-                  {/* <div className="flex items-center gap-3 p-4 bg-brand-light/30 border border-brand-gold/20 rounded-md">
-                    <Truck size={22} className="text-brand-gold shrink-0" />
-                    <div>
-                      <p className="text-xs font-semibold text-brand-text">Estimated Delivery Window</p>
-                      <p className="text-xs text-brand-grey mt-0.5">{getEstimatedDeliveryRange(billingAddress.pincode)}</p>
-                    </div>
-                  </div> */}
-
-                  {/* Payment Method Selector */}
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <h3 className="font-semibold text-xs text-neutral-500 uppercase tracking-wider">
-                        Payment Method
-                      </h3>
-                    </div>
-
-                    {/* Payment options (grid-cols-1 while COD is disabled, switch to sm:grid-cols-2 if re-enabling COD) */}
-                    <div className="grid grid-cols-1 gap-3">
-                      {/* Online Payment Option */}
-                      <label
-                        className={`flex items-start gap-3 p-3.5 rounded-lg border cursor-pointer transition-all ${
-                          paymentMethod !== 'Cash on Delivery (COD)'
-                            ? 'border-brand-gold bg-amber-50/25 shadow-xs'
-                            : 'border-neutral-200 hover:border-neutral-300 bg-white'
-                        }`}
-                      >
-                        <input
-                          type="radio"
-                          name="checkout-payment-method"
-                          checked={paymentMethod !== 'Cash on Delivery (COD)'}
-                          onChange={() => {
-                            setPaymentMethod('Razorpay Secure Online');
-                            setIsVerified(false);
-                            setOtpSent(false);
-                          }}
-                          className="mt-0.5 w-4 h-4 accent-brand-gold"
-                        />
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-1.5 font-semibold text-xs text-neutral-900">
-                            <CreditCard size={15} className="text-brand-gold" />
-                            <span>Online Payment</span>
-                            <span className="text-[10px] bg-emerald-100 text-emerald-700 font-bold px-1.5 py-0.5 rounded ml-auto">
-                              Direct & Fast
-                            </span>
-                          </div>
-                          <p className="text-[11px] text-neutral-500 mt-1 leading-snug">
-                            UPI, Cards, NetBanking via Razorpay
+                    return (
+                      <div className="p-3.5 sm:p-4 rounded-xl border border-neutral-200/90 bg-neutral-50/70 flex items-start justify-between gap-3">
+                        <div className="space-y-1 min-w-0">
+                          <p className="text-xs sm:text-[13px] font-semibold text-neutral-900 flex items-center gap-1.5">
+                            <MapPin size={13} className="text-[#BEA266] shrink-0" />
+                            <span>Deliver to: <span className="font-bold text-neutral-950">{addrFullName}</span></span>
+                          </p>
+                          <p className="text-xs text-neutral-600 leading-relaxed break-words">
+                            {addrStreet}{addrLandmark ? `, ${addrLandmark}` : ''}{addrCity ? `, ${addrCity}` : ''}{addrState ? `, ${addrState}` : ''} {addrPincode}
+                          </p>
+                          <p className="text-[11px] text-neutral-400 flex items-center gap-2 pt-0.5">
+                            {addrPhone && <span>{addrPhone}</span>}
+                            {addrPhone && addrEmail && <span className="text-neutral-300">·</span>}
+                            {addrEmail && <span className="truncate">{addrEmail}</span>}
                           </p>
                         </div>
-                      </label>
+                        <button
+                          type="button"
+                          onClick={() => setStep(1)}
+                          className="text-xs font-semibold text-[#996822] hover:underline px-2.5 py-1 rounded-md border border-neutral-200 bg-white shadow-xs shrink-0 transition-colors"
+                        >
+                          Edit
+                        </button>
+                      </div>
+                    );
+                  })()}
 
-                      {/* Cash on Delivery Option (Hidden for now as COD is not in requirements) */}
-                      {/*
-                      <label
-                        className={`flex items-start gap-3 p-3.5 rounded-lg border cursor-pointer transition-all ${
-                          paymentMethod === 'Cash on Delivery (COD)'
-                            ? 'border-brand-gold bg-amber-50/25 shadow-xs'
-                            : 'border-neutral-200 hover:border-neutral-300 bg-white'
-                        }`}
-                      >
+                  {/* Payment Options */}
+                  <div className="space-y-2">
+                    <label className="block text-[11px] font-bold uppercase tracking-wider text-neutral-500">
+                      Payment Method
+                    </label>
+
+                    <div className="p-3.5 sm:p-4 rounded-xl border-2 border-[#BEA266] bg-[#FAF9F5] flex items-center justify-between">
+                      <div className="flex items-center gap-3">
                         <input
                           type="radio"
-                          name="checkout-payment-method"
-                          checked={paymentMethod === 'Cash on Delivery (COD)'}
-                          onChange={() => {
-                            setPaymentMethod('Cash on Delivery (COD)');
-                            setIsVerified(false);
-                            setOtpSent(false);
-                          }}
-                          className="mt-0.5 w-4 h-4 accent-brand-gold"
+                          name="payment"
+                          checked
+                          readOnly
+                          className="w-4 h-4 accent-[#BEA266]"
                         />
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-1.5 font-semibold text-xs text-neutral-900">
-                            <Truck size={15} className="text-brand-gold" />
-                            <span>Cash on Delivery</span>
-                            <span className="text-[10px] bg-amber-100 text-amber-800 font-bold px-1.5 py-0.5 rounded ml-auto">
-                              OTP Verified
-                            </span>
-                          </div>
-                          <p className="text-[11px] text-neutral-500 mt-1 leading-snug">
-                            Pay in cash upon delivery. Requires email OTP verification.
+                        <div>
+                          <p className="text-xs sm:text-sm font-bold text-neutral-900 flex items-center gap-1.5">
+                            <CreditCard size={14} className="text-[#BEA266]" />
+                            Razorpay Secure Online Payment
+                          </p>
+                          <p className="text-[11px] text-neutral-500 mt-0.5">
+                            UPI (GPay, PhonePe, Paytm), Cards, NetBanking
                           </p>
                         </div>
-                      </label>
-                      */}
+                      </div>
+                      <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">
+                        100% Secure
+                      </span>
                     </div>
                   </div>
 
-                  <div className="flex flex-col-reverse sm:flex-row gap-3">
-                    <button onClick={() => setStep(1)} className="btn-outline flex-1 py-3 text-sm font-semibold" id="step2-back">Back to Delivery</button>
+                  {/* Action Buttons */}
+                  <div className="flex flex-col-reverse sm:flex-row gap-3 pt-4 border-t border-neutral-100">
                     <button
+                      type="button"
+                      onClick={() => setStep(1)}
+                      className="py-3 px-5 rounded-lg border border-neutral-300 text-neutral-700 hover:bg-neutral-50 font-semibold text-xs uppercase tracking-wider transition-colors"
+                      id="step2-back"
+                    >
+                      ← Back
+                    </button>
+
+                    <button
+                      type="button"
                       onClick={() => {
                         if (shippingStatus === 'NOT_DELIVERABLE') {
-                          toast.error('The selected delivery address / pincode is not deliverable. Please choose a deliverable address.');
+                          toast.error('The selected delivery address is not deliverable. Please choose another address.');
                           setStep(1);
                           return;
                         }
@@ -1774,15 +1792,9 @@ const CheckoutPage = () => {
                         const aedLimit = otpSettings.aedThreshold || 800;
                         const isCod = paymentMethod === 'Cash on Delivery (COD)';
                         const isLocationUae = geoCountry === 'AE';
-
                         const effectiveRate = Number(currencyRate) > 0 ? Number(currencyRate) : 26.06;
                         const totalInAed = total / effectiveRate;
-
-                        const isHighValue = isLocationUae
-                          ? totalInAed >= aedLimit
-                          : total >= inrLimit;
-
-                        // When codOnly is active (default), OTP verification triggers ONLY for Cash on Delivery orders
+                        const isHighValue = isLocationUae ? totalInAed >= aedLimit : total >= inrLimit;
                         const isCodOnly = otpSettings.codOnly !== false;
                         const requiresOtp = isCodOnly
                           ? (isCod && otpSettings.requireCodOtp !== false)
@@ -1795,15 +1807,14 @@ const CheckoutPage = () => {
                         }
                       }}
                       disabled={placing || otpLoading}
-                      className="btn-primary flex-1 py-3 text-sm font-semibold" id="place-order-btn"
+                      className="flex-1 py-3.5 rounded-lg bg-[#17130B] hover:bg-black text-[#F3E7C6] font-semibold text-xs sm:text-sm uppercase tracking-[0.14em] flex items-center justify-center gap-2 transition-all shadow-sm active:scale-[0.99]"
+                      id="place-order-btn"
                     >
                       {placing
-                        ? 'Placing Order…'
+                        ? 'Processing Payment…'
                         : otpLoading
-                        ? 'Sending Verification Code…'
-                        : paymentMethod === 'Cash on Delivery (COD)'
-                        ? `Confirm COD Order — ${fmt(total)}`
-                        : `Place Order & Pay — ${fmt(total)}`}
+                        ? 'Sending Code…'
+                        : `Pay & Complete Order — ${fmt(total)}`}
                     </button>
                   </div>
                 </motion.div>
@@ -1811,296 +1822,273 @@ const CheckoutPage = () => {
             </AnimatePresence>
           </div>
 
-          {/* ── Order Summary Sidebar ── */}
-          <div className="lg:col-span-1 bg-white border border-neutral-200 rounded-lg p-5 md:p-6 self-start sticky top-24">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="font-playfair text-lg font-semibold">Order Summary</h2>
-            </div>
-            <div className="space-y-2.5 text-sm">
-              <div className="flex justify-between"><span className="text-brand-grey">Subtotal ({items.length} items)</span><span>{fmt(subtotal)}</span></div>
-              {activeDiscountType === 'COUPON' && couponDiscount > 0 && (
-                <div className="flex justify-between text-green-600">
-                  <span className="flex items-center gap-1"><Tag size={12} /> Coupon ({activeCouponObj?.code})</span>
-                  <span>-{fmt(couponDiscount)}</span>
-                </div>
-              )}
-              {activeDiscountType === 'LOYALTY' && loyaltyDiscountVal > 0 && (
-                <div className="flex justify-between text-green-600">
-                  <span className="flex items-center gap-1"><Award size={13} className="text-brand-gold" /> Loyalty Discount</span>
-                  <span>-{fmt(loyaltyDiscountVal)}</span>
-                </div>
-              )}
-              <div className="flex justify-between items-center">
-                <span className="text-brand-grey">Shipping</span>
-                <span>
-                  {shippingStatus === 'PENDING' ? (
-                    <span className="text-amber-700 bg-amber-50 px-2 py-0.5 rounded border border-amber-200/80 text-xs font-medium">
-                      Enter Pincode
-                    </span>
-                  ) : shippingStatus === 'NOT_DELIVERABLE' ? (
-                    <span className="text-red-600 font-semibold text-xs bg-red-50 px-2 py-0.5 rounded border border-red-200/80">
-                      Not Deliverable
-                    </span>
-                  ) : shipping === 0 ? (
-                    <span className="text-green-600 font-bold">Free</span>
-                  ) : (
-                    fmt(shipping)
-                  )}
+          {/* ══════════════════════════════════════════════════
+              RIGHT COLUMN: Sticky Order Summary (5 Cols)
+          ══════════════════════════════════════════════════ */}
+          <div className="lg:col-span-5 sticky top-28 space-y-4">
+            <div className="bg-white border border-neutral-200/90 rounded-2xl p-5 sm:p-6 shadow-sm space-y-4">
+              <h3 className="font-playfair text-base sm:text-lg font-bold text-neutral-900 pb-2.5 border-b border-neutral-100 flex items-center justify-between">
+                <span>Order Summary</span>
+                <span className="text-xs font-normal text-neutral-500 font-sans">
+                  {items.length} {items.length === 1 ? 'item' : 'items'}
                 </span>
-              </div>
-              <div className="border-t border-neutral-100 pt-3">
-                <div className="flex justify-between font-bold text-base">
-                  <span>Total</span>
-                  <span className="text-brand-gold">{fmt(total)}</span>
-                </div>
-                <p className="text-[11px] font-medium text-neutral-500 text-right mt-0.5">(Includes GST)</p>
-              </div>
-            </div>
+              </h3>
 
-            {/* ── Auto-Select Best Savings Banner ── */}
-            {userDiscountChoice === null && activeDiscountType ? (
-              <div className="mt-4 pt-4 border-t border-neutral-100">
-                <div className="bg-gradient-to-r from-amber-500/10 via-yellow-500/10 to-amber-500/5 border border-amber-300/80 rounded-lg p-3.5 shadow-xs flex items-start gap-2.5">
-                  {/* <Sparkles className="text-amber-600 mt-0.5 shrink-0 animate-pulse" size={18} /> */}
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between gap-1">
-                      <span className="text-xs font-bold text-amber-900 tracking-wide">
-                         Best Savings Auto-Applied!
-                      </span>
-                      <span className="text-[10px] font-extrabold bg-amber-600 text-white px-2 py-0.5 rounded-full uppercase">
-                        Auto-Selected
-                      </span>
+              {/* Items List */}
+              <div className="space-y-3 max-h-[300px] overflow-y-auto pt-2.5 pb-1 px-1.5 pr-2">
+                {items.map((item, idx) => {
+                  const details = getItemDetails(item);
+                  return (
+                    <div key={item.productId || item.id || idx} className="flex gap-3 items-center">
+                      <div className="relative shrink-0 my-0.5">
+                        <div className="w-12 h-14 sm:w-13 sm:h-15 rounded-lg overflow-hidden bg-neutral-100 border border-neutral-200">
+                          <img
+                            src={details.image}
+                            alt={details.name}
+                            className="w-full h-full object-cover"
+                            onError={(e) => {
+                              e.target.onerror = null;
+                              e.target.src = 'https://images.unsplash.com/photo-1469334031218-e382a71b716b?w=160';
+                            }}
+                          />
+                        </div>
+                        <span className="absolute -top-1.5 -right-1.5 min-w-[20px] h-[20px] px-1 rounded-full bg-neutral-900 text-white text-[10px] font-bold flex items-center justify-center shadow-sm border-2 border-white z-10 font-sans pointer-events-none">
+                          {item.quantity}
+                        </span>
+                      </div>
+
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs sm:text-[13px] font-semibold text-neutral-900 truncate leading-snug">
+                          {details.name}
+                        </p>
+                        {details.variantText && (
+                          <p className="text-[11px] text-neutral-500 mt-0.5">
+                            {details.variantText}
+                          </p>
+                        )}
+                        <p className="text-xs sm:text-[13px] font-bold text-neutral-900 mt-1 tabular-nums">
+                          {fmt(details.price)}
+                        </p>
+                      </div>
                     </div>
-                    <p className="text-xs text-amber-950 mt-1 leading-snug">
-                      {activeDiscountType === 'COUPON' ? (
-                        <>
-                          Coupon <strong>{activeCouponObj?.code}</strong> auto-selected as it saves you maximum money (<strong>-{fmt(couponDiscount)}</strong>)!
-                        </>
-                      ) : (
-                        <>
-                          <strong>Loyalty Points</strong> auto-selected as it gives you the best discount (<strong>-{fmt(loyaltyDiscountVal)}</strong>)!
-                        </>
-                      )}
+                  );
+                })}
+              </div>
+
+              {/* ── APPLIED COUPON INDICATOR (CLEAR & PROMINENT) ── */}
+              {activeDiscountType === 'COUPON' && couponDiscount > 0 && (
+                <div className="p-3.5 rounded-xl bg-gradient-to-r from-emerald-50 via-teal-50/50 to-emerald-50 border border-emerald-300 shadow-xs">
+                  <div className="flex items-center justify-between gap-2.5">
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-7 h-7 rounded-full bg-emerald-600 text-white flex items-center justify-center shrink-0">
+                        <Tag size={14} />
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-1.5">
+                          <span className="font-sans text-[11px] font-bold text-emerald-950 bg-white px-2 py-0.5 rounded border border-emerald-300 uppercase tracking-wider">
+                            {activeCouponObj?.code || appliedCoupon?.code || 'COUPON'}
+                          </span>
+                          <span className="text-[11px] font-bold text-emerald-700 uppercase">
+                            Applied
+                          </span>
+                        </div>
+                        <p className="text-[11px] text-emerald-800 font-medium mt-0.5">
+                          Saving <strong className="text-emerald-950 font-bold">{fmt(couponDiscount)}</strong> on your order
+                        </p>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={handleRemoveCheckoutCoupon}
+                      className="text-xs font-semibold text-rose-600 hover:text-rose-700 hover:underline px-2.5 py-1 bg-white rounded border border-rose-200 shadow-xs transition-colors shrink-0"
+                    >
+                      Remove
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Promo Code Input & Available Chips */}
+              <div className="pt-2 border-t border-neutral-100 space-y-2">
+                {(activeDiscountType !== 'COUPON' || couponDiscount === 0) && (
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={couponCodeInput}
+                      onChange={e => setCouponCodeInput(e.target.value.toUpperCase())}
+                      placeholder="ENTER PROMO CODE"
+                      className="flex-1 border border-neutral-300 rounded-lg px-3 py-2 text-xs uppercase font-sans font-medium focus:outline-none focus:border-[#BEA266]"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => handleApplyCheckoutCoupon()}
+                      disabled={validatingCoupon}
+                      className="px-4 py-2 bg-[#17130B] text-[#F3E7C6] text-xs font-semibold rounded-lg hover:bg-black transition-colors"
+                    >
+                      {validatingCoupon ? '…' : 'Apply'}
+                    </button>
+                  </div>
+                )}
+
+                {/* Available coupon chips */}
+                {availableCoupons.length > 0 && (
+                  <div className="pt-1">
+                    <p className="text-[10px] text-neutral-400 uppercase tracking-wider font-semibold mb-1.5">
+                      Available Offers:
                     </p>
-                  </div>
-                </div>
-              </div>
-            ) : userDiscountChoice !== null ? (
-              <div className="mt-4 pt-4 border-t border-neutral-100">
-                <div className="flex items-center justify-between bg-neutral-50 border border-neutral-200 rounded-md p-2.5">
-                  <span className="text-xs text-neutral-600 font-medium">Custom discount selected</span>
-                  <button
-                    type="button"
-                    onClick={handleResetToAutoSelect}
-                    className="text-xs font-bold text-amber-700 hover:text-amber-800 flex items-center gap-1 hover:underline cursor-pointer"
-                  >
-                    <Sparkles size={12} /> Auto-Select Best
-                  </button>
-                </div>
-              </div>
-            ) : null}
-
-            {/* Loyalty Points Section */}
-            {isAuthenticated && customer && customer.loyaltyPoints > 0 && (
-              <div className="mt-4 pt-4 border-t border-neutral-100">
-                <div className={`border rounded-md p-3 transition-all ${activeDiscountType === 'LOYALTY' ? 'bg-amber-50/80 border-amber-300 ring-1 ring-amber-300/50' : 'bg-neutral-50/50 border-neutral-200 opacity-80'}`}>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-1.5 flex-wrap">
-                      <span className="text-amber-700 font-semibold text-xs flex items-center gap-1"> Loyalty Points</span>
-                      <span className="text-[11px] bg-amber-200/60 text-amber-900 px-1.5 py-0.5 rounded font-semibold">{customer.loyaltyPoints} pts</span>
-                      {autoSelectedType === 'LOYALTY' && userDiscountChoice === null && (
-                        <span className="text-[9px] bg-amber-600 text-white font-extrabold px-1.5 py-0.5 rounded uppercase">BEST VALUE</span>
-                      )}
+                    <div className="flex flex-wrap gap-1.5">
+                      {availableCoupons.map(c => {
+                        const isCurrentlyApplied = (activeDiscountType === 'COUPON' && (activeCouponObj?.code === c.code || appliedCoupon?.code === c.code));
+                        const cDiscount = getCouponDiscount(c, subtotal);
+                        return (
+                          <button
+                            key={c.code}
+                            type="button"
+                            onClick={() => {
+                              if (isCurrentlyApplied) {
+                                handleRemoveCheckoutCoupon();
+                              } else {
+                                handleApplyCheckoutCoupon(c.code);
+                              }
+                            }}
+                            className={`text-[11px] font-sans font-semibold px-2.5 py-1 rounded-md border transition-all flex items-center gap-1.5 ${
+                              isCurrentlyApplied
+                                ? 'border-emerald-500 bg-emerald-50 text-emerald-800'
+                                : 'border-dashed border-[#BEA266] text-[#996822] bg-[#FAF9F5] hover:bg-[#F3E7C6]/30'
+                            }`}
+                          >
+                            <span>{isCurrentlyApplied ? `✓ ${c.code}` : `+ ${c.code}`}</span>
+                            {cDiscount > 0 && (
+                              <span className="text-[10px] font-sans font-bold text-emerald-700">
+                                (Save ₹{Math.round(cDiscount)})
+                              </span>
+                            )}
+                          </button>
+                        );
+                      })}
                     </div>
-                    <label className="flex items-center gap-1.5 cursor-pointer select-none">
-                      <input
-                        type="checkbox"
-                        checked={activeDiscountType === 'LOYALTY'}
-                        onChange={(e) => handleToggleLoyaltyPoints(e.target.checked)}
-                        className="w-4 h-4 accent-brand-gold rounded border-brand-light cursor-pointer"
-                        id="checkout-auto-loyalty"
-                      />
-                      <span className="text-xs text-neutral-700 font-medium">{activeDiscountType === 'LOYALTY' ? 'Applied' : 'Apply'}</span>
-                    </label>
                   </div>
-                  <p className="text-[11px] text-neutral-600 mt-1.5">
-                    {activeDiscountType === 'LOYALTY' ? (
-                      <span className="text-green-700 font-medium flex items-center gap-1"><Check size={12} /> Discount applied: -{fmt(loyaltyDiscountVal)}</span>
-                    ) : (
-                      <span className="text-neutral-500">Check to apply loyalty points (saves {fmt(potentialLoyaltyDisc)})</span>
-                    )}
-                  </p>
-                </div>
-              </div>
-            )}
-
-            {/* Coupon Section */}
-            <div className="mt-4 pt-4 border-t border-neutral-100">
-              <div className="flex items-center justify-between mb-3">
-                <h3 className="font-playfair text-base font-semibold flex items-center gap-2">
-                  <Tag size={16} className="text-brand-gold" /> Apply Coupon
-                </h3>
-                {userDiscountChoice !== null && (
-                  <button
-                    type="button"
-                    onClick={handleResetToAutoSelect}
-                    className="text-[11px] text-amber-700 font-semibold hover:underline flex items-center gap-1 cursor-pointer"
-                  >
-                    <Sparkles size={11} /> Reset Auto-Select
-                  </button>
                 )}
               </div>
 
-              {availableCoupons.length > 0 && (
-                <div className="space-y-3 max-h-[190px] overflow-y-auto pr-1 mb-4">
-                  {availableCoupons.map(coupon => {
-                    const discountAmt = getCouponDiscount(coupon, subtotal);
-                    const isApplicable = discountAmt > 0;
-                    const isBestCoupon = bestCoupon && bestCoupon.id === coupon.id && bestCouponDisc > 0;
-                    const isCurrentlyApplied = activeDiscountType === 'COUPON' && activeCouponObj?.code === coupon.code;
-                    
-                    return (
-                      <div 
-                        key={coupon.id} 
-                        onClick={() => isApplicable && handleApplyCheckoutCoupon(coupon.code)}
-                        className={`p-3 border rounded-sm transition-all flex flex-col justify-between relative overflow-hidden ${
-                          isCurrentlyApplied
-                            ? 'border-green-500 bg-green-50/40 shadow-xs ring-1 ring-green-500/50'
-                            : isApplicable 
-                              ? 'border-brand-light hover:border-brand-gold/50 cursor-pointer bg-white' 
-                              : 'border-neutral-100 bg-neutral-50/50 opacity-60 cursor-not-allowed'
-                        }`}
-                      >
-                        <div className="flex justify-between items-start">
-                          <div className="flex items-center gap-1.5">
-                            <span className="font-mono text-xs font-bold text-[#0F2942] bg-brand-light px-2.5 py-0.5 rounded-sm">
-                              {coupon.code}
-                            </span>
-                            {isBestCoupon && (
-                              <span className="text-[9px] bg-amber-600 text-white font-extrabold px-1.5 py-0.5 rounded flex items-center gap-0.5 uppercase">
-                                <Sparkles size={9} /> Max Savings
-                              </span>
-                            )}
-                          </div>
-                          <span className="text-[10px] text-brand-gold font-semibold uppercase">
-                            {coupon.type === 'PERCENT' ? `${coupon.value}% OFF` : `₹${coupon.value} OFF`}
-                          </span>
-                        </div>
-                        <div className="flex justify-between items-center mt-2">
-                          <p className="text-[10px] text-brand-grey leading-relaxed">
-                            Min Order: ₹{coupon.minOrderValue || 0}
-                            {coupon.maxDiscount ? ` · Max Disc: ₹${coupon.maxDiscount}` : ''}
-                          </p>
-                          {isApplicable && (
-                            <span className="text-[11px] font-bold text-green-700">
-                              Saves {fmt(discountAmt)}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                    );
-                  })}
+              {/* Price Calculation */}
+              <div className="pt-3 border-t border-neutral-100 space-y-2 text-xs sm:text-[13px]">
+                <div className="flex justify-between text-neutral-600">
+                  <span>Subtotal</span>
+                  <span className="font-semibold text-neutral-900 tabular-nums">{fmt(subtotal)}</span>
                 </div>
-              )}
 
-              {activeDiscountType !== 'COUPON' && (
-                <div className="flex gap-2">
-                  <input
-                    type="text"
-                    value={couponCodeInput}
-                    onChange={e => setCouponCodeInput(e.target.value.toUpperCase())}
-                    placeholder="Enter coupon code"
-                    className="flex-1 border border-neutral-200 px-3 py-2 text-sm focus:outline-none focus:border-brand-gold uppercase font-mono rounded"
-                    aria-label="Coupon code"
-                  />
-                  <button onClick={() => handleApplyCheckoutCoupon()} disabled={validatingCoupon} className="bg-neutral-950 text-white px-4 py-2 text-sm font-medium hover:bg-neutral-800 transition-colors focus-visible:outline-brand-gold rounded">
-                    {validatingCoupon ? '...' : 'Apply'}
-                  </button>
+                <div className="flex justify-between text-neutral-600">
+                  <span>Delivery</span>
+                  <span>
+                    {shipping === 0 ? (
+                      <span className="font-bold text-emerald-700 uppercase text-xs">FREE</span>
+                    ) : (
+                      <span className="font-semibold text-neutral-900 tabular-nums">{fmt(shipping)}</span>
+                    )}
+                  </span>
                 </div>
-              )}
-              
-              {activeDiscountType === 'COUPON' && activeCouponObj && (
-                <div className="flex items-center justify-between bg-green-50 border border-green-200 p-2.5 rounded text-xs mt-2">
-                  <div className="flex items-center gap-1.5 font-medium text-green-700">
-                    <Tag size={14} />
-                    <span>Coupon <strong>{activeCouponObj.code}</strong> Applied!</span>
+
+                {/* Prominently show coupon discount if active */}
+                {couponDiscount > 0 && (
+                  <div className="flex justify-between text-emerald-700">
+                    <span>Coupon Discount ({activeCouponObj?.code || appliedCoupon?.code || 'Applied'})</span>
+                    <span className="font-semibold tabular-nums">-{fmt(couponDiscount)}</span>
                   </div>
-                  <button onClick={handleRemoveCheckoutCoupon} className="text-red-500 hover:underline font-semibold text-[11px]">Remove</button>
+                )}
+
+                <div className="pt-3 border-t border-neutral-200 flex justify-between items-baseline">
+                  <span className="text-xs font-bold uppercase tracking-wider text-neutral-900 font-montserrat">
+                    Total
+                  </span>
+                  <div className="text-right">
+                    <span className="font-sans text-base sm:text-lg font-bold text-neutral-900 tabular-nums">
+                      {fmt(total)}
+                    </span>
+                    <p className="text-[10px] text-neutral-400 mt-0.5">Inclusive of all taxes</p>
+                  </div>
                 </div>
-              )}
+              </div>
             </div>
 
+            {/* Trust Micro-Badges */}
+            <div className="grid grid-cols-3 gap-2 px-2 text-center text-[10px] text-neutral-500 font-medium">
+              <div className="flex flex-col items-center gap-1 p-1">
+                <Lock size={14} className="text-[#BEA266]" />
+                <span>SSL Secure</span>
+              </div>
+              <div className="flex flex-col items-center gap-1 p-1 border-x border-neutral-200">
+                <Truck size={14} className="text-[#BEA266]" />
+                <span>Express Delivery</span>
+              </div>
+              <div className="flex flex-col items-center gap-1 p-1">
+                <Award size={14} className="text-[#BEA266]" />
+                <span>Quality Assured</span>
+              </div>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* ── OTP Fraud-Check Modal ── */}
+      {/* ── OTP Verification Modal ── */}
       <AnimatePresence>
         {otpSent && !isVerified && (
-          <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
+          <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-[2px]">
             <motion.div
-              initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }}
-              className="bg-white p-6 rounded-xl max-w-md w-full shadow-2xl space-y-4"
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="bg-white p-6 rounded-2xl max-w-md w-full shadow-2xl space-y-4"
             >
-              <div className="flex items-center gap-2 mb-1">
-                <span className="w-2 h-5 bg-brand-gold rounded-full"></span>
-                <h3 className="font-playfair text-lg font-bold text-brand-text flex items-center gap-1.5"><Lock size={18} className="text-brand-gold" /> Security Verification</h3>
+              <div className="flex items-center gap-2">
+                <Lock size={18} className="text-[#BEA266]" />
+                <h3 className="font-playfair text-lg font-bold text-neutral-900">
+                  Security Verification
+                </h3>
               </div>
-              <p className="text-xs text-brand-grey leading-relaxed">
-                {paymentMethod === 'Cash on Delivery (COD)' ? (
-                  <>For order confirmation and security, Cash on Delivery (COD) orders require email verification. We've sent a 6-digit code to <strong className="text-brand-text font-semibold">{billingAddress.email || customer?.email}</strong>.</>
-                ) : (
-                  <>For security reasons, high-value orders (exceeding {`₹${otpSettings.inrThreshold.toLocaleString('en-IN')}`}) require email verification. We've sent a 6-digit code to <strong className="text-brand-text font-semibold">{billingAddress.email || customer?.email}</strong>.</>
-                )}
+              <p className="text-xs text-neutral-600 leading-relaxed">
+                We've sent a 6-digit confirmation code to <strong className="text-neutral-900 font-semibold">{billingAddress.email || customer?.email}</strong>.
               </p>
 
               <div>
-                <div className="flex justify-between items-center mb-1.5">
-                  <label className="block text-[10px] font-semibold text-neutral-500 uppercase tracking-wider" htmlFor="fraud-otp">
-                    Enter 6-Digit Verification Code
-                  </label>
-                  <button
-                    type="button"
-                    onClick={handleTriggerFraudCheck}
-                    disabled={otpLoading}
-                    className="text-xs text-brand-gold hover:underline font-semibold"
-                    id="resend-fraud-otp"
-                  >
-                    {otpLoading ? 'Resending…' : 'Resend Email'}
-                  </button>
-                </div>
                 <input
-                  id="fraud-otp" type="text" value={otp}
+                  id="fraud-otp"
+                  type="text"
+                  value={otp}
                   onChange={e => {
                     const val = e.target.value.replace(/\D/g, '');
                     setOtp(val);
                     if (val.length === 6) { handleVerifyFraudOtp(val); }
                   }}
-                  placeholder="0  0  0  0  0  0" maxLength={6}
+                  placeholder="000000"
+                  maxLength={6}
                   disabled={verifyingOtp}
-                  className="w-full border border-neutral-200 rounded-md px-4 py-3 text-center text-xl font-mono tracking-[0.5em] focus:outline-none focus:border-brand-gold bg-neutral-50"
-                  aria-label="OTP Code"
+                  className="w-full border border-neutral-300 rounded-xl px-4 py-3 text-center text-xl font-sans tracking-[0.4em] focus:outline-none focus:border-[#BEA266] bg-neutral-50 shadow-inner"
                 />
               </div>
-              <div className="flex flex-col-reverse sm:flex-row gap-3 pt-2">
-                <button onClick={() => setOtpSent(false)} disabled={verifyingOtp} className="btn-outline flex-1 py-3 text-sm font-semibold">Cancel</button>
+
+              <div className="flex gap-3 pt-2">
                 <button
+                  type="button"
+                  onClick={() => setOtpSent(false)}
+                  disabled={verifyingOtp}
+                  className="flex-1 py-3 text-xs font-semibold uppercase tracking-wider rounded-lg border border-neutral-200 hover:bg-neutral-50 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
                   onClick={() => handleVerifyFraudOtp()}
                   disabled={verifyingOtp || otp.length < 6}
-                  className="btn-primary flex-1 py-3 text-sm font-semibold flex items-center justify-center gap-2"
+                  className="flex-1 py-3 text-xs font-semibold uppercase tracking-wider rounded-lg bg-[#17130B] hover:bg-black text-[#F3E7C6] transition-colors shadow-xs"
                 >
-                  {verifyingOtp ? (
-                    <div className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                  ) : (
-                    'Confirm & Place Order'
-                  )}
+                  {verifyingOtp ? 'Verifying…' : 'Verify & Place'}
                 </button>
               </div>
             </motion.div>
           </div>
         )}
       </AnimatePresence>
-
 
       <Footer />
     </main>

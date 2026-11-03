@@ -183,28 +183,7 @@ const seedAll = async () => {
     console.log('✅ Customers seeded + carts created');
   }
 
-  // ─── Abandoned Carts (Cart Items) ─────────────────────────────────────────
-  if (await isTableEmpty(CartItem)) {
-    const carts = await Cart.findAll();
-    const products = await Product.findAll();
-    if (carts.length > 0 && products.length > 0) {
-      await CartItem.bulkCreate([
-        {
-          cartId: carts[0].id,
-          productId: products[0].id,
-          quantity: 1,
-          priceAtAdd: products[0].price,
-        },
-        {
-          cartId: carts[1].id,
-          productId: products[1] ? products[1].id : products[0].id,
-          quantity: 2,
-          priceAtAdd: products[1] ? products[1].price : products[0].price,
-        }
-      ]);
-      console.log('✅ Cart items seeded (Abandoned carts populated)');
-    }
-  }
+  // Cart Items (Empty by default)
 
   // ─── Orders & Order Items (including Cancelled Orders) ────────────────────
   if (await isTableEmpty(Order)) {
