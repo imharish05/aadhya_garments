@@ -1,6 +1,7 @@
 'use strict';
 const fs = require('fs');
 const path = require('path');
+const { deleteFromCloudinary } = require('../services/cloudinaryService');
 
 /**
  * Safely delete a local file from disk under /uploads/ directory.
@@ -40,4 +41,16 @@ const deleteLocalFile = (imagePath) => {
   }
 };
 
-module.exports = { deleteLocalFile };
+/**
+ * Universal delete helper: handles both local files (Webuzo) and Cloudinary URLs.
+ */
+const deleteFile = async (imagePath) => {
+  if (!imagePath || typeof imagePath !== 'string') return;
+  if (imagePath.includes('cloudinary.com')) {
+    await deleteFromCloudinary(imagePath);
+    return;
+  }
+  deleteLocalFile(imagePath);
+};
+
+module.exports = { deleteLocalFile, deleteFile };

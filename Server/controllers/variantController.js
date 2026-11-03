@@ -1,3 +1,4 @@
+const { getUploadedUrl } = require('../services/cloudinaryService');
 'use strict';
 const { Op } = require('sequelize');
 const { Product, ProductVariant, InventoryMovementLog } = require('../models');
@@ -125,12 +126,12 @@ const add = async (req, res) => {
 
     let galleryPaths = [];
     if (req.files && Array.isArray(req.files)) {
-      req.files.forEach(file => {
-        const p = buildImagePath(file);
+      for (const file of req.files) {
+        const p = await buildImagePath(file);
         if (p) galleryPaths.push(p);
-      });
+      }
     } else if (req.file) {
-      const p = buildImagePath(req.file);
+      const p = await buildImagePath(req.file);
       if (p) galleryPaths.push(p);
     }
 

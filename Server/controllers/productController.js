@@ -4,11 +4,12 @@ const { Product, Category, SubCategory, ProductVariant } = require('../models');
 const { syncProductVariants } = require('./variantController');
 const fs = require('fs');
 const path = require('path');
-const { deleteLocalFile } = require('../utils/fileHelper');
+const { deleteLocalFile, deleteFile } = require('../utils/fileHelper');
+const { getUploadedUrl } = require('../services/cloudinaryService');
 const { deleteProductsCascade } = require('../services/productCascadeService');
 
 // Helper to process FormData body & files
-const processProductData = (req) => {
+const processProductData = async (req) => {
   const data = { ...req.body };
 
   if (data.productName && !data.name) {
@@ -73,17 +74,14 @@ const processProductData = (req) => {
   const newImages = [];
 
   if (req.files && Array.isArray(req.files)) {
-    req.files.forEach(file => {
-      const normalizedPath = file.path.replace(/\\/g, '/');
-      const uploadsIndex = normalizedPath.indexOf('uploads');
-      const pathString = '/' + normalizedPath.substring(uploadsIndex);
-
+    for (const file of req.files) {
+      const pathString = await getUploadedUrl(file, 'products');
       if (file.fieldname === 'images' || file.fieldname === 'variantImages') {
-        newImages.push(pathString);
+        if (pathString) newImages.push(pathString);
       } else if (file.fieldname === 'defaultProductImage') {
         data.defaultProductImage = pathString;
       }
-    });
+    }
   }
 
   if (data.defaultProductImage) {

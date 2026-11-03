@@ -17,7 +17,8 @@ const handleDBError = (err, res, type = 'item') => {
   return res.status(500).json({ success: false, message: err.message });
 };
 
-const { deleteLocalFile } = require('../utils/fileHelper');
+const { deleteLocalFile, deleteFile } = require('../utils/fileHelper');
+const { getUploadedUrl } = require('../services/cloudinaryService');
 const { deleteProductsCascade } = require('../services/productCascadeService');
 const { toAbsoluteUrl } = require('../utils/imageUrl');
 
@@ -82,9 +83,7 @@ const create = async (req, res) => {
         deleteLocalFile('/' + normalizedPath.substring(uploadsIndex));
         return res.status(400).json({ success: false, message: 'Sub-category image file size exceeds 5MB limit. Please upload an image under 5MB.' });
       }
-      const normalizedPath = req.file.path.replace(/\\/g, '/');
-      const uploadsIndex = normalizedPath.indexOf('uploads');
-      data.image = '/' + normalizedPath.substring(uploadsIndex);
+      data.image = await getUploadedUrl(req.file, 'subcategories');
     }
     if (data.isActive !== undefined) {
       data.isActive = data.isActive === 'true' || data.isActive === true;
@@ -113,10 +112,8 @@ const update = async (req, res) => {
         deleteLocalFile('/' + normalizedPath.substring(uploadsIndex));
         return res.status(400).json({ success: false, message: 'Sub-category image file size exceeds 5MB limit. Please upload an image under 5MB.' });
       }
-      deleteLocalFile(subCategory.image);
-      const normalizedPath = req.file.path.replace(/\\/g, '/');
-      const uploadsIndex = normalizedPath.indexOf('uploads');
-      data.image = '/' + normalizedPath.substring(uploadsIndex);
+      await deleteFile(subCategory.image);
+      data.image = await getUploadedUrl(req.file, 'subcategories');
     }
     if (data.isActive !== undefined) {
       data.isActive = data.isActive === 'true' || data.isActive === true;
@@ -156,7 +153,7 @@ const remove = async (req, res) => {
 
     // 3. Delete sub-category image file from disk
     if (subCategory.image) {
-      deleteLocalFile(subCategory.image);
+      await deleteFile(subCategory.image);
     }
 
     // 4. Destroy the sub-category record

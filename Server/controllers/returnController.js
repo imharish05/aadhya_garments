@@ -1,3 +1,4 @@
+const { getUploadedUrl } = require('../services/cloudinaryService');
 'use strict';
 const { sequelize, ReturnRequest, Order, OrderItem, Product, ProductVariant, Customer, InventoryMovementLog } = require('../models');
 const { Op } = require('sequelize');

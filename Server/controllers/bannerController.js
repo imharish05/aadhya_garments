@@ -18,7 +18,8 @@ const handleDBError = (err, res, type = 'item') => {
   return res.status(500).json({ success: false, message: err.message || 'Internal Server Error' });
 };
 
-const { deleteLocalFile } = require('../utils/fileHelper');
+const { deleteLocalFile, deleteFile } = require('../utils/fileHelper');
+const { getUploadedUrl } = require('../services/cloudinaryService');
 
 // Word & Character limits for Banner content fields
 const BANNER_LIMITS = {
@@ -167,9 +168,7 @@ const create = async (req, res) => {
         try { fs.unlinkSync(req.file.path); } catch (e) {}
         return res.status(400).json({ success: false, message: 'Image file size exceeds 5MB limit.' });
       }
-      const normalizedPath = req.file.path.replace(/\\/g, '/');
-      const uploadsIndex = normalizedPath.indexOf('uploads');
-      data.image = '/' + normalizedPath.substring(uploadsIndex);
+      data.image = await getUploadedUrl(req.file, 'banners');
     }
     const banner = await Banner.create(data);
     res.status(201).json({ success: true, banner: formatBanner(banner, req) });
@@ -218,10 +217,8 @@ const update = async (req, res) => {
         try { fs.unlinkSync(req.file.path); } catch (e) {}
         return res.status(400).json({ success: false, message: 'Image file size exceeds 5MB limit.' });
       }
-      deleteLocalFile(banner.image);
-      const normalizedPath = req.file.path.replace(/\\/g, '/');
-      const uploadsIndex = normalizedPath.indexOf('uploads');
-      data.image = '/' + normalizedPath.substring(uploadsIndex);
+      await deleteFile(banner.image);
+      data.image = await getUploadedUrl(req.file, 'banners');
     }
     await banner.update(data);
     res.json({ success: true, banner: formatBanner(banner, req) });
@@ -234,7 +231,7 @@ const remove = async (req, res) => {
   try {
     const banner = await Banner.findByPk(req.params.id);
     if (!banner) return res.status(404).json({ success: false, message: 'Banner not found' });
-    deleteLocalFile(banner.image);
+    await deleteFile(banner.image);
     await banner.destroy();
     res.json({ success: true, message: 'Banner deleted' });
   } catch (err) {

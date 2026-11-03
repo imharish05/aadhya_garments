@@ -1,3 +1,4 @@
+const { getUploadedUrl } = require('../services/cloudinaryService');
 'use strict';
 const { SiteSetting } = require('../models');
 

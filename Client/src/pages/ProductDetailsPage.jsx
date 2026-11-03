@@ -815,9 +815,16 @@ const ProductDetailsPage = () => {
               </div>
             )}
 
-            <h1 className="font-playfair text-2xl sm:text-3xl md:text-4xl font-semibold text-brand-text leading-tight break-words">
-              {product.name}
-            </h1>
+            <div className="flex flex-wrap items-center gap-2.5 sm:gap-3">
+              <h1 className="font-playfair text-2xl sm:text-3xl md:text-4xl font-semibold text-brand-text leading-tight break-words">
+                {product.name}
+              </h1>
+              {discount && (
+                <span className="text-emerald-700 font-semibold text-xs sm:text-sm bg-emerald-50 border border-emerald-200/80 px-2.5 py-0.5 rounded-sm whitespace-nowrap">
+                  Save {discount}%
+                </span>
+              )}
+            </div>
 
             {/* Rating */}
             {/* Rating — shown ONLY if product has real reviews */}
@@ -837,20 +844,25 @@ const ProductDetailsPage = () => {
 
             {/* Price — React Bits price reveal pattern (inline motion) */}
             <motion.div
-              className="flex flex-wrap items-baseline gap-x-3 gap-y-1"
+              className="flex flex-col items-start gap-1"
               key={displayPrice}
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5 }}
             >
-              <span className="font-playfair text-2xl sm:text-3xl md:text-4xl font-bold text-brand-text whitespace-nowrap">{fmt(displayPrice, displayPriceAED)}</span>
-              {displayComparePrice && (
-                <span className="text-base sm:text-lg md:text-xl text-brand-grey line-through whitespace-nowrap">{fmt(displayComparePrice, displayComparePriceAED)}</span>
-              )}
-              {discount && (
-                <span className="text-brand-gold font-semibold text-xs sm:text-sm bg-brand-gold/10 px-2.5 py-0.5 rounded-sm whitespace-nowrap">Save {discount}%</span>
-              )}
-              <span className="text-xs text-neutral-500 font-normal self-center ml-1">(Incl. of all taxes)</span>
+              <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+                <span className="font-playfair text-2xl sm:text-3xl md:text-4xl font-bold text-brand-text whitespace-nowrap">
+                  {fmt(displayPrice, displayPriceAED)}
+                </span>
+                {displayComparePrice && (
+                  <span className="text-base sm:text-lg md:text-xl text-brand-grey line-through whitespace-nowrap">
+                    {fmt(displayComparePrice, displayComparePriceAED)}
+                  </span>
+                )}
+              </div>
+              <span className="text-xs text-neutral-500 font-normal">
+                (Incl. of all taxes)
+              </span>
             </motion.div>
 
             <p className="text-brand-grey text-sm leading-relaxed">{product.shortDescription}</p>

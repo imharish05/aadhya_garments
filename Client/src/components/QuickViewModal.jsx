@@ -546,9 +546,16 @@ const QuickViewModal = () => {
                 </div>
 
                 {/* Product Title */}
-                <h3 className="font-playfair text-2xl sm:text-3xl font-bold text-neutral-900 leading-tight mb-2.5">
-                  {product.name}
-                </h3>
+                <div className="flex flex-wrap items-center gap-2.5 mb-2.5">
+                  <h3 className="font-playfair text-2xl sm:text-3xl font-bold text-neutral-900 leading-tight">
+                    {product.name}
+                  </h3>
+                  {discount > 0 && (
+                    <span className="text-emerald-700 font-semibold text-xs bg-emerald-50 border border-emerald-200/80 px-2.5 py-1 rounded-full whitespace-nowrap">
+                      Save {discount}%
+                    </span>
+                  )}
+                </div>
 
                 {/* Rating & Reviews */}
                 {Number(product.reviewCount) > 0 && Number(product.rating) > 0 && (
@@ -570,11 +577,6 @@ const QuickViewModal = () => {
                   {displayComparePrice && displayComparePrice > displayPrice && (
                     <span className="text-neutral-400 text-base line-through font-medium">
                       {fmt(displayComparePrice, displayComparePriceAED)}
-                    </span>
-                  )}
-                  {discount > 0 && (
-                    <span className="text-amber-900 font-bold text-xs bg-amber-100/90 px-2.5 py-1 rounded-full border border-amber-300/60">
-                      Save {discount}%
                     </span>
                   )}
                 </div>
