@@ -66,7 +66,7 @@ const TopBar = () => {
   }, [messages]);
 
   return (
-    <div className="topbar" role="region" aria-label="Announcements">
+    <div className="topbar bg-white" role="region" aria-label="Announcements">
       <div className="topbar__track" style={{ '--topbar-duration': `${duration}s` }}>
         <ul className="topbar__group">
           {group.map((m, i) => <Cell key={`a-${i}`} text={m} />)}

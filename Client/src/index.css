@@ -696,7 +696,7 @@ a:focus-visible, button:focus-visible { outline: 2px solid var(--color-gold); ou
 .topbar {
   position: relative;
   height: var(--topbar-h);
-  background: #FBF7EE;
+  background: #FFFFFF;
   overflow: hidden;
   display: flex;
 }

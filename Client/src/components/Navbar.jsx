@@ -395,7 +395,7 @@ const Navbar = () => {
       >
         {/* Announcement ticker (scrolls continuously) */}
         <div
-          className={`overflow-hidden transition-all duration-300 ease-in-out ${
+          className={`overflow-hidden bg-white transition-all duration-300 ease-in-out ${
             announcementHidden ? 'opacity-0 pointer-events-none' : 'opacity-100'
           }`}
           style={{ marginTop: announcementHidden ? 'calc(var(--topbar-h) * -1)' : '0px' }}
