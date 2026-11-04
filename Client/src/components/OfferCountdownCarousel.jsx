@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { ChevronLeft, ChevronRight, ArrowRight } from 'lucide-react';
 import { getImageUrl } from '../utils/imageUrl';
 import { CountdownBannerSkeleton } from './skeletons';
@@ -26,18 +26,18 @@ const SoftArt = () => (
 
 /* ── Countdown unit ──────────────────────────────────────────────────────── */
 const CountBox = ({ value, label }) => (
-  <div className="min-w-[54px] sm:min-w-[60px] text-center rounded-xl bg-white/80 border border-brand-gold/30 py-2 px-2">
+  <div className="min-w-[54px] sm:min-w-[60px] text-center rounded-xl bg-white/80 border border-brand-gold/30 py-2 px-2 shadow-xs">
     <span className="block font-montserrat text-lg sm:text-xl font-semibold text-neutral-900 leading-none tabular-nums">
       {String(value).padStart(2, '0')}
     </span>
-    <span className="block mt-1 text-[10px] font-montserrat text-neutral-500">
+    <span className="block mt-1 text-[10px] font-montserrat uppercase tracking-wider text-neutral-500 font-medium">
       {label}
     </span>
   </div>
 );
 
 /* ── Single offer slide ──────────────────────────────────────────────────── */
-const OfferSlide = ({ banner }) => {
+const OfferSlide = ({ banner, reduce }) => {
   const calcTimeLeft = useCallback(() => {
     if (!banner?.countdown) return { d: 0, h: 0, m: 0, s: 0, expired: true };
     const diff = new Date(banner.countdown).getTime() - Date.now();
@@ -65,20 +65,44 @@ const OfferSlide = ({ banner }) => {
       {/* Content: tight, vertically centered, no dead space */}
       <div className="w-full md:w-[58%] px-5 py-6 sm:px-8 md:px-10 flex flex-col justify-center gap-4">
         <div>
-          <p className="font-montserrat text-xs font-medium text-brand-gold mb-1.5">
+          <motion.p
+            initial={reduce ? { opacity: 0 } : { opacity: 0, y: 12 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, amount: 0.2 }}
+            transition={{ duration: 0.6, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
+            className="font-montserrat text-xs font-semibold uppercase tracking-[0.2em] text-[#BEA266] mb-1.5"
+          >
             Limited-time offer
-          </p>
-          <h3 className="font-playfair text-2xl sm:text-3xl md:text-4xl font-semibold text-neutral-900 leading-tight line-clamp-2">
+          </motion.p>
+          <motion.h3
+            initial={reduce ? { opacity: 0 } : { opacity: 0, y: 16 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, amount: 0.2 }}
+            transition={{ duration: 0.7, delay: 0.3, ease: [0.16, 1, 0.3, 1] }}
+            className="font-playfair text-2xl sm:text-3xl md:text-4xl font-semibold text-neutral-900 leading-tight line-clamp-2"
+          >
             {banner.title}
-          </h3>
+          </motion.h3>
           {banner.subtitle && (
-            <p className="font-montserrat text-sm text-neutral-600 leading-relaxed mt-2 line-clamp-2 max-w-lg">
+            <motion.p
+              initial={reduce ? { opacity: 0 } : { opacity: 0, y: 14 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, amount: 0.2 }}
+              transition={{ duration: 0.7, delay: 0.4, ease: [0.16, 1, 0.3, 1] }}
+              className="font-montserrat text-sm text-neutral-600 leading-relaxed mt-2 line-clamp-2 max-w-lg"
+            >
               {banner.subtitle}
-            </p>
+            </motion.p>
           )}
         </div>
 
-        <div className="flex flex-col items-start gap-4">
+        <motion.div
+          initial={reduce ? { opacity: 0 } : { opacity: 0, y: 16 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.2 }}
+          transition={{ duration: 0.75, delay: 0.45, ease: [0.16, 1, 0.3, 1] }}
+          className="flex flex-col items-start gap-4"
+        >
           <div className="flex items-center gap-2" role="timer" aria-label="Time left">
             <CountBox value={timeLeft.d} label="Days" />
             <CountBox value={timeLeft.h} label="Hours" />
@@ -97,13 +121,13 @@ const OfferSlide = ({ banner }) => {
           ) : (
             <Link
               to={banner.ctaLink || '/products'}
-              className="group inline-flex items-center gap-2 px-6 py-3 rounded-full bg-neutral-900 hover:bg-brand-gold hover:text-neutral-950 text-white font-montserrat font-medium text-sm transition-colors duration-300"
+              className="group inline-flex items-center gap-2 px-6 py-3 rounded-full bg-neutral-900 hover:bg-brand-gold hover:text-neutral-950 text-white font-montserrat font-medium text-sm transition-all duration-300 shadow-sm hover:shadow-md"
             >
               <span>{banner.ctaText || 'Shop now'}</span>
               <ArrowRight size={15} className="transition-transform duration-300 group-hover:translate-x-1" />
             </Link>
           )}
-        </div>
+        </motion.div>
       </div>
 
       {/* Visual: abstract art + arch-framed photo */}
@@ -111,20 +135,32 @@ const OfferSlide = ({ banner }) => {
         <SoftArt />
 
         {banner.image && (
-          <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[200px] sm:w-[220px] md:w-[78%] max-w-[280px] h-[92%] overflow-hidden rounded-t-full border-4 border-white shadow-lg bg-white">
+          <motion.div
+            initial={reduce ? { opacity: 0 } : { opacity: 0, scale: 0.95, y: 16 }}
+            whileInView={{ opacity: 1, scale: 1, y: 0 }}
+            viewport={{ once: true, amount: 0.2 }}
+            transition={{ duration: 0.85, delay: 0.3, ease: [0.16, 1, 0.3, 1] }}
+            className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[200px] sm:w-[220px] md:w-[78%] max-w-[280px] h-[92%] overflow-hidden rounded-t-full border-4 border-white shadow-lg bg-white"
+          >
             <img
               src={getImageUrl(banner.image)}
               alt={banner.title || 'Special Offer'}
-              className="w-full h-full object-cover object-top"
+              className="w-full h-full object-cover object-top transition-transform duration-700 ease-out hover:scale-105"
               loading="lazy"
             />
-          </div>
+          </motion.div>
         )}
 
         {banner.badgeText && (
-          <span className="absolute top-4 right-4 md:top-5 md:right-6 z-10 bg-brand-gold text-neutral-950 font-montserrat font-semibold text-xs px-3.5 py-1.5 rounded-full shadow-md rotate-3">
+          <motion.span
+            initial={reduce ? { opacity: 0 } : { opacity: 0, scale: 0.8, rotate: -6 }}
+            whileInView={{ opacity: 1, scale: 1, rotate: 3 }}
+            viewport={{ once: true, amount: 0.2 }}
+            transition={{ duration: 0.6, delay: 0.45, ease: [0.16, 1, 0.3, 1] }}
+            className="absolute top-4 right-4 md:top-5 md:right-6 z-10 bg-brand-gold text-neutral-950 font-montserrat font-semibold text-xs px-3.5 py-1.5 rounded-full shadow-md"
+          >
             {banner.badgeText}
-          </span>
+          </motion.span>
         )}
       </div>
     </div>
@@ -133,6 +169,7 @@ const OfferSlide = ({ banner }) => {
 
 /* ── Main section ────────────────────────────────────────────────────────── */
 const OfferCountdownCarousel = ({ banners = [], loading = false }) => {
+  const reduce = useReducedMotion();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [direction, setDirection] = useState(1);
   const [isPaused, setIsPaused] = useState(false);
@@ -205,22 +242,52 @@ const OfferCountdownCarousel = ({ banners = [], loading = false }) => {
       onTouchEnd={handleTouchEnd}
     >
       <div className="max-w-site mx-auto px-4 sm:px-6 md:px-8">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="font-montserrat text-sm sm:text-base font-semibold text-neutral-800">
-            Special offers
-          </h2>
+        {/* Header with Our Story-inspired typography and luxury line ornament */}
+        <div className="flex items-end justify-between mb-5 sm:mb-6">
+          <div className="flex flex-col">
+            <motion.h2
+              initial={reduce ? { opacity: 0 } : { opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, amount: 0.3 }}
+              transition={{ duration: 0.85, ease: [0.16, 1, 0.3, 1] }}
+              className="font-playfair text-2xl sm:text-3xl lg:text-[34px] font-light text-neutral-900 tracking-wide"
+            >
+              Special offers
+            </motion.h2>
+
+            {/* Luxury Line Ornament with smooth expansion like Our Story */}
+            <motion.div
+              initial={reduce ? { opacity: 0 } : { opacity: 0, scaleX: 0 }}
+              whileInView={{ opacity: 1, scaleX: 1 }}
+              viewport={{ once: true, amount: 0.3 }}
+              transition={{ duration: 0.95, delay: 0.15, ease: [0.16, 1, 0.3, 1] }}
+              style={{ transformOrigin: 'left' }}
+              className="flex items-center gap-3 w-full max-w-[200px] sm:max-w-[220px] mt-2.5"
+              aria-hidden="true"
+            >
+              <span className="h-[2px] w-12 bg-neutral-950" />
+              <span className="h-1.5 w-1.5 rotate-45 bg-[#BEA266]" />
+              <span className="h-[1.5px] flex-1 bg-gradient-to-r from-[#BEA266] to-transparent" />
+            </motion.div>
+          </div>
 
           {offerBanners.length > 1 && (
-            <div className="flex items-center gap-3">
-              <span className="text-xs font-montserrat text-neutral-500 tabular-nums">
+            <motion.div
+              initial={reduce ? { opacity: 0 } : { opacity: 0, y: 15 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, amount: 0.3 }}
+              transition={{ duration: 0.85, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
+              className="flex items-center gap-3 pb-1"
+            >
+              <span className="text-xs sm:text-sm font-montserrat font-medium text-neutral-500 tabular-nums">
                 {currentIndex + 1} / {offerBanners.length}
               </span>
-              <div className="flex items-center gap-1.5">
+              <div className="flex items-center gap-2">
                 <button
                   type="button"
                   onClick={handlePrev}
                   aria-label="Previous offer"
-                  className="w-8 h-8 rounded-full border border-neutral-300 bg-white text-neutral-700 hover:border-neutral-900 flex items-center justify-center transition-colors cursor-pointer"
+                  className="w-8 h-8 sm:w-9 sm:h-9 rounded-full border border-neutral-300 bg-white text-neutral-700 hover:border-neutral-900 hover:bg-neutral-900 hover:text-white flex items-center justify-center transition-all duration-300 cursor-pointer shadow-xs active:scale-95"
                 >
                   <ChevronLeft size={16} />
                 </button>
@@ -228,16 +295,23 @@ const OfferCountdownCarousel = ({ banners = [], loading = false }) => {
                   type="button"
                   onClick={handleNext}
                   aria-label="Next offer"
-                  className="w-8 h-8 rounded-full border border-neutral-300 bg-white text-neutral-700 hover:border-neutral-900 flex items-center justify-center transition-colors cursor-pointer"
+                  className="w-8 h-8 sm:w-9 sm:h-9 rounded-full border border-neutral-300 bg-white text-neutral-700 hover:border-neutral-900 hover:bg-neutral-900 hover:text-white flex items-center justify-center transition-all duration-300 cursor-pointer shadow-xs active:scale-95"
                 >
                   <ChevronRight size={16} />
                 </button>
               </div>
-            </div>
+            </motion.div>
           )}
         </div>
 
-        <div className="relative">
+        {/* Offers Card with scroll entrance */}
+        <motion.div
+          initial={reduce ? { opacity: 0 } : { opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.15 }}
+          transition={{ duration: 0.85, delay: 0.15, ease: [0.16, 1, 0.3, 1] }}
+          className="relative"
+        >
           <AnimatePresence mode="wait" custom={direction}>
             <motion.div
               key={currentBanner.id || currentIndex}
@@ -248,13 +322,19 @@ const OfferCountdownCarousel = ({ banners = [], loading = false }) => {
               exit="exit"
               className="w-full"
             >
-              <OfferSlide banner={currentBanner} />
+              <OfferSlide banner={currentBanner} reduce={reduce} />
             </motion.div>
           </AnimatePresence>
-        </div>
+        </motion.div>
 
         {offerBanners.length > 1 && (
-          <div className="flex justify-center items-center gap-1.5 mt-4">
+          <motion.div
+            initial={reduce ? { opacity: 0 } : { opacity: 0, y: 10 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, amount: 0.3 }}
+            transition={{ duration: 0.7, delay: 0.25, ease: [0.16, 1, 0.3, 1] }}
+            className="flex justify-center items-center gap-1.5 mt-4"
+          >
             {offerBanners.map((_, idx) => (
               <button
                 key={idx}
@@ -270,7 +350,7 @@ const OfferCountdownCarousel = ({ banners = [], loading = false }) => {
                 aria-current={currentIndex === idx}
               />
             ))}
-          </div>
+          </motion.div>
         )}
       </div>
     </section>
