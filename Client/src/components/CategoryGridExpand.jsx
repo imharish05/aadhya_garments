@@ -237,7 +237,7 @@ export default function CategoryGridExpand({ categories = [], allHref = "/produc
 
           <div
             ref={trackRef}
-            className="relative flex gap-3 overflow-x-auto snap-x snap-mandatory no-scrollbar scroll-smooth px-1 -mx-1"
+            className="relative flex gap-2.5 sm:gap-3 overflow-x-auto snap-x snap-mandatory no-scrollbar scroll-smooth px-1 -mx-1 py-1"
             style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
           >
             {categories.map((cat) => (
@@ -245,7 +245,7 @@ export default function CategoryGridExpand({ categories = [], allHref = "/produc
                 key={cat.id}
                 to={cat.href}
                 aria-label={`${cat.name}, ${cat.count} items`}
-                className="group relative isolate aspect-[5/6] w-[62vw] sm:w-[42vw] md:w-[calc((100%-24px)/3)] shrink-0 snap-start overflow-hidden rounded-[18px] bg-transparent text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[3px] focus-visible:outline-neutral-900"
+                className="group relative isolate aspect-[4/5] sm:aspect-[5/6] w-[36vw] min-w-[125px] max-w-[155px] sm:w-[32vw] md:w-[calc((100%-24px)/3)] md:max-w-none shrink-0 snap-start overflow-hidden rounded-[14px] sm:rounded-[18px] bg-transparent text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[3px] focus-visible:outline-neutral-900"
               >
                 <div data-img className="absolute inset-0 -z-20">
                   <img
@@ -262,15 +262,15 @@ export default function CategoryGridExpand({ categories = [], allHref = "/produc
                 </div>
                 <div
                   data-chip
-                  className="absolute bottom-2.5 left-2.5 flex items-center gap-2 rounded-full bg-white/95 py-[5px] pl-3 pr-[5px] text-[13px] font-medium text-neutral-900 shadow-sm"
+                  className="absolute bottom-2 left-2 sm:bottom-2.5 sm:left-2.5 flex items-center gap-1.5 sm:gap-2 rounded-full bg-white/95 py-1 pl-2.5 pr-1 sm:py-[5px] sm:pl-3 sm:pr-[5px] text-[11px] sm:text-[13px] font-medium text-neutral-900 shadow-sm max-w-[calc(100%-16px)]"
                 >
-                  <span>
+                  <span className="truncate max-w-[80px] sm:max-w-none">
                     {cat.name}{" "}
-                    <small className="text-[11px] font-normal text-neutral-500">
+                    <small className="text-[10px] sm:text-[11px] font-normal text-neutral-500">
                       {cat.count}
                     </small>
                   </span>
-                  <span className="grid h-6 w-6 place-items-center rounded-full bg-neutral-900 text-white transition-all duration-300 group-hover:bg-brand-gold group-hover:text-black group-hover:rotate-45">
+                  <span className="grid h-5 w-5 sm:h-6 sm:w-6 shrink-0 place-items-center rounded-full bg-neutral-900 text-white transition-all duration-300 group-hover:bg-brand-gold group-hover:text-black group-hover:rotate-45">
                     <Arrow />
                   </span>
                 </div>

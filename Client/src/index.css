@@ -562,7 +562,7 @@ a:focus-visible, button:focus-visible { outline: 2px solid var(--color-gold); ou
 }
 
 /* ── Product Description Rich Text Renderer ──────────────────────────────── */
-.prose-description { font-size: 0.95rem; line-height: 1.75; color: var(--color-grey); font-family: var(--font-body); }
+.prose-description { font-size: 0.95rem; line-height: 1.8; color: #3f3f46; font-family: var(--font-body); }
 
 .prose-description h1 {
   font-family: var(--font-heading);

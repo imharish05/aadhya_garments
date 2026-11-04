@@ -52,7 +52,10 @@ export const NewArrivalsSection = () => {
   const scrollSlider = (direction) => {
     const el = sliderRef.current;
     if (!el || !el.children[0]) return;
-    const step = el.children[0].offsetWidth + 16; // card width + gap-4
+    const cardW = el.children[0].offsetWidth;
+    const gap = window.innerWidth < 640 ? 10 : 16;
+    const count = window.innerWidth < 640 ? 2 : 1;
+    const step = (cardW + gap) * count;
     el.scrollBy({ left: direction === 'left' ? -step : step, behavior: 'smooth' });
   };
 
@@ -143,14 +146,14 @@ export const NewArrivalsSection = () => {
           >
             <div
               ref={sliderRef}
-              className="flex gap-4 overflow-x-auto scrollbar-none scroll-smooth snap-x snap-mandatory"
+              className="flex gap-2.5 sm:gap-4 overflow-x-auto scrollbar-none scroll-smooth snap-x snap-mandatory"
             >
               {newArrivalsList.map((item, idx) => (
                 <div
                   key={item.id || item._id || idx}
-                  className="snap-start shrink-0 w-[68%] sm:w-[44%] md:w-[31%] lg:w-[calc((100%-3rem)/4)]"
+                  className="snap-start shrink-0 w-[calc(50%-5px)] sm:w-[calc(33.333%-11px)] md:w-[calc(33.333%-11px)] lg:w-[calc((100%-3rem)/4)]"
                 >
-                  <ProductCard product={item} />
+                  <ProductCard product={item} compactMobile />
                 </div>
               ))}
             </div>

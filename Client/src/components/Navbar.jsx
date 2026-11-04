@@ -415,13 +415,28 @@ const Navbar = () => {
               >
                 <Menu size={22} strokeWidth={1.75} />
               </button>
-              <Link to="/" className="hidden lg:flex items-center focus:outline-none" aria-label="Twin A Apparels — Home">
+              <Link
+                to="/"
+                onClick={() => {
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }}
+                className="hidden lg:flex items-center focus:outline-none"
+                aria-label="Twin A Apparels — Home"
+              >
                 <img src="/logo.png" alt="Twin A Apparels Logo" className="h-16 w-auto object-contain" />
               </Link>
             </div>
 
             {/* mobile logo */}
-            <Link to="/" className="lg:hidden flex items-center focus:outline-none" aria-label="Twin A Apparels — Home">
+            <Link
+              to="/"
+              onClick={() => {
+                dispatch(closeMobileMenu());
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }}
+              className="lg:hidden flex items-center focus:outline-none"
+              aria-label="Twin A Apparels — Home"
+            >
               <img src="/logo.png" alt="Twin A Apparels Logo" className="h-12 w-auto object-contain" />
             </Link>
 

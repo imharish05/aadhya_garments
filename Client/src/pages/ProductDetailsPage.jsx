@@ -3,7 +3,35 @@ import { useEffect, useState, useMemo, useRef } from 'react';
 import { useParams, Link, useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ShoppingBag, Heart, Star, ChevronRight, ChevronLeft, Share2, Shield, ZoomIn, Mail, CheckCircle2, X, Tag, Copy, Edit3, Trash2, FileText } from 'lucide-react';
+import {
+  ShoppingBag,
+  Heart,
+  Star,
+  ChevronRight,
+  ChevronLeft,
+  Share2,
+  Shield,
+  ShieldCheck,
+  ZoomIn,
+  Mail,
+  CheckCircle2,
+  X,
+  Tag,
+  Copy,
+  Edit3,
+  Trash2,
+  FileText,
+  Sparkles,
+  Truck,
+  RotateCcw,
+  Award,
+  Check,
+  MessageSquare,
+  ThumbsUp,
+  ArrowUpDown,
+} from 'lucide-react';
+import { ToolbarMenu } from '../components/shop/ToolbarControls';
+import ActiveFilters from '../components/shop/ActiveFilters';
 import { fetchProduct, fetchProducts } from '../redux/slices/productsSlice';
 import { addLocal, openCart, setBuyNowItem } from '../redux/slices/cartSlice';
 import { toggleItem, toggleWishlistApi } from '../redux/slices/wishlistSlice';
@@ -77,6 +105,8 @@ const ProductDetailsPage = () => {
   const [reviewTitle, setReviewTitle] = useState('');
   const [reviewBody, setReviewBody] = useState('');
   const [editingReviewId, setEditingReviewId] = useState(null);
+  const [reviewFilter, setReviewFilter] = useState('all');
+  const [reviewSort, setReviewSort] = useState('newest');
   const [reviewImage, setReviewImage] = useState(null);
   const [reviewImagePreview, setReviewImagePreview] = useState(null);
   const reviewImageRef = useRef(null);
@@ -226,6 +256,62 @@ const ProductDetailsPage = () => {
       .filter(p => p.categoryId === product.categoryId && p.id !== product.id)
       .slice(0, 5);
   }, [allProducts, product]);
+
+  const ratingFilterOptions = useMemo(() => [
+    { value: 'all', label: 'All Ratings' },
+    { value: '5', label: '5 Stars ★★★★★' },
+    { value: '4', label: '4 Stars ★★★★☆' },
+    { value: '3', label: '3 Stars ★★★☆☆' },
+    { value: '2', label: '2 Stars ★★☆☆☆' },
+    { value: '1', label: '1 Star ★☆☆☆☆' },
+    { value: 'verified', label: 'Verified Buyers' },
+  ], []);
+
+  const reviewSortOptions = useMemo(() => [
+    { value: 'newest', label: 'Newest First' },
+    { value: 'highest', label: 'Highest Rating' },
+    { value: 'lowest', label: 'Lowest Rating' },
+  ], []);
+
+  const filteredReviews = useMemo(() => {
+    let list = [...(reviewsState.reviews || [])];
+    if (reviewFilter === '5') list = list.filter(r => Math.round(r.rating) === 5);
+    else if (reviewFilter === '4') list = list.filter(r => Math.round(r.rating) === 4);
+    else if (reviewFilter === '3') list = list.filter(r => Math.round(r.rating) === 3);
+    else if (reviewFilter === '2') list = list.filter(r => Math.round(r.rating) === 2);
+    else if (reviewFilter === '1') list = list.filter(r => Math.round(r.rating) === 1);
+    else if (reviewFilter === 'verified') list = list.filter(r => r.isVerifiedPurchase);
+
+    if (reviewSort === 'highest') {
+      list.sort((a, b) => (b.rating || 0) - (a.rating || 0));
+    } else if (reviewSort === 'lowest') {
+      list.sort((a, b) => (a.rating || 0) - (b.rating || 0));
+    } else {
+      list.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+    }
+    return list;
+  }, [reviewsState.reviews, reviewFilter, reviewSort]);
+
+  const activeReviewChips = useMemo(() => {
+    const chips = [];
+    if (reviewFilter !== 'all') {
+      const opt = ratingFilterOptions.find(o => o.value === reviewFilter);
+      chips.push({
+        key: `rating-${reviewFilter}`,
+        label: opt ? opt.label : `${reviewFilter} Stars`,
+        onRemove: () => setReviewFilter('all'),
+      });
+    }
+    if (reviewSort !== 'newest') {
+      const opt = reviewSortOptions.find(o => o.value === reviewSort);
+      chips.push({
+        key: `sort-${reviewSort}`,
+        label: opt ? opt.label : reviewSort,
+        onRemove: () => setReviewSort('newest'),
+      });
+    }
+    return chips;
+  }, [reviewFilter, reviewSort, ratingFilterOptions, reviewSortOptions]);
 
   const parsedVariants = useMemo(() => {
     if (!product || !product.variants) return [];
@@ -1078,11 +1164,11 @@ const ProductDetailsPage = () => {
               ) : (
                 <button
                   type="button"
-                  onClick={() => setNotifySuccess(false)}
-                  className="bg-neutral-950 hover:bg-neutral-800 text-white font-semibold text-sm tracking-wider uppercase py-4 w-full flex items-center justify-center gap-2 transition-all duration-200 shadow-sm rounded-lg cursor-pointer"
+                  disabled
+                  className="bg-neutral-950 text-white/60 font-semibold text-sm tracking-wider uppercase py-4 w-full flex items-center justify-center rounded-lg cursor-not-allowed select-none shadow-sm"
                   id="pdp-notify"
                 >
-                  <Mail size={16} /> Out of Stock — Notify Me
+                  Out of Stock
                 </button>
               )}
               <button
@@ -1097,45 +1183,6 @@ const ProductDetailsPage = () => {
                 <Heart size={18} className={isWishlisted ? 'fill-current text-red-500' : ''} />
                 {isWishlisted ? 'Wishlisted' : 'Wishlist'}
               </button>
-
-              {/* Restock Notification Form */}
-              {displayStock <= 0 && !notifySuccess && (
-                <motion.form
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: 'auto' }}
-                  onSubmit={handleNotifySubmit}
-                  className="bg-brand-light p-4 rounded-lg border border-brand-light space-y-3"
-                >
-                  <p className="text-xs font-semibold text-brand-text">Get notified when this item is back in stock:</p>
-                  <div className="flex gap-2">
-                    <input
-                      type="email"
-                      required
-                      placeholder="Enter your email address"
-                      value={notifyEmail}
-                      onChange={e => setNotifyEmail(e.target.value)}
-                      className="flex-1 bg-white border border-brand-light px-3 py-2 text-xs focus:outline-none focus:border-brand-gold"
-                    />
-                    <button type="submit" className="bg-brand-gold hover:bg-amber-600 text-white px-4 py-2 text-xs font-semibold uppercase tracking-wider transition-colors">
-                      Alert Me
-                    </button>
-                  </div>
-                </motion.form>
-              )}
-
-              {displayStock <= 0 && notifySuccess && (
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  className="bg-green-50 text-green-700 p-4 rounded-lg border border-green-200 flex items-start gap-2.5"
-                >
-                  <CheckCircle2 size={16} className="flex-shrink-0 mt-0.5" />
-                  <div>
-                    <p className="text-xs font-semibold">Subscription Active</p>
-                    <p className="text-[11px] text-green-600/90 mt-0.5">We will send an email alert to {notifyEmail} as soon as this item is back in stock.</p>
-                  </div>
-                </motion.div>
-              )}
             </div>
 
             {/* Authenticity Certificate Card */}
@@ -1153,143 +1200,323 @@ const ProductDetailsPage = () => {
           </div>
         </div>
 
-        {/* Tabs — Description / Reviews */}
-        <div className="mt-12 sm:mt-16 border-t border-brand-light" id="reviews">
-          <div className="flex border-b border-neutral-200/60 overflow-x-auto scrollbar-none" role="tablist">
-            {['description', 'reviews'].map(tab => (
-              <button
-                key={tab}
-                role="tab"
-                aria-selected={activeTab === tab}
-                onClick={() => setActiveTab(tab)}
-                id={`pdp-tab-${tab}`}
-                className={`px-4 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm font-semibold capitalize border-b-2 transition-colors whitespace-nowrap ${activeTab === tab ? 'border-brand-gold text-brand-gold' : 'border-transparent text-brand-grey hover:text-brand-text'}`}
-              >
-                {tab === 'reviews' ? `Reviews (${reviewsState.totalCount || 0})` : tab.charAt(0).toUpperCase() + tab.slice(1)}
-              </button>
-            ))}
+        {/* Editorial Tabs — Description & Details / Verified Customer Reviews */}
+        <div className="mt-14 sm:mt-20 border-t border-[#EFECE6] pt-10" id="reviews">
+          <div className="flex items-center justify-start sm:justify-center border-b border-[#EFECE6] overflow-x-auto scrollbar-none gap-2 sm:gap-8" role="tablist">
+            <button
+              type="button"
+              role="tab"
+              aria-selected={activeTab === 'description'}
+              onClick={() => setActiveTab('description')}
+              id="pdp-tab-description"
+              className={`relative py-4 px-3 sm:px-5 font-montserrat text-xs sm:text-sm font-semibold uppercase tracking-[0.2em] transition-all duration-300 flex items-center gap-2.5 whitespace-nowrap cursor-pointer ${
+                activeTab === 'description'
+                  ? 'text-neutral-950 font-bold'
+                  : 'text-neutral-400 hover:text-neutral-700'
+              }`}
+            >
+              <FileText size={16} className={activeTab === 'description' ? 'text-[#BEA266]' : 'text-neutral-400'} />
+              <span>Garment Details & Craft</span>
+              {activeTab === 'description' && (
+                <motion.div
+                  layoutId="pdp-active-tab"
+                  className="absolute bottom-0 left-0 right-0 h-[2.5px] bg-[#BEA266]"
+                  transition={{ type: 'spring', stiffness: 380, damping: 30 }}
+                />
+              )}
+            </button>
+
+            <button
+              type="button"
+              role="tab"
+              aria-selected={activeTab === 'reviews'}
+              onClick={() => setActiveTab('reviews')}
+              id="pdp-tab-reviews"
+              className={`relative py-4 px-3 sm:px-5 font-montserrat text-xs sm:text-sm font-semibold uppercase tracking-[0.2em] transition-all duration-300 flex items-center gap-2.5 whitespace-nowrap cursor-pointer ${
+                activeTab === 'reviews'
+                  ? 'text-neutral-950 font-bold'
+                  : 'text-neutral-400 hover:text-neutral-700'
+              }`}
+            >
+              <Star size={16} className={activeTab === 'reviews' ? 'text-[#BEA266] fill-[#BEA266]' : 'text-neutral-400'} />
+              <span>Customer Reviews</span>
+              <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full transition-colors ${
+                activeTab === 'reviews' ? 'bg-neutral-900 text-white' : 'bg-neutral-100 text-neutral-500'
+              }`}>
+                {reviewsState.totalCount || 0}
+              </span>
+              {activeTab === 'reviews' && (
+                <motion.div
+                  layoutId="pdp-active-tab"
+                  className="absolute bottom-0 left-0 right-0 h-[2.5px] bg-[#BEA266]"
+                  transition={{ type: 'spring', stiffness: 380, damping: 30 }}
+                />
+              )}
+            </button>
           </div>
 
-          <div className="py-8">
+          <div className="py-8 sm:py-12">
             {activeTab === 'description' && (
               <div className="w-full">
-                {product.description ? (
-                  <div
-                    className="prose-description text-brand-grey leading-relaxed w-full"
-                    dangerouslySetInnerHTML={{ __html: product.description }}
-                  />
-                ) : (
-                  <p className="text-brand-grey leading-relaxed text-sm italic">No description available.</p>
+                <div className="mb-6">
+                  <h3 className="font-playfair text-2xl sm:text-3xl font-light text-neutral-950 tracking-wide mb-3">
+                    Product Description
+                  </h3>
+                  <div className="flex items-center gap-3 w-28" aria-hidden="true">
+                    <span className="h-[1.5px] w-8 bg-neutral-950" />
+                    <span className="h-1 w-1 rotate-45 bg-[#BEA266]" />
+                    <span className="h-[1px] flex-1 bg-gradient-to-r from-[#BEA266] to-transparent" />
+                  </div>
+                </div>
+
+                {/* Short Description Lead */}
+                {product.shortDescription && (
+                  <p className="font-playfair italic text-base sm:text-lg text-neutral-800 leading-relaxed mb-6 border-l-2 border-[#BEA266] pl-4 max-w-4xl">
+                    {product.shortDescription}
+                  </p>
                 )}
+
+                {/* Main Rich Text Description - Full Width */}
+                <div className="w-full">
+                  {product.description ? (
+                    <div
+                      className="prose-description text-neutral-800 leading-relaxed text-sm sm:text-base space-y-4 w-full max-w-none"
+                      dangerouslySetInnerHTML={{ __html: product.description }}
+                    />
+                  ) : (
+                    <p className="text-neutral-500 text-sm leading-relaxed italic">
+                      No detailed description available for this item.
+                    </p>
+                  )}
+                </div>
               </div>
             )}
-            {activeTab === 'reviews' && (
-              <div className="space-y-8 w-full">
-                {/* Summary & Rating Breakdown Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-stretch">
-                  {/* Review Summary Card */}
-                  <div className="bg-neutral-50 p-4 sm:p-6 rounded-lg border border-neutral-200/60 flex flex-col justify-between overflow-hidden">
-                    <div>
-                      <h3 className="font-playfair text-2xl font-semibold text-neutral-900 mb-2">Customer Reviews</h3>
-                      {reviewsState.totalCount > 0 ? (
-                        <div className="flex items-center gap-4">
-                          <span className="text-4xl font-bold text-brand-gold">{parseFloat(reviewsState.averageRating).toFixed(1)}</span>
-                          <div>
-                            <div className="flex gap-0.5 mb-1">
-                              {[1, 2, 3, 4, 5].map(s => (
-                                <Star key={s} size={16} className={s <= Math.round(reviewsState.averageRating) ? 'fill-brand-gold text-brand-gold' : 'fill-brand-light text-brand-light'} />
-                              ))}
-                            </div>
-                            <span className="text-xs text-neutral-500">Based on {reviewsState.totalCount} {reviewsState.totalCount === 1 ? 'review' : 'reviews'}</span>
-                          </div>
-                        </div>
-                      ) : (
-                        <p className="text-xs text-neutral-500">No reviews yet for this product.</p>
-                      )}
-                    </div>
 
-                    <div className="mt-4 pt-4 border-t border-neutral-200/60 flex items-center justify-between gap-3 flex-wrap">
-                      {reviewsState.userCanReview ? (
-                        !reviewsState.userReview && (
-                          <button
-                            onClick={handleOpenWriteReview}
-                            className="px-5 py-2.5 bg-amber-400 hover:bg-amber-500 text-white text-xs font-semibold rounded-lg shadow-sm transition-colors flex items-center gap-2 cursor-pointer"
-                          >
-                            <Star size={15} /> Write a Review
-                          </button>
-                        )
-                      ) : (
-                        <p className="text-xs text-neutral-500 italic">
-                          {isAuthenticated ? (
-                            'Customers who buy this product will be able to review it after delivery!'
-                          ) : (
-                            <span>
-                              <Link to={`/account?view=login&redirect=${encodeURIComponent(location.pathname + location.search)}`} className="text-amber-600 font-semibold hover:underline">Sign in</Link> & purchase this item to leave a review after delivery.
-                            </span>
-                          )}
-                        </p>
-                      )}
+            {activeTab === 'reviews' && (
+              <div className="w-full space-y-8">
+                {/* Header & Write Review Action */}
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  <div>
+                    <h3 className="font-playfair text-2xl sm:text-3xl font-light text-neutral-950 tracking-wide">
+                      Customer Reviews
+                    </h3>
+                    <div className="flex items-center gap-3 w-28 mt-2" aria-hidden="true">
+                      <span className="h-[1.5px] w-8 bg-neutral-950" />
+                      <span className="h-1 w-1 rotate-45 bg-[#BEA266]" />
+                      <span className="h-[1px] flex-1 bg-gradient-to-r from-[#BEA266] to-transparent" />
                     </div>
                   </div>
 
-                  {/* Star Breakdown */}
+                  <div>
+                    {reviewsState.userReview ? (
+                      <button
+                        type="button"
+                        onClick={() => handleOpenEditReview(reviewsState.userReview)}
+                        className="group flex h-11 items-center gap-2 rounded-full border border-black bg-black px-6 font-sans text-[12px] font-semibold uppercase tracking-[0.14em] text-[#DFC481] hover:bg-[#2A2014] transition-colors cursor-pointer"
+                      >
+                        <Edit3 size={15} /> Edit My Review
+                      </button>
+                    ) : reviewsState.userCanReview ? (
+                      <button
+                        type="button"
+                        onClick={handleOpenWriteReview}
+                        className="group flex h-11 items-center gap-2 rounded-full border border-black bg-black px-6 font-sans text-[12px] font-semibold uppercase tracking-[0.14em] text-white hover:bg-[#BEA266] hover:text-black transition-colors cursor-pointer shadow-xs"
+                      >
+                        <Star size={15} /> Write a Review
+                      </button>
+                    ) : (
+                      !isAuthenticated && (
+                        <Link
+                          to={`/account?view=login&redirect=${encodeURIComponent(location.pathname + location.search)}`}
+                          className="group flex h-11 items-center gap-2 rounded-full border border-black/30 bg-white px-5 font-sans text-[12px] font-semibold uppercase tracking-[0.14em] text-black hover:border-black transition-colors"
+                        >
+                          Sign In To Review
+                        </Link>
+                      )
+                    )}
+                  </div>
+                </div>
+
+                {/* Rating Score & Distribution Bar */}
+                <div className="py-6 border-y border-neutral-200/80 flex flex-col sm:flex-row sm:items-center justify-between gap-6">
+                  <div className="flex items-center gap-5">
+                    <span className="font-playfair text-4xl sm:text-5xl font-light text-neutral-950 leading-none">
+                      {parseFloat(reviewsState.averageRating || 0).toFixed(1)}
+                    </span>
+                    <div>
+                      <div className="flex items-center gap-1 mb-1">
+                        {[1, 2, 3, 4, 5].map((s) => (
+                          <Star
+                            key={s}
+                            size={16}
+                            className={
+                              s <= Math.round(reviewsState.averageRating || 0)
+                                ? 'fill-[#BEA266] text-[#BEA266]'
+                                : 'fill-neutral-200 text-neutral-200'
+                            }
+                          />
+                        ))}
+                      </div>
+                      <p className="font-sans text-xs text-neutral-500">
+                        Based on <span className="font-semibold text-neutral-900">{reviewsState.totalCount || 0}</span> {reviewsState.totalCount === 1 ? 'review' : 'reviews'}
+                      </p>
+                    </div>
+                  </div>
+
                   {reviewsState.totalCount > 0 && (
-                    <div className="space-y-2 bg-white p-5 border border-neutral-200/60 rounded-lg shadow-sm flex flex-col justify-center">
+                    <div className="flex items-center gap-4 text-xs font-sans text-neutral-600 overflow-x-auto scrollbar-none py-1">
                       {[5, 4, 3, 2, 1].map((star) => {
                         const count = reviewsState.ratingBreakdown?.[star] || 0;
-                        const percentage = reviewsState.totalCount > 0 ? Math.round((count / reviewsState.totalCount) * 100) : 0;
+                        const pct = reviewsState.totalCount > 0 ? Math.round((count / reviewsState.totalCount) * 100) : 0;
                         return (
-                          <div key={star} className="flex items-center gap-3 text-xs text-neutral-600">
-                            <span className="w-14 font-medium">{star} Stars</span>
-                            <div className="flex-1 h-1.5 bg-neutral-100 rounded-full overflow-hidden">
-                              <div className="h-full bg-brand-gold transition-all duration-500 rounded-full" style={{ width: `${percentage}%` }} />
+                          <button
+                            key={star}
+                            type="button"
+                            onClick={() => setReviewFilter(prev => prev === String(star) ? 'all' : String(star))}
+                            className="flex items-center gap-1.5 whitespace-nowrap cursor-pointer hover:opacity-80 transition-opacity"
+                            title={`Filter by ${star} Stars`}
+                          >
+                            <span className="font-medium text-neutral-700">{star}★</span>
+                            <div className="w-16 h-1.5 bg-neutral-100 rounded-full overflow-hidden">
+                              <div className="h-full bg-[#BEA266] rounded-full" style={{ width: `${pct}%` }} />
                             </div>
-                            <span className="w-10 text-right font-sans text-[11px] text-neutral-400">{count}</span>
-                          </div>
+                            <span className="text-[11px] text-neutral-400 tabular-nums">({count})</span>
+                          </button>
                         );
                       })}
                     </div>
                   )}
                 </div>
 
-                {/* Reviews List */}
-                <div className="space-y-6 pt-2">
-                  {reviewsState.reviews.length === 0 ? (
-                    <p className="text-sm text-neutral-500 italic">No reviews yet. Customers who buy this product will be able to review it after delivery!</p>
+                {/* Filters Toolbar — Collections Dropdown Pattern */}
+                <div className="space-y-4">
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <div className="flex flex-wrap items-center gap-2.5">
+                      <ToolbarMenu
+                        id="reviews-star-filter"
+                        icon={Star}
+                        label="Rating"
+                        options={ratingFilterOptions}
+                        value={reviewFilter}
+                        onChange={setReviewFilter}
+                        active={reviewFilter !== 'all'}
+                      />
+                      <ToolbarMenu
+                        id="reviews-sort-filter"
+                        icon={ArrowUpDown}
+                        label="Sort"
+                        options={reviewSortOptions}
+                        value={reviewSort}
+                        onChange={setReviewSort}
+                        active={reviewSort !== 'newest'}
+                      />
+                    </div>
+
+                    <span className="font-sans text-[12px] text-neutral-500">
+                      Showing <span className="font-semibold text-neutral-900">{filteredReviews.length}</span> of {reviewsState.totalCount || 0} reviews
+                    </span>
+                  </div>
+
+                  {/* Active Filters chip list (Collections pattern) */}
+                  {activeReviewChips.length > 0 && (
+                    <ActiveFilters
+                      chips={activeReviewChips}
+                      onClearAll={() => {
+                        setReviewFilter('all');
+                        setReviewSort('newest');
+                      }}
+                    />
+                  )}
+                </div>
+
+                {/* Review Cards List */}
+                <div className="divide-y divide-neutral-200/80 pt-2">
+                  {filteredReviews.length === 0 ? (
+                    <div className="py-12 text-center">
+                      <p className="font-playfair text-xl text-neutral-800 mb-2">No reviews found</p>
+                      <p className="font-sans text-xs text-neutral-500 mb-4">
+                        {reviewFilter !== 'all'
+                          ? 'Try choosing a different rating filter or view all customer reviews.'
+                          : 'Be the first to share your thoughts after delivery! Every verified order is invited to review.'}
+                      </p>
+                      {reviewFilter !== 'all' && (
+                        <button
+                          type="button"
+                          onClick={() => setReviewFilter('all')}
+                          className="font-sans text-xs font-semibold uppercase tracking-wider text-[#7A5F28] underline hover:text-black cursor-pointer"
+                        >
+                          View all reviews
+                        </button>
+                      )}
+                    </div>
                   ) : (
-                    reviewsState.reviews.map(review => (
-                      <motion.div
-                        key={review.id}
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        className="bg-white p-4 sm:p-6 rounded-lg border border-neutral-200/60 shadow-sm relative w-full overflow-hidden"
-                      >
-                        <div className="flex justify-between items-start mb-2">
-                          <div className="flex items-center gap-3">
-                            <div className="w-9 h-9 rounded-full bg-brand-gold/10 text-brand-gold font-bold flex items-center justify-center text-sm border border-brand-gold/20">
-                              {(review.reviewerName || 'U')[0].toUpperCase()}
+                    filteredReviews.map((review) => (
+                      <div key={review.id} className="py-6 sm:py-8">
+                        <div className="flex items-start justify-between gap-4 mb-2">
+                          <div>
+                            <div className="flex items-center gap-2.5">
+                              <span className="font-sans font-semibold text-sm text-neutral-950">
+                                {review.reviewerName}
+                              </span>
+                              {review.isVerifiedPurchase && (
+                                <span className="text-[10px] font-sans font-semibold text-[#1F7A4C] bg-[#E8F6EE] px-2.5 py-0.5 rounded-full border border-[#C5E8D4]">
+                                  Verified Buyer
+                                </span>
+                              )}
                             </div>
-                            <div>
-                              <div className="flex items-center gap-2">
-                                <span className="font-semibold text-sm text-neutral-900">{review.reviewerName}</span>
-                                {review.isVerifiedPurchase && (
-                                  <span className="text-[10px] bg-emerald-50 text-emerald-700 font-semibold px-2 py-0.5 rounded border border-emerald-100">Verified Buyer</span>
-                                )}
-                              </div>
-                              <span className="text-[11px] text-neutral-400">{new Date(review.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
-                            </div>
+                            <span className="font-sans text-[11px] text-neutral-400">
+                              {new Date(review.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
+                            </span>
                           </div>
+
+                          {review.isOwnReview && (
+                            <div className="flex items-center gap-2">
+                              <button
+                                type="button"
+                                onClick={() => handleOpenEditReview(review)}
+                                className="text-xs font-sans text-neutral-600 hover:text-black flex items-center gap-1 px-2.5 py-1 rounded border border-neutral-200 hover:border-black cursor-pointer transition-colors"
+                              >
+                                <Edit3 size={12} /> Edit
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  if (window.confirm('Are you sure you want to delete your review?')) {
+                                    handleDeleteReview(review.id);
+                                  }
+                                }}
+                                className="text-xs font-sans text-red-600 hover:text-red-800 flex items-center gap-1 px-2.5 py-1 rounded border border-red-200 hover:border-red-400 cursor-pointer transition-colors"
+                              >
+                                <Trash2 size={12} /> Delete
+                              </button>
+                            </div>
+                          )}
                         </div>
 
                         <div className="flex items-center gap-1 my-2">
-                          {[1, 2, 3, 4, 5].map(s => (
-                            <Star key={s} size={13} className={s <= review.rating ? 'fill-brand-gold text-brand-gold' : 'fill-neutral-200 text-neutral-200'} />
+                          {[1, 2, 3, 4, 5].map((s) => (
+                            <Star
+                              key={s}
+                              size={13}
+                              className={
+                                s <= review.rating
+                                  ? 'fill-[#BEA266] text-[#BEA266]'
+                                  : 'fill-neutral-200 text-neutral-200'
+                              }
+                            />
                           ))}
                         </div>
 
-                        {review.title && <h4 className="font-playfair font-semibold text-base text-neutral-900 mb-1">{review.title}</h4>}
-                        <p className="text-sm text-neutral-600 leading-relaxed whitespace-pre-line">{review.body}</p>
-                      </motion.div>
+                        {review.title && (
+                          <h4 className="font-playfair font-semibold text-base sm:text-lg text-neutral-950 mb-1.5">
+                            {review.title}
+                          </h4>
+                        )}
+
+                        <p className="font-sans text-sm text-neutral-700 leading-relaxed whitespace-pre-line">
+                          {review.body}
+                        </p>
+                      </div>
                     ))
                   )}
                 </div>
@@ -1298,89 +1525,109 @@ const ProductDetailsPage = () => {
           </div>
         </div>
 
-        {/* Review Modal Form */}
+        {/* Luxury Review Modal Form */}
         <AnimatePresence>
           {reviewModalOpen && (
-            <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4" onClick={() => setReviewModalOpen(false)}>
+            <div className="fixed inset-0 bg-black/65 backdrop-blur-xs z-50 flex items-center justify-center p-4 overflow-y-auto" onClick={() => setReviewModalOpen(false)}>
               <motion.div
-                initial={{ opacity: 0, scale: 0.95, y: 10 }}
+                initial={{ opacity: 0, scale: 0.95, y: 16 }}
                 animate={{ opacity: 1, scale: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.95, y: 10 }}
-                className="bg-white rounded-lg max-w-lg w-full p-6 shadow-2xl relative"
+                exit={{ opacity: 0, scale: 0.95, y: 16 }}
+                className="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-8 shadow-2xl relative border border-[#EFECE6] my-8"
                 onClick={e => e.stopPropagation()}
               >
                 <button
+                  type="button"
                   onClick={() => setReviewModalOpen(false)}
-                  className="absolute top-4 right-4 p-2 text-neutral-400 hover:text-neutral-700 transition-colors rounded-full"
+                  className="absolute top-5 right-5 p-2 text-neutral-400 hover:text-neutral-900 transition-colors rounded-full hover:bg-neutral-100 cursor-pointer"
+                  aria-label="Close review dialog"
                 >
-                  <X size={18} />
+                  <X size={20} />
                 </button>
 
-                <h3 className="font-playfair text-xl sm:text-2xl font-semibold mb-1 text-neutral-900">
-                  {editingReviewId ? 'Edit Your Review' : 'Write a Product Review'}
-                </h3>
-                <p className="text-xs text-neutral-500 mb-5">
-                  Share your experience with <span className="font-semibold text-neutral-800">{product.name}</span>
-                </p>
+                <div className="mb-6">
+                  <p className="font-montserrat text-[11px] font-semibold uppercase tracking-[0.24em] text-[#BEA266] mb-1">
+                    VERIFIED BUYER FEEDBACK
+                  </p>
+                  <h3 className="font-playfair text-2xl sm:text-3xl font-light text-neutral-950">
+                    {editingReviewId ? 'Edit Your Review' : 'Write a Product Review'}
+                  </h3>
+                  <p className="font-montserrat text-xs text-neutral-500 mt-1">
+                    Sharing experience for <span className="font-semibold text-neutral-800">{product.name}</span>
+                  </p>
+                </div>
 
-                <form onSubmit={handleSubmitReview} className="space-y-4">
+                <form onSubmit={handleSubmitReview} className="space-y-5">
                   {/* Rating Stars Picker */}
-                  <div>
-                    <label className="block text-xs font-semibold text-neutral-700 mb-1.5 uppercase tracking-wider">Rating</label>
+                  <div className="bg-[#FAF8F5] p-4 rounded-2xl border border-[#EFECE6]">
+                    <div className="flex items-center justify-between mb-2">
+                      <label className="block text-xs font-semibold text-neutral-700 uppercase tracking-wider font-montserrat">
+                        Rating *
+                      </label>
+                      <span className="text-xs font-bold text-[#BEA266] font-montserrat">
+                        {reviewRating === 5 ? 'Exceptional (5/5)' :
+                         reviewRating === 4 ? 'Very Good (4/5)' :
+                         reviewRating === 3 ? 'Good (3/5)' :
+                         reviewRating === 2 ? 'Fair (2/5)' : 'Poor (1/5)'}
+                      </span>
+                    </div>
                     <div className="flex items-center gap-2">
                       {[1, 2, 3, 4, 5].map(star => (
                         <button
                           key={star}
                           type="button"
                           onClick={() => setReviewRating(star)}
-                          className="p-1 hover:scale-110 transition-transform focus:outline-none"
+                          className="p-1 hover:scale-115 transition-transform focus:outline-none cursor-pointer"
                         >
                           <Star
-                            size={26}
-                            className={star <= reviewRating ? 'fill-brand-gold text-brand-gold' : 'fill-neutral-200 text-neutral-300'}
+                            size={28}
+                            className={star <= reviewRating ? 'fill-[#BEA266] text-[#BEA266]' : 'fill-neutral-200 text-neutral-300'}
                           />
                         </button>
                       ))}
-                      <span className="text-xs font-bold text-brand-gold ml-2">{reviewRating} / 5 Stars</span>
                     </div>
                   </div>
 
                   {/* Title */}
                   <div>
-                    <label className="block text-xs font-semibold text-neutral-700 mb-1 uppercase tracking-wider">Review Title (Optional)</label>
+                    <label className="block text-xs font-semibold text-neutral-700 mb-1.5 uppercase tracking-wider font-montserrat">
+                      Headline (Optional)
+                    </label>
                     <input
                       type="text"
                       value={reviewTitle}
                       onChange={e => setReviewTitle(e.target.value)}
-                      placeholder="e.g. Excellent quality, perfect fit!"
-                      className="w-full px-3 py-2 border border-neutral-200 rounded-lg text-sm focus:border-brand-gold focus:outline-none"
+                      placeholder="e.g. Magnificent craftsmanship, perfect fit!"
+                      className="w-full px-4 py-3 border border-neutral-200 rounded-xl text-sm focus:border-[#BEA266] focus:ring-1 focus:ring-[#BEA266] focus:outline-none font-montserrat"
                     />
                   </div>
 
                   {/* Body */}
                   <div>
-                    <label className="block text-xs font-semibold text-neutral-700 mb-1 uppercase tracking-wider">Review Comments *</label>
+                    <label className="block text-xs font-semibold text-neutral-700 mb-1.5 uppercase tracking-wider font-montserrat">
+                      Detailed Review Comments *
+                    </label>
                     <textarea
                       rows={4}
                       value={reviewBody}
                       onChange={e => setReviewBody(e.target.value)}
-                      placeholder="Tell us what you liked or disliked about this product after your purchase..."
-                      className="w-full px-3 py-2 border border-neutral-200 rounded-lg text-sm focus:border-brand-gold focus:outline-none resize-none"
+                      placeholder="Share your experience regarding the fabric feel, drape, sizing, stitching, or packaging..."
+                      className="w-full px-4 py-3 border border-neutral-200 rounded-xl text-sm focus:border-[#BEA266] focus:ring-1 focus:ring-[#BEA266] focus:outline-none resize-none font-montserrat leading-relaxed"
                       required
                     />
                   </div>
 
-                  {/* Photo Upload (Optional, max 5MB) */}
+                  {/* Photo Upload (Optional) */}
                   <div>
-                    <label className="block text-xs font-semibold text-neutral-700 mb-1 uppercase tracking-wider">
-                      Add a Photo <span className="font-normal text-neutral-400 normal-case">(Optional · Max 5MB · JPG / PNG / WEBP)</span>
+                    <label className="block text-xs font-semibold text-neutral-700 mb-1.5 uppercase tracking-wider font-montserrat">
+                      Attach Photo <span className="font-normal text-neutral-400 normal-case">(Optional · Max 5MB)</span>
                     </label>
                     {reviewImagePreview ? (
                       <div className="relative inline-block">
                         <img
                           src={reviewImagePreview}
                           alt="Review preview"
-                          className="w-24 h-24 object-cover rounded-lg border border-neutral-200 shadow-sm"
+                          className="w-24 h-24 object-cover rounded-xl border border-neutral-200 shadow-sm"
                         />
                         <button
                           type="button"
@@ -1389,21 +1636,22 @@ const ProductDetailsPage = () => {
                             setReviewImagePreview(null);
                             if (reviewImageRef.current) reviewImageRef.current.value = '';
                           }}
-                          className="absolute -top-2 -right-2 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600 transition-colors shadow"
+                          className="absolute -top-2 -right-2 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600 transition-colors shadow-xs cursor-pointer"
                           aria-label="Remove image"
                         >
-                          <X size={11} />
+                          <X size={12} />
                         </button>
-                        <p className="text-[10px] text-neutral-400 mt-1">
-                          {reviewImage ? `${(reviewImage.size / (1024 * 1024)).toFixed(2)} MB` : ''}
-                        </p>
                       </div>
                     ) : (
-                      <label className="flex items-center gap-3 cursor-pointer w-full border border-dashed border-neutral-300 hover:border-brand-gold rounded-lg px-4 py-3 transition-colors bg-neutral-50 hover:bg-amber-50/30 group">
-                        <span className="text-2xl text-neutral-400 group-hover:text-brand-gold transition-colors">📷</span>
+                      <label className="flex items-center gap-3 cursor-pointer w-full border border-dashed border-neutral-300 hover:border-[#BEA266] rounded-xl px-4 py-3 transition-colors bg-[#FAF8F5] hover:bg-amber-50/30 group">
+                        <span className="text-2xl text-neutral-400 group-hover:text-[#BEA266] transition-colors">📷</span>
                         <div>
-                          <p className="text-xs font-semibold text-neutral-600 group-hover:text-brand-gold transition-colors">Click to upload a photo</p>
-                          <p className="text-[10px] text-neutral-400 mt-0.5">Maximum file size: 5MB</p>
+                          <p className="text-xs font-semibold text-neutral-700 group-hover:text-[#BEA266] transition-colors font-montserrat">
+                            Upload a picture of your garment
+                          </p>
+                          <p className="text-[10px] text-neutral-400 mt-0.5 font-montserrat">
+                            JPG, PNG, WEBP up to 5MB
+                          </p>
                         </div>
                         <input
                           ref={reviewImageRef}
@@ -1416,18 +1664,18 @@ const ProductDetailsPage = () => {
                     )}
                   </div>
 
-                  <div className="flex justify-end gap-3 pt-2">
+                  <div className="flex justify-end gap-3 pt-3">
                     <button
                       type="button"
                       onClick={() => setReviewModalOpen(false)}
-                      className="px-4 py-2 border border-neutral-200 text-neutral-600 text-xs font-semibold rounded-lg hover:bg-neutral-50"
+                      className="px-5 py-2.5 border border-neutral-200 text-neutral-600 text-xs font-semibold rounded-full hover:bg-neutral-50 font-montserrat transition-colors cursor-pointer"
                     >
                       Cancel
                     </button>
                     <button
                       type="submit"
                       disabled={reviewsState.submitting}
-                      className="btn-primary text-xs py-2 px-5 disabled:opacity-50"
+                      className="px-7 py-2.5 bg-neutral-950 text-white hover:bg-brand-gold hover:text-black text-xs font-semibold rounded-full font-montserrat uppercase tracking-wider transition-all duration-300 shadow-sm disabled:opacity-50 cursor-pointer"
                     >
                       {reviewsState.submitting ? 'Saving...' : (editingReviewId ? 'Update Review' : 'Submit Review')}
                     </button>

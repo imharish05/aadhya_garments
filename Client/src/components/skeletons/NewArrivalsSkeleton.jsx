@@ -27,9 +27,9 @@ export const NewArrivalsSkeleton = ({ className = '' }) => {
           </div>
 
           {/* Right Products Slider Track */}
-          <div className="lg:col-span-7 flex gap-4 overflow-hidden py-2">
-            {[...Array(3)].map((_, i) => (
-              <div key={i} className="w-[200px] sm:w-[240px] shrink-0">
+          <div className="lg:col-span-7 flex gap-2.5 sm:gap-4 overflow-hidden py-2">
+            {[...Array(4)].map((_, i) => (
+              <div key={i} className="w-[calc(50%-5px)] sm:w-[240px] shrink-0">
                 <ProductCardSkeleton compactMobile />
               </div>
             ))}

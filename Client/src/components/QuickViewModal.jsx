@@ -799,46 +799,13 @@ const QuickViewModal = () => {
                       </button>
                     </div>
                   ) : (
-                    <div className="bg-amber-50/60 p-3 rounded-lg border border-amber-200/80 space-y-2">
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs font-bold text-neutral-900 flex items-center gap-1.5">
-                          <Mail size={14} className="text-amber-600" /> Out of Stock
-                        </span>
-                        <span className="text-[10px] font-semibold text-rose-600 bg-rose-50 px-2 py-0.5 rounded-full border border-rose-200">
-                          Restock Alert
-                        </span>
-                      </div>
-                      {!notifySuccess ? (
-                        <form onSubmit={handleNotifySubmit} className="space-y-2">
-                          <p className="text-[11px] text-neutral-600 font-medium">Enter your email to get notified immediately when restocked:</p>
-                          <div className="flex gap-2">
-                            <input
-                              type="email"
-                              required
-                              placeholder="Enter your email"
-                              value={notifyEmail}
-                              onChange={e => setNotifyEmail(e.target.value)}
-                              className="flex-1 bg-white border border-neutral-300 rounded-lg px-3 py-2 text-xs text-neutral-900 focus:outline-none focus:border-amber-500 shadow-xs"
-                            />
-                            <button
-                              type="submit"
-                              disabled={submittingNotify}
-                              className="bg-neutral-950 hover:bg-neutral-800 disabled:opacity-50 text-amber-400 px-3.5 py-2 text-xs font-bold uppercase tracking-wider rounded-lg transition-colors cursor-pointer flex items-center gap-1 shrink-0"
-                            >
-                              {submittingNotify ? 'Saving...' : 'Notify Me'}
-                            </button>
-                          </div>
-                        </form>
-                      ) : (
-                        <div className="bg-emerald-50 text-emerald-800 p-2.5 rounded-lg border border-emerald-200 text-xs flex items-center gap-2">
-                          <CheckCircle2 size={16} className="text-emerald-600 shrink-0" />
-                          <div>
-                            <p className="font-bold">Subscription Active!</p>
-                            <p className="text-[11px] text-emerald-700">We will email <span className="font-semibold">{notifyEmail}</span> as soon as this item is restocked.</p>
-                          </div>
-                        </div>
-                      )}
-                    </div>
+                    <button
+                      type="button"
+                      disabled
+                      className="bg-neutral-950 text-white/60 text-[11px] sm:text-xs font-bold tracking-wider sm:tracking-widest uppercase py-3.5 px-4 rounded-lg w-full flex items-center justify-center cursor-not-allowed select-none shadow-sm"
+                    >
+                      Out of Stock
+                    </button>
                   )}
                   <Link
                     to={`/products/${product.slug}`}

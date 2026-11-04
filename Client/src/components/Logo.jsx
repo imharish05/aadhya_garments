@@ -1,8 +1,10 @@
+import { Link } from 'react-router-dom';
+
 /**
  * Logo component — both apps
  * Renders the brand logo image alongside styled brand text.
  */
-const Logo = ({ size = 'md', className = '', showText = false, fullHeight = false }) => {
+const Logo = ({ size = 'md', className = '', showText = false, fullHeight = false, asLink = true }) => {
   const imageSizes = {
     sm: 'h-12 w-12',
     md: 'h-20 w-20',
@@ -17,7 +19,7 @@ const Logo = ({ size = 'md', className = '', showText = false, fullHeight = fals
 
   const imgSizeClass = fullHeight ? 'h-full w-auto max-h-full py-1.5' : imageSizes[size];
 
-  return (
+  const content = (
     <div className={`flex items-center gap-2.5 ${className}`}>
       <img
         src="/logo.png"
@@ -35,6 +37,23 @@ const Logo = ({ size = 'md', className = '', showText = false, fullHeight = fals
       )}
     </div>
   );
+
+  if (asLink) {
+    return (
+      <Link
+        to="/"
+        aria-label="Twin A Apparels — Home"
+        className="inline-flex items-center focus:outline-none hover:opacity-90 transition-opacity"
+        onClick={() => {
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        }}
+      >
+        {content}
+      </Link>
+    );
+  }
+
+  return content;
 };
 
 export default Logo;
