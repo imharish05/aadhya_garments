@@ -1216,7 +1216,7 @@ const ProductDetailsPage = () => {
               }`}
             >
               <FileText size={16} className={activeTab === 'description' ? 'text-[#BEA266]' : 'text-neutral-400'} />
-              <span>Garment Details & Craft</span>
+              <span>Description</span>
               {activeTab === 'description' && (
                 <motion.div
                   layoutId="pdp-active-tab"
@@ -1239,7 +1239,7 @@ const ProductDetailsPage = () => {
               }`}
             >
               <Star size={16} className={activeTab === 'reviews' ? 'text-[#BEA266] fill-[#BEA266]' : 'text-neutral-400'} />
-              <span>Customer Reviews</span>
+              <span>Reviews</span>
               <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full transition-colors ${
                 activeTab === 'reviews' ? 'bg-neutral-900 text-white' : 'bg-neutral-100 text-neutral-500'
               }`}>
